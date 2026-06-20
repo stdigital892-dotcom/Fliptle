@@ -280,20 +280,61 @@ nav.scrolled{
 }
 .founder-inner{display:grid;grid-template-columns:1fr 1.1fr;gap:70px;align-items:center}
 .founder-photo-wrap{position:relative;display:flex;justify-content:center;align-items:center}
-.founder-bg{
-  position:absolute;width:340px;height:340px;border-radius:50%;object-fit:cover;
-  filter:blur(26px) saturate(1.2);opacity:.55;transform:scale(1.15) translate(28px,28px);z-index:0;
+/* --- 3D photo card swiper --- */
+.founder-swiper{
+  position:relative;display:flex;flex-direction:column;align-items:center;gap:30px;
+  width:100%;perspective:1400px;
 }
-.founder-main{
-  position:relative;z-index:2;width:330px;height:330px;border-radius:50%;object-fit:cover;
-  padding:6px;background:var(--grad);box-shadow:0 30px 80px rgba(123,47,190,.5);
-  animation:floaty 9s ease-in-out infinite;
+.swiper-glow{
+  position:absolute;top:50%;left:50%;width:360px;height:360px;border-radius:50%;z-index:0;
+  pointer-events:none;filter:blur(72px);transform:translate(-50%,-58%) scale(1);
+  background:radial-gradient(circle,rgba(30,111,232,.5),rgba(123,47,190,.4) 45%,rgba(255,60,172,.25) 70%,transparent 80%);
+  animation:glowpulse 5s ease-in-out infinite;
 }
-.founder-main img{width:100%;height:100%;border-radius:50%;object-fit:cover;border:4px solid #000}
-.founder-secondary{
-  position:absolute;z-index:3;width:120px;height:120px;border-radius:50%;object-fit:cover;
-  bottom:-6px;right:30px;border:4px solid #000;box-shadow:0 14px 40px rgba(255,60,172,.5);
+@keyframes glowpulse{
+  0%,100%{opacity:.5;transform:translate(-50%,-58%) scale(.9)}
+  50%{opacity:.85;transform:translate(-50%,-58%) scale(1.1)}
 }
+.deck{
+  position:relative;width:clamp(250px,72vw,340px);aspect-ratio:1/1;z-index:2;
+  transform-style:preserve-3d;animation:cardfloat 9s ease-in-out infinite;
+}
+@keyframes cardfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.card-shadow{
+  position:absolute;left:50%;bottom:-30px;width:74%;height:42px;border-radius:50%;z-index:0;
+  background:rgba(0,0,0,.6);filter:blur(28px);transform:translateX(calc(-50% - 16px));
+  transition:transform .75s cubic-bezier(.6,.02,.2,1),width .75s ease;
+}
+.is-flipped .card-shadow{transform:translateX(calc(-50% + 16px))}
+.deck-peek{
+  position:absolute;inset:0;border-radius:30px;padding:5px;background:var(--grad);z-index:1;
+  transform:translate(26px,24px) scale(.93);box-shadow:0 22px 55px rgba(123,47,190,.35);
+}
+.deck-peek .peek-img{
+  position:absolute;inset:5px;width:calc(100% - 10px);height:calc(100% - 10px);
+  border-radius:26px;object-fit:cover;border:3px solid #000;transition:opacity .7s ease;
+}
+.peek-b{opacity:0}
+.is-flipped .peek-a{opacity:0}
+.is-flipped .peek-b{opacity:1}
+.flipper{
+  position:absolute;inset:0;transform-style:preserve-3d;z-index:3;cursor:pointer;outline:none;
+  transition:transform .72s cubic-bezier(.6,.02,.2,1);
+}
+.is-flipped .flipper{transform:rotateY(180deg)}
+.face{
+  position:absolute;inset:0;border-radius:30px;padding:5px;background:var(--grad);
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  box-shadow:0 30px 80px rgba(123,47,190,.5);
+}
+.face img{width:100%;height:100%;border-radius:26px;object-fit:cover;border:4px solid #000}
+.face.back{transform:rotateY(180deg)}
+.swiper-dots{display:flex;gap:12px;position:relative;z-index:4}
+.swiper-dots .dot{
+  width:11px;height:11px;border-radius:50%;border:none;padding:0;cursor:pointer;
+  background:rgba(255,255,255,.22);transition:transform .3s, background .3s, box-shadow .3s;
+}
+.swiper-dots .dot.active{background:var(--grad);transform:scale(1.25);box-shadow:0 0 14px rgba(255,60,172,.7)}
 .founder-content h2{font-size:clamp(2rem,4vw,3rem);font-weight:800;letter-spacing:-.02em}
 .founder-role{color:var(--pink);font-weight:600;margin:8px 0 26px;font-size:1.1rem;letter-spacing:.02em}
 .founder-bio{color:#b4b6c4;font-size:1.1rem;line-height:1.8;max-width:560px}
@@ -543,9 +584,24 @@ footer{
   <div class="container">
     <div class="founder-inner">
       <div class="founder-photo-wrap reveal">
-        <img src="founder-2.JPG" alt="" class="founder-bg" aria-hidden="true" />
-        <div class="founder-main"><img src="founder.JPG" alt="Shivam Yadav, Founder of Fliptle" /></div>
-        <img src="founder-2.JPG" alt="Shivam Yadav" class="founder-secondary" />
+        <div class="founder-swiper" id="founderSwiper">
+          <span class="swiper-glow" aria-hidden="true"></span>
+          <div class="deck" id="founderDeck" role="button" aria-label="Flip founder photo">
+            <span class="card-shadow" aria-hidden="true"></span>
+            <div class="deck-peek" aria-hidden="true">
+              <img src="founder-2.JPG" alt="" class="peek-img peek-a" />
+              <img src="founder.JPG" alt="" class="peek-img peek-b" />
+            </div>
+            <div class="flipper" id="founderFlipper">
+              <div class="face front"><img src="founder.JPG" alt="Shivam Yadav, Founder of Fliptle" /></div>
+              <div class="face back"><img src="founder-2.JPG" alt="Shivam Yadav" /></div>
+            </div>
+          </div>
+          <div class="swiper-dots" id="founderDots">
+            <button class="dot active" data-i="0" aria-label="Show photo 1"></button>
+            <button class="dot" data-i="1" aria-label="Show photo 2"></button>
+          </div>
+        </div>
       </div>
       <div class="founder-content reveal reveal-d1">
         <span class="section-label">Meet The Founder</span>
@@ -687,6 +743,77 @@ window.addEventListener('scroll',()=>{
     });
   }
 });
+
+/* ---------- Founder 3D photo card swiper ---------- */
+(function(){
+  const swiper=document.getElementById('founderSwiper');
+  if(!swiper)return;
+  const deck=document.getElementById('founderDeck');
+  const dots=[].slice.call(document.querySelectorAll('#founderDots .dot'));
+  const DURATION=4500;        // autoplay interval
+  const FLIP_MS=760;          // matches CSS transition
+  let idx=0, lock=false, autoTimer=null, resumeTimer=null, lastSwipe=0;
+
+  function render(){
+    swiper.classList.toggle('is-flipped', idx===1);
+    dots.forEach((d,i)=>d.classList.toggle('active', i===idx));
+  }
+  function goTo(i){
+    if(i===idx||lock)return;
+    idx=i; lock=true; render();
+    setTimeout(()=>{lock=false;}, FLIP_MS);
+  }
+  function flip(){ goTo(idx===0?1:0); }
+
+  function startAuto(){ stopAuto(); autoTimer=setInterval(flip, DURATION); }
+  function stopAuto(){ if(autoTimer){clearInterval(autoTimer);autoTimer=null;} }
+  function pauseAuto(){
+    stopAuto();
+    if(resumeTimer)clearTimeout(resumeTimer);
+    resumeTimer=setTimeout(startAuto, 6000);
+  }
+
+  // tap / click (desktop) — ignore the click synthesized right after a swipe
+  deck.addEventListener('click', ()=>{
+    if(Date.now()-lastSwipe<600)return;
+    flip(); pauseAuto();
+  });
+
+  // indicator dots
+  dots.forEach(d=>d.addEventListener('click', e=>{
+    e.stopPropagation();
+    goTo(parseInt(d.dataset.i,10)); pauseAuto();
+  }));
+
+  // swipe (mobile touch)
+  let sx=0, sy=0, touching=false;
+  deck.addEventListener('touchstart', e=>{
+    touching=true;
+    sx=e.changedTouches[0].clientX; sy=e.changedTouches[0].clientY;
+  }, {passive:true});
+  deck.addEventListener('touchend', e=>{
+    if(!touching)return; touching=false;
+    const dx=e.changedTouches[0].clientX-sx;
+    const dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)>40 && Math.abs(dx)>Math.abs(dy)){
+      lastSwipe=Date.now(); flip(); pauseAuto();
+    }
+  }, {passive:true});
+
+  // keyboard accessibility
+  deck.setAttribute('tabindex','0');
+  deck.addEventListener('keydown', e=>{
+    if(['Enter',' ','ArrowLeft','ArrowRight'].indexOf(e.key)>-1){
+      e.preventDefault(); flip(); pauseAuto();
+    }
+  });
+
+  // pause autoplay while hovering (desktop), resume on leave
+  swiper.addEventListener('mouseenter', stopAuto);
+  swiper.addEventListener('mouseleave', startAuto);
+
+  render(); startAuto();
+})();
 </script>
 </body>
 </html>
