@@ -243,6 +243,30 @@ nav.scrolled{
 .platform-ico.pinterest:hover{color:#E60023}
 .platform-ico.reddit:hover{color:#FF4500}
 
+/* ============================ TRUSTED BY (logo marquee) ============================ */
+.trusted{
+  padding:90px 0;overflow:hidden;
+  border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06);
+}
+.marquee{
+  position:relative;width:100%;margin-top:50px;overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+}
+.marquee-track{
+  display:flex;width:max-content;animation:marquee 30s linear infinite;will-change:transform;
+}
+.marquee:hover .marquee-track{animation-play-state:paused}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.client-card{
+  flex:0 0 auto;width:200px;height:120px;margin-right:28px;padding:22px;border-radius:18px;
+  display:flex;align-items:center;justify-content:center;
+  background:#f4f5f8;border:1px solid rgba(0,0,0,.06);
+  box-shadow:0 16px 40px rgba(0,0,0,.5);transition:transform .35s ease, box-shadow .35s ease;
+}
+.client-card:hover{transform:translateY(-6px) scale(1.04);box-shadow:0 22px 54px rgba(123,47,190,.4)}
+.client-card img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain}
+
 /* ============================ INTERNATIONAL ============================ */
 .flags{display:flex;flex-wrap:wrap;justify-content:center;gap:24px;margin-top:50px}
 .flag-card{
@@ -584,6 +608,33 @@ footer{
   </div>
 </section>
 
+<!-- TRUSTED BY -->
+<section class="trusted" id="trusted">
+  <div class="container center">
+    <span class="section-label reveal">Trusted By</span>
+    <h2 class="section-title reveal reveal-d1">Trusted By <span class="gradient-text">Leading Fitness Brands</span></h2>
+    <p class="section-sub reveal reveal-d2">Brands across the gym and fitness industry rely on Fliptle for growth.</p>
+  </div>
+  <div class="marquee reveal reveal-d2" id="trustedMarquee">
+    <div class="marquee-track">
+      <!-- set 1 -->
+      <div class="client-card"><img src="client-truespirit.png" alt="True Spirit" loading="lazy" /></div>
+      <div class="client-card"><img src="client-gofitwear.png" alt="Go Fit Wear" loading="lazy" /></div>
+      <div class="client-card"><img src="client-dyness.png" alt="Dyness" loading="lazy" /></div>
+      <div class="client-card"><img src="client-inoxpsis.png" alt="Inoxpsis" loading="lazy" /></div>
+      <div class="client-card"><img src="client-fitgo.png" alt="Fitgo" loading="lazy" /></div>
+      <div class="client-card"><img src="client-hunk.png" alt="Hunk" loading="lazy" /></div>
+      <!-- set 2 (duplicate for a seamless loop) -->
+      <div class="client-card" aria-hidden="true"><img src="client-truespirit.png" alt="" loading="lazy" /></div>
+      <div class="client-card" aria-hidden="true"><img src="client-gofitwear.png" alt="" loading="lazy" /></div>
+      <div class="client-card" aria-hidden="true"><img src="client-dyness.png" alt="" loading="lazy" /></div>
+      <div class="client-card" aria-hidden="true"><img src="client-inoxpsis.png" alt="" loading="lazy" /></div>
+      <div class="client-card" aria-hidden="true"><img src="client-fitgo.png" alt="" loading="lazy" /></div>
+      <div class="client-card" aria-hidden="true"><img src="client-hunk.png" alt="" loading="lazy" /></div>
+    </div>
+  </div>
+</section>
+
 <!-- MEET FOUNDER -->
 <section class="founder" id="founder">
   <div class="container">
@@ -748,6 +799,18 @@ window.addEventListener('scroll',()=>{
     });
   }
 });
+
+/* ---------- Trusted By logo marquee: pause on touch ---------- */
+(function(){
+  const m=document.getElementById('trustedMarquee');
+  if(!m)return;
+  const track=m.querySelector('.marquee-track');
+  const pause=()=>{track.style.animationPlayState='paused';};
+  const play=()=>{track.style.animationPlayState='running';};
+  m.addEventListener('touchstart',pause,{passive:true});
+  m.addEventListener('touchend',play,{passive:true});
+  m.addEventListener('touchcancel',play,{passive:true});
+})();
 
 /* ---------- Founder 3D photo card swiper ---------- */
 (function(){
