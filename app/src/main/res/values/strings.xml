@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Hello App</string>
-    <string name="hello_message">Hello, it works</string>
+    <string name="app_name">Usage Access Demo</string>
+    <string name="grant_button">Grant Usage Access</string>
+    <string name="permission_needed">Permission needed — tap the button above.</string>
+    <string name="foreground_label">Foreground app:</string>
 </resources>
