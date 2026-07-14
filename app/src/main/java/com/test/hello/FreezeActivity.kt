@@ -3,12 +3,15 @@ package com.test.hello
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.ceil
 
 class FreezeActivity : AppCompatActivity() {
@@ -21,6 +24,10 @@ class FreezeActivity : AppCompatActivity() {
     private lateinit var cancelButton: Button
 
     private val handler = Handler(Looper.getMainLooper())
+    private val io = Executors.newSingleThreadExecutor()
+    private val fetchInFlight = AtomicBoolean(false)
+    private var lastFetchElapsed = 0L
+
     private val tick = object : Runnable {
         override fun run() {
             render()
@@ -47,7 +54,7 @@ class FreezeActivity : AppCompatActivity() {
         }
 
         extendButton.setOnClickListener {
-            // Tightening is always allowed.
+            // Tightening is always allowed, even while VERIFYING.
             val ms = enteredMinutesMs() ?: return@setOnClickListener
             store.extend(ms)
             minutesInput.text.clear()
@@ -55,7 +62,7 @@ class FreezeActivity : AppCompatActivity() {
         }
 
         cancelButton.setOnClickListener {
-            // Only reachable in REVIEW state (disabled while frozen).
+            // Only reachable in REVIEW state (disabled while frozen/verifying).
             if (store.state() == FreezeStore.State.REVIEW) {
                 store.confirmClear()
                 render()
@@ -71,6 +78,11 @@ class FreezeActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         handler.removeCallbacks(tick)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        io.shutdownNow()
     }
 
     private fun enteredMinutesMs(): Long? {
@@ -93,45 +105,73 @@ class FreezeActivity : AppCompatActivity() {
             }
 
             FreezeStore.State.FROZEN -> {
-                startButton.visibility = View.GONE
-                countdownText.visibility = View.VISIBLE
-                extendButton.visibility = View.VISIBLE
-                cancelButton.visibility = View.VISIBLE
-
+                showActiveControls()
                 val remaining = store.remainingMs()
                 val minutes = ceil(remaining / 60_000.0).toLong()
                 countdownText.text = getString(R.string.locked_for, minutes, mmss(remaining))
-
-                // Tightening allowed; loosening blocked.
                 extendButton.isEnabled = true
                 cancelButton.isEnabled = false
-                minutesInput.hint = getString(R.string.minutes_to_add_hint)
+                // Correct any start-time clock offset against trusted time (once).
+                if (!store.wallTrusted) maybeFetchTrustedTime(reboot = false)
+            }
+
+            FreezeStore.State.VERIFYING -> {
+                showActiveControls()
+                countdownText.text = getString(R.string.verifying_locked)
+                extendButton.isEnabled = true   // tightening still allowed
+                cancelButton.isEnabled = false  // cannot loosen while locked
+                // Reboot detected: only trusted network time can re-anchor.
+                maybeFetchTrustedTime(reboot = true)
             }
 
             FreezeStore.State.REVIEW -> {
-                startButton.visibility = View.GONE
-                countdownText.visibility = View.VISIBLE
-                extendButton.visibility = View.VISIBLE
-                cancelButton.visibility = View.VISIBLE
-
+                showActiveControls()
                 countdownText.text = getString(R.string.review_available)
-
-                // Freeze is NOT auto-cleared: user must confirm to change it.
                 extendButton.isEnabled = true
-                cancelButton.isEnabled = true
-                minutesInput.hint = getString(R.string.minutes_to_add_hint)
+                cancelButton.isEnabled = true // confirm-to-change
+            }
+        }
+    }
+
+    private fun showActiveControls() {
+        startButton.visibility = View.GONE
+        countdownText.visibility = View.VISIBLE
+        extendButton.visibility = View.VISIBLE
+        cancelButton.visibility = View.VISIBLE
+        minutesInput.hint = getString(R.string.minutes_to_add_hint)
+    }
+
+    /**
+     * Fetch trusted network time off the main thread, throttled. On success,
+     * re-anchor (after reboot) or correct the wall end (same boot). On failure the
+     * state is untouched, so a reboot stays LOCKED until verification succeeds.
+     */
+    private fun maybeFetchTrustedTime(reboot: Boolean) {
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastFetchElapsed < FETCH_THROTTLE_MS && lastFetchElapsed != 0L) return
+        if (!fetchInFlight.compareAndSet(false, true)) return
+        lastFetchElapsed = now
+
+        io.execute {
+            val trusted = TrustedTime.fetchEpochMillis()
+            handler.post {
+                if (trusted != null) {
+                    if (reboot) store.rebootReanchor(trusted)
+                    else store.applyTrustedTimeSameBoot(trusted)
+                    render()
+                }
+                fetchInFlight.set(false)
             }
         }
     }
 
     private fun mmss(ms: Long): String {
         val totalSeconds = ms / 1000
-        val m = totalSeconds / 60
-        val s = totalSeconds % 60
-        return String.format("%02d:%02d", m, s)
+        return String.format("%02d:%02d", totalSeconds / 60, totalSeconds % 60)
     }
 
     companion object {
         private const val TICK_MS = 1_000L
+        private const val FETCH_THROTTLE_MS = 5_000L
     }
 }
