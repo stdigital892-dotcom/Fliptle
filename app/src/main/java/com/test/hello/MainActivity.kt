@@ -34,6 +34,9 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.grantButton).setOnClickListener {
             startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         }
+        findViewById<Button>(R.id.openFreezeButton).setOnClickListener {
+            startActivity(Intent(this, FreezeActivity::class.java))
+        }
     }
 
     override fun onResume() {

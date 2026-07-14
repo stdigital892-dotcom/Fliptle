@@ -4,4 +4,15 @@
     <string name="grant_button">Grant Usage Access</string>
     <string name="permission_needed">Permission needed — tap the button above.</string>
     <string name="foreground_label">Foreground app:</string>
+
+    <string name="open_freeze">Open Freeze</string>
+    <string name="freeze_title">Freeze</string>
+    <string name="minutes_hint">Duration in minutes</string>
+    <string name="minutes_to_add_hint">Minutes to add</string>
+    <string name="start_freeze">Start Freeze</string>
+    <string name="extend_freeze">Extend Freeze</string>
+    <string name="reduce_cancel_freeze">Reduce / Cancel Freeze</string>
+    <string name="locked_for">Locked for %1$d more minutes.\n(%2$s remaining)</string>
+    <string name="review_available">Review available — freeze still active. Confirm to change.</string>
+    <string name="enter_valid_minutes">Enter a positive number of minutes.</string>
 </resources>
