@@ -9,6 +9,9 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
             BlockingService.start(context)
+            // Restart the DNS filter too. establish() succeeds only if the user
+            // previously granted VPN consent; otherwise the service stops itself.
+            DnsVpnService.start(context)
         }
     }
 }

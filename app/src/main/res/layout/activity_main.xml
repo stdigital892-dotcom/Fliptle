@@ -38,6 +38,27 @@
             android:text="@string/detected_browsers" />
 
         <Button
+            android:id="@+id/openDomainsButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/blocked_domains" />
+
+        <Button
+            android:id="@+id/enableVpnButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/enable_vpn" />
+
+        <Button
+            android:id="@+id/disableVpnButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/disable_vpn" />
+
+        <Button
             android:id="@+id/openFreezeButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
