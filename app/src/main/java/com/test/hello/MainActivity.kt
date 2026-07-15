@@ -70,6 +70,9 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.openA11yButton).setOnClickListener {
             startActivity(Intent(this, AccessibilityDisclosureActivity::class.java))
         }
+        findViewById<Button>(R.id.openBlocklistButton).setOnClickListener {
+            startActivity(Intent(this, BlocklistStatusActivity::class.java))
+        }
         findViewById<Button>(R.id.openFreezeButton).setOnClickListener {
             startActivity(Intent(this, FreezeActivity::class.java))
         }
@@ -79,6 +82,11 @@ class MainActivity : AppCompatActivity() {
         // are handled live by PackageInstallReceiver.
         BrowserDetector.autoBlockInstalledBrowsers(this)
         BlockingService.start(this)
+
+        // Warm the shared blocklists and schedule the weekly refresh.
+        AdultBlocklist.ensureLoaded(this)
+        KeywordBlocklist.ensureLoaded(this)
+        BlocklistUpdateWorker.schedule(this)
     }
 
     override fun onResume() {

@@ -1,0 +1,28 @@
+# Explicit search-query keywords. Lines starting with # are ignored.
+# A search whose text contains any of these (case-insensitive) is blocked.
+porn
+porno
+pornography
+xxx
+nsfw
+hentai
+sex video
+sex videos
+xvideos
+xnxx
+pornhub
+redtube
+onlyfans nude
+nudes
+nude pics
+naked girls
+naked women
+camgirl
+camsex
+escort service
+adult video
+adult videos
+explicit sex
+hardcore porn
+milf porn
+teen porn
