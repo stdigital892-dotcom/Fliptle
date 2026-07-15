@@ -25,4 +25,8 @@
     <string name="return_home">Return to Home</string>
     <string name="service_title">Focus freeze active</string>
     <string name="service_text">Monitoring foreground apps</string>
+
+    <string name="detected_browsers">Detected Browsers</string>
+    <string name="browser_rescan">Re-scan browsers</string>
+    <string name="no_browsers_found">No browsers detected.</string>
 </resources>

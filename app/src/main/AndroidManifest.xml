@@ -38,6 +38,10 @@
             android:name=".AppListActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".BrowserListActivity"
+            android:exported="false" />
+
         <service
             android:name=".BlockingService"
             android:exported="false"
@@ -52,6 +56,15 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".PackageInstallReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_ADDED" />
+                <data android:scheme="package" />
             </intent-filter>
         </receiver>
     </application>
