@@ -17,6 +17,16 @@
     <string name="verifying_locked">Reboot detected — freeze stays LOCKED until real time is verified from the network.\nConnect to the internet to verify. (Extending is still allowed.)</string>
     <string name="enter_valid_minutes">Enter a positive number of minutes.</string>
 
+    <string name="taper_status">Current freeze: %1$d day(s). Next tier: %2$s</string>
+    <string name="taper_next">%1$d days after this cycle</string>
+    <string name="taper_next_max">7 days (maximum reached)</string>
+    <string name="taper_cycles">Completed cycles: %1$d</string>
+    <string name="taper_debug">[DEBUG] current freeze length: %1$s (mm:ss)</string>
+    <string name="taper_start">Start Taper Freeze (current tier)</string>
+    <string name="debug_mode">Debug mode (short cycles for testing)</string>
+    <string name="manual_freeze_label">Or start a manual freeze (does not advance the taper):</string>
+    <string name="cycle_complete">Cycle complete! Freeze tier is now %1$d day(s).</string>
+
     <string name="grant_overlay">Grant Overlay Permission</string>
     <string name="select_apps">Select Apps to Block</string>
     <string name="save">Save</string>

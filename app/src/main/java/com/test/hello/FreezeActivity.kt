@@ -6,6 +6,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.view.View
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
@@ -17,8 +18,12 @@ import kotlin.math.ceil
 class FreezeActivity : AppCompatActivity() {
 
     private lateinit var store: FreezeStore
+    private lateinit var taper: TaperStore
     private lateinit var minutesInput: EditText
     private lateinit var startButton: Button
+    private lateinit var taperStartButton: Button
+    private lateinit var taperStatusText: TextView
+    private lateinit var debugModeCheck: CheckBox
     private lateinit var countdownText: TextView
     private lateinit var extendButton: Button
     private lateinit var cancelButton: Button
@@ -39,17 +44,34 @@ class FreezeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_freeze)
         store = FreezeStore(this)
+        taper = TaperStore(this)
 
         minutesInput = findViewById(R.id.minutesInput)
         startButton = findViewById(R.id.startButton)
+        taperStartButton = findViewById(R.id.taperStartButton)
+        taperStatusText = findViewById(R.id.taperStatusText)
+        debugModeCheck = findViewById(R.id.debugModeCheck)
         countdownText = findViewById(R.id.countdownText)
         extendButton = findViewById(R.id.extendButton)
         cancelButton = findViewById(R.id.cancelButton)
 
+        debugModeCheck.isChecked = taper.debugMode
+        debugModeCheck.setOnCheckedChangeListener { _, checked ->
+            taper.debugMode = checked
+            render()
+        }
+
         startButton.setOnClickListener {
             val ms = enteredMinutesMs() ?: return@setOnClickListener
+            taper.onManualFreezeStarted() // a manual freeze does not count as a cycle
             store.start(ms)
             minutesInput.text.clear()
+            render()
+        }
+
+        taperStartButton.setOnClickListener {
+            taper.onTaperFreezeStarted()
+            store.start(taper.currentDurationMs())
             render()
         }
 
@@ -64,8 +86,17 @@ class FreezeActivity : AppCompatActivity() {
         cancelButton.setOnClickListener {
             // Only reachable in REVIEW state (disabled while frozen/verifying).
             if (store.state() == FreezeStore.State.REVIEW) {
+                // Actively confirming a COMPLETED taper freeze advances the tier.
+                val newTier = taper.onCycleConfirmed()
                 store.confirmClear()
                 render()
+                if (newTier != null) {
+                    Toast.makeText(
+                        this,
+                        getString(R.string.cycle_complete, newTier),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
         }
     }
@@ -95,9 +126,12 @@ class FreezeActivity : AppCompatActivity() {
     }
 
     private fun render() {
+        renderTaperStatus()
         when (store.state()) {
             FreezeStore.State.NONE -> {
                 startButton.visibility = View.VISIBLE
+                taperStartButton.visibility = View.VISIBLE
+                debugModeCheck.visibility = View.VISIBLE
                 countdownText.visibility = View.GONE
                 extendButton.visibility = View.GONE
                 cancelButton.visibility = View.GONE
@@ -135,10 +169,28 @@ class FreezeActivity : AppCompatActivity() {
 
     private fun showActiveControls() {
         startButton.visibility = View.GONE
+        taperStartButton.visibility = View.GONE
+        debugModeCheck.visibility = View.GONE
         countdownText.visibility = View.VISIBLE
         extendButton.visibility = View.VISIBLE
         cancelButton.visibility = View.VISIBLE
         minutesInput.hint = getString(R.string.minutes_to_add_hint)
+    }
+
+    private fun renderTaperStatus() {
+        val cur = taper.currentTier()
+        val next = if (taper.isAtMax()) {
+            getString(R.string.taper_next_max)
+        } else {
+            getString(R.string.taper_next, taper.nextTier())
+        }
+        val sb = StringBuilder()
+        sb.append(getString(R.string.taper_status, cur, next))
+        sb.append("\n").append(getString(R.string.taper_cycles, taper.completedCycles()))
+        if (taper.debugMode) {
+            sb.append("\n").append(getString(R.string.taper_debug, mmss(taper.currentDurationMs())))
+        }
+        taperStatusText.text = sb.toString()
     }
 
     /**
