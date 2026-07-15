@@ -40,4 +40,15 @@
     <string name="vpn_session">Focus Website Filter</string>
     <string name="vpn_notif_title">Website filter active</string>
     <string name="vpn_notif_text">Filtering DNS for blocked sites</string>
+
+    <string name="open_a11y">Website URL Blocking (Accessibility)</string>
+    <string name="url_blocked_title">Blocked</string>
+    <string name="url_blocked_subtitle">This page is blocked during your freeze.</string>
+    <string name="a11y_service_label">Focus URL Blocking</string>
+    <string name="a11y_service_description">Reads the address bar of browsers to block pages on your blocklist and enforce safe-search, but only while a freeze is running. No browsing data is stored or sent anywhere.</string>
+    <string name="a11y_disclosure_title">Website URL Blocking</string>
+    <string name="a11y_disclosure_body">This feature uses Android\'s Accessibility service to read the URL shown in your browser\'s address bar.\n\nWhat it does with that text:\n• Compares the current URL against your local blocklist (shared with the VPN feature).\n• If it matches, it navigates the browser away from the page and shows a brief \"Blocked\" notice.\n• For Google, Bing, and DuckDuckGo searches it enforces safe-search, and blocks searches containing banned keywords.\n\nImportant guarantees:\n• It only reads the address bar of browser apps, and only while a freeze is running.\n• It does NOT log, store, or transmit your browsing history — matching happens entirely on-device.\n• This is a separate, optional module. You can turn it off any time in Accessibility settings without affecting the rest of the app.</string>
+    <string name="a11y_open_settings">Open Accessibility Settings</string>
+    <string name="a11y_status_on">Status: ENABLED</string>
+    <string name="a11y_status_off">Status: not enabled — tap below to turn it on.</string>
 </resources>
