@@ -59,6 +59,13 @@
             android:text="@string/disable_vpn" />
 
         <Button
+            android:id="@+id/openA11yButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/open_a11y" />
+
+        <Button
             android:id="@+id/openFreezeButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

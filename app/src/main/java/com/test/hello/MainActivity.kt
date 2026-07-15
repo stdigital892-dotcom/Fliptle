@@ -16,6 +16,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.test.hello.accessibility.AccessibilityDisclosureActivity
 
 class MainActivity : AppCompatActivity() {
 
@@ -65,6 +66,9 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.enableVpnButton).setOnClickListener { enableVpnFilter() }
         findViewById<Button>(R.id.disableVpnButton).setOnClickListener {
             DnsVpnService.stop(this)
+        }
+        findViewById<Button>(R.id.openA11yButton).setOnClickListener {
+            startActivity(Intent(this, AccessibilityDisclosureActivity::class.java))
         }
         findViewById<Button>(R.id.openFreezeButton).setOnClickListener {
             startActivity(Intent(this, FreezeActivity::class.java))
