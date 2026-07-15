@@ -53,10 +53,12 @@
     <string name="a11y_status_off">Status: not enabled — tap below to turn it on.</string>
 
     <string name="content_blocklist">Content Blocklist</string>
-    <string name="blocklist_counts">Adult domains loaded: %1$d\nSearch keywords: %2$d\nLast updated: %3$s</string>
-    <string name="never_updated">never (using bundled list)</string>
-    <string name="update_now">Update now</string>
+    <string name="blocklist_total">Total merged (unique): %1$d domains</string>
+    <string name="keywords_line">Search keywords: %1$d</string>
+    <string name="last_updated_line">Last updated: %1$s</string>
+    <string name="never_updated">never (using bundled lists)</string>
+    <string name="update_now">Update all sources now</string>
     <string name="updating">Updating…</string>
-    <string name="update_done">Updated. %1$d domains loaded.</string>
-    <string name="update_failed">Update failed — keeping the current list.</string>
+    <string name="update_done">Updated. %1$d unique domains merged.</string>
+    <string name="update_partial">Updated to %1$d domains. %2$d source(s) ok; kept last-known for: %3$s</string>
 </resources>

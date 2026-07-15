@@ -37,15 +37,20 @@ class BlocklistStatusActivity : AppCompatActivity() {
     }
 
     private fun render() {
+        val counts = AdultBlocklist.sourceCounts
         val last = AdultBlocklist.lastUpdated(this)
         val lastStr = if (last == 0L) getString(R.string.never_updated)
         else DateFormat.getDateTimeInstance().format(Date(last))
-        countText.text = getString(
-            R.string.blocklist_counts,
-            AdultBlocklist.count,
-            KeywordBlocklist.count,
-            lastStr
-        )
+
+        val sb = StringBuilder()
+        sb.append(getString(R.string.blocklist_total, AdultBlocklist.count))
+        sb.append("\n")
+        for (src in AdultBlocklist.SOURCES) {
+            sb.append("\n• ${src.name}: ${counts[src.id] ?: 0}")
+        }
+        sb.append("\n\n").append(getString(R.string.keywords_line, KeywordBlocklist.count))
+        sb.append("\n").append(getString(R.string.last_updated_line, lastStr))
+        countText.text = sb.toString()
     }
 
     private fun updateNow() {
@@ -55,8 +60,16 @@ class BlocklistStatusActivity : AppCompatActivity() {
             val result = AdultBlocklist.updateFromNetwork(this)
             main.post {
                 updateButton.isEnabled = true
-                val msg = if (result != null) getString(R.string.update_done, result)
-                else getString(R.string.update_failed)
+                val msg = if (result.failed.isEmpty()) {
+                    getString(R.string.update_done, result.mergedCount)
+                } else {
+                    getString(
+                        R.string.update_partial,
+                        result.mergedCount,
+                        result.succeeded.size,
+                        result.failed.joinToString(", ")
+                    )
+                }
                 Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
                 render()
             }
