@@ -46,6 +46,7 @@ class DnsVpnService : VpnService() {
         super.onCreate()
         executor = Executors.newFixedThreadPool(4)
         freezeStore = FreezeStore(this)
+        AdultBlocklist.ensureLoaded(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -126,7 +127,7 @@ class DnsVpnService : VpnService() {
         val domain = parseDomain(dnsPayload)
         val blocked = domain != null &&
             freezeStore.active &&
-            DomainBlocklist(this).isBlocked(domain)
+            (DomainBlocklist(this).isBlocked(domain) || AdultBlocklist.isBlocked(domain))
 
         val responsePayload = if (blocked) buildNxdomain(dnsPayload) else forwardUpstream(dnsPayload)
         if (responsePayload != null) {

@@ -15,9 +15,11 @@ import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import com.test.hello.AdultBlocklist
 import com.test.hello.BrowserDetector
 import com.test.hello.DomainBlocklist
 import com.test.hello.FreezeStore
+import com.test.hello.KeywordBlocklist
 import com.test.hello.R
 
 /**
@@ -45,6 +47,8 @@ class UrlBlockAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        AdultBlocklist.ensureLoaded(this)
+        KeywordBlocklist.ensureLoaded(this)
     }
 
     override fun onInterrupt() {}
@@ -82,9 +86,10 @@ class UrlBlockAccessibilityService : AccessibilityService() {
             SafeSearch.Result.None -> { /* fall through to domain check */ }
         }
 
-        // 2) Domain blocklist match (subdomains included).
+        // 2) Domain blocklist match (subdomains included). Checks the shared
+        //    adult-content list AND the user's own blocked domains.
         val host = hostOf(url) ?: return
-        if (DomainBlocklist(this).isBlocked(host)) {
+        if (AdultBlocklist.isBlocked(host) || DomainBlocklist(this).isBlocked(host)) {
             blockAndLeave(host)
         }
     }

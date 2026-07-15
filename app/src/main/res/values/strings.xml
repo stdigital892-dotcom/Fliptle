@@ -51,4 +51,12 @@
     <string name="a11y_open_settings">Open Accessibility Settings</string>
     <string name="a11y_status_on">Status: ENABLED</string>
     <string name="a11y_status_off">Status: not enabled — tap below to turn it on.</string>
+
+    <string name="content_blocklist">Content Blocklist</string>
+    <string name="blocklist_counts">Adult domains loaded: %1$d\nSearch keywords: %2$d\nLast updated: %3$s</string>
+    <string name="never_updated">never (using bundled list)</string>
+    <string name="update_now">Update now</string>
+    <string name="updating">Updating…</string>
+    <string name="update_done">Updated. %1$d domains loaded.</string>
+    <string name="update_failed">Update failed — keeping the current list.</string>
 </resources>

@@ -1,22 +1,20 @@
 package com.test.hello.accessibility
 
 import android.net.Uri
+import com.test.hello.KeywordBlocklist
 
 /**
  * Safe-search enforcement for the major search engines.
  *
  * Given a URL, it either:
- *   - reports the query should be BLOCKED (it contains a banned keyword), or
+ *   - reports the query should be BLOCKED (it matches the shared keyword layer), or
  *   - reports a REDIRECT to the same search with the engine's safe-search
  *     parameter forced on, or
  *   - reports NONE (not a search / already safe).
  *
- * This module is self-contained: it has no Android dependencies beyond Uri.
+ * The keyword check delegates to the shared [KeywordBlocklist].
  */
 object SafeSearch {
-
-    // Sample keyword list. Queries containing any of these are blocked outright.
-    val KEYWORDS: Set<String> = setOf("porn", "xxx", "nsfw", "explicit")
 
     private enum class Engine(val safeParam: String, val safeValue: String) {
         GOOGLE("safe", "active"),
@@ -44,7 +42,7 @@ object SafeSearch {
         val isSearch = query.isNotBlank() || (uri.path?.contains("search") == true)
         if (!isSearch) return Result.None
 
-        if (query.isNotBlank() && KEYWORDS.any { query.contains(it) }) {
+        if (query.isNotBlank() && KeywordBlocklist.matches(query)) {
             return Result.BlockKeyword
         }
 
