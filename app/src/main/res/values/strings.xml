@@ -16,4 +16,13 @@
     <string name="review_available">Review available — freeze still active. Confirm to change.</string>
     <string name="verifying_locked">Reboot detected — freeze stays LOCKED until real time is verified from the network.\nConnect to the internet to verify. (Extending is still allowed.)</string>
     <string name="enter_valid_minutes">Enter a positive number of minutes.</string>
+
+    <string name="grant_overlay">Grant Overlay Permission</string>
+    <string name="select_apps">Select Apps to Block</string>
+    <string name="save">Save</string>
+    <string name="apps_saved">Blocked apps saved.</string>
+    <string name="blocked_overlay_title">This app is blocked</string>
+    <string name="return_home">Return to Home</string>
+    <string name="service_title">Focus freeze active</string>
+    <string name="service_text">Monitoring foreground apps</string>
 </resources>
