@@ -29,4 +29,15 @@
     <string name="detected_browsers">Detected Browsers</string>
     <string name="browser_rescan">Re-scan browsers</string>
     <string name="no_browsers_found">No browsers detected.</string>
+
+    <string name="blocked_domains">Blocked Domains</string>
+    <string name="domain_hint">Enter a domain, e.g. example.com</string>
+    <string name="add_domain">Add Domain</string>
+    <string name="enter_domain">Enter a domain first.</string>
+    <string name="builtin_not_removable">Built-in test domain — cannot be removed.</string>
+    <string name="enable_vpn">Enable Website Filter (VPN)</string>
+    <string name="disable_vpn">Disable Website Filter</string>
+    <string name="vpn_session">Focus Website Filter</string>
+    <string name="vpn_notif_title">Website filter active</string>
+    <string name="vpn_notif_text">Filtering DNS for blocked sites</string>
 </resources>
