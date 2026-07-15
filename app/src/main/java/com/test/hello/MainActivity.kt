@@ -47,11 +47,17 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.openBlockButton).setOnClickListener {
             startActivity(Intent(this, AppListActivity::class.java))
         }
+        findViewById<Button>(R.id.openBrowsersButton).setOnClickListener {
+            startActivity(Intent(this, BrowserListActivity::class.java))
+        }
         findViewById<Button>(R.id.openFreezeButton).setOnClickListener {
             startActivity(Intent(this, FreezeActivity::class.java))
         }
 
         requestNotificationPermissionIfNeeded()
+        // Auto-block any already-installed browsers (except Chrome). New installs
+        // are handled live by PackageInstallReceiver.
+        BrowserDetector.autoBlockInstalledBrowsers(this)
         BlockingService.start(this)
     }
 
