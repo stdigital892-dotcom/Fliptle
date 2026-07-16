@@ -71,4 +71,14 @@
     <string name="updating">Updating…</string>
     <string name="update_done">Updated. %1$d unique domains merged.</string>
     <string name="update_partial">Updated to %1$d domains. %2$d source(s) ok; kept last-known for: %3$s</string>
+
+    <string name="open_auth">Sign in (phone)</string>
+    <string name="auth_title">Phone Sign-In</string>
+    <string name="phone_hint">Phone number, e.g. +15551234567</string>
+    <string name="send_code">Send code</string>
+    <string name="code_hint">6-digit code</string>
+    <string name="verify_code">Verify &amp; sign in</string>
+    <string name="enter_phone">Enter a phone number.</string>
+    <string name="enter_code">Enter the code you received.</string>
+    <string name="firebase_not_configured">Firebase is not configured. Add google-services.json to enable phone sign-in. The app\'s protection features work without it.</string>
 </resources>
