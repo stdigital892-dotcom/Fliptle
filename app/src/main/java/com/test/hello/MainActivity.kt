@@ -17,6 +17,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.test.hello.accessibility.AccessibilityDisclosureActivity
+import com.test.hello.auth.FirebaseGate
+import com.test.hello.auth.PhoneAuthActivity
 
 class MainActivity : AppCompatActivity() {
 
@@ -73,6 +75,9 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.openBlocklistButton).setOnClickListener {
             startActivity(Intent(this, BlocklistStatusActivity::class.java))
         }
+        findViewById<Button>(R.id.openAuthButton).setOnClickListener {
+            startActivity(Intent(this, PhoneAuthActivity::class.java))
+        }
         findViewById<Button>(R.id.openFreezeButton).setOnClickListener {
             startActivity(Intent(this, FreezeActivity::class.java))
         }
@@ -87,6 +92,8 @@ class MainActivity : AppCompatActivity() {
         AdultBlocklist.ensureLoaded(this)
         KeywordBlocklist.ensureLoaded(this)
         BlocklistUpdateWorker.schedule(this)
+
+        initRemoteConfigIfAvailable()
     }
 
     override fun onResume() {
@@ -112,6 +119,17 @@ class MainActivity : AppCompatActivity() {
         // Returns an intent if the user must consent; null if already authorized.
         val consent = VpnService.prepare(this)
         if (consent != null) vpnConsentLauncher.launch(consent) else DnsVpnService.start(this)
+    }
+
+    private fun initRemoteConfigIfAvailable() {
+        if (!FirebaseGate.isAvailable(this)) return
+        try {
+            val rc = com.google.firebase.remoteconfig.FirebaseRemoteConfig.getInstance()
+            rc.setDefaultsAsync(R.xml.remote_config_defaults)
+            rc.fetchAndActivate()
+        } catch (_: Throwable) {
+            // Remote Config unavailable; the in-app default threshold (1) applies.
+        }
     }
 
     private fun requestNotificationPermissionIfNeeded() {

@@ -54,6 +54,10 @@
             android:name=".BlocklistStatusActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".auth.PhoneAuthActivity"
+            android:exported="false" />
+
         <service
             android:name=".BlockingService"
             android:exported="false"
