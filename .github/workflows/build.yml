@@ -26,6 +26,20 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
+      - name: Print debug keystore SHA-1 (for Firebase console)
+        run: |
+          echo "=================================================================="
+          echo "===== DEBUG KEYSTORE SHA-1 FINGERPRINT (copy into Firebase) ====="
+          echo "=================================================================="
+          keytool -list -v \
+            -keystore app/keystore/debug.keystore \
+            -alias androiddebugkey \
+            -storepass android \
+            -keypass android | grep -E 'SHA1:|SHA-1:|SHA256:'
+          echo "=================================================================="
+          echo "Package name: com.fliptle.app"
+          echo "=================================================================="
+
       - name: Build debug APK
         run: ./gradlew assembleDebug --stacktrace
 

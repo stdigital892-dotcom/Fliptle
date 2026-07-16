@@ -15,7 +15,9 @@ Services plugin; when it is absent, the app just shows "Firebase not configured"
 
 ## 2. Register the Android app
 1. In the project, tap **Add app → Android**.
-2. **Android package name:** `com.test.hello` (must match exactly).
+2. **Android package name:** `com.fliptle.app` (must match exactly).
+   Also add the **debug SHA-1** fingerprint (printed in the GitHub Actions build
+   log — see the "Print debug keystore SHA-1" step) so phone auth is authorized.
 3. Register, then **download `google-services.json`**.
 
 ## 3. Add the config to the repo

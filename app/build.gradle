@@ -10,11 +10,11 @@ if (project.file('google-services.json').exists()) {
 }
 
 android {
-    namespace 'com.test.hello'
+    namespace 'com.fliptle.app'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.test.hello"
+        applicationId "com.fliptle.app"
         minSdk 24
         targetSdk 34
         versionCode 1
