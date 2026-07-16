@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Usage Access Demo</string>
+    <string name="app_name">Fliptle</string>
     <string name="grant_button">Grant Usage Access</string>
     <string name="permission_needed">Permission needed — tap the button above.</string>
     <string name="foreground_label">Foreground app:</string>
@@ -81,4 +81,60 @@
     <string name="enter_phone">Enter a phone number.</string>
     <string name="enter_code">Enter the code you received.</string>
     <string name="firebase_not_configured">Firebase is not configured. Add google-services.json to enable phone sign-in. The app\'s protection features work without it.</string>
+
+    <!-- Onboarding -->
+    <string name="ob_intro_title">Welcome to Fliptle</string>
+    <string name="ob_intro_body">Fliptle helps you stay off distracting and adult content. You set a freeze; while it runs, the apps and websites you chose stay blocked. A freeze can\'t be shortened once it starts — only extended. As you complete freezes, the taper lengthens the next one, up to 7 days.\n\nNext we\'ll sign you in (optional) and turn on a few permissions the blocking needs. We\'ll explain each one.</string>
+    <string name="ob_signin_title">Sign in (optional)</string>
+    <string name="ob_signin_body">Phone sign-in lets Fliptle recognise your account across reinstalls. It\'s optional — all protection works without it, and nothing about your browsing is tied to your number.</string>
+    <string name="ob_signin_action">Sign in with phone</string>
+    <string name="ob_get_started">Get started</string>
+    <string name="ob_continue">Continue</string>
+    <string name="ob_next">Next</string>
+    <string name="ob_back">Back</string>
+    <string name="ob_finish">Finish setup</string>
+    <string name="ob_usage_title">1. Usage access</string>
+    <string name="ob_usage_body">Fliptle needs Usage Access to see which app is currently in the foreground, so it can cover apps you\'ve chosen to block during a freeze. It only reads the name of the current app — nothing else.</string>
+    <string name="ob_usage_action">Grant usage access</string>
+    <string name="ob_overlay_title">2. Display over other apps</string>
+    <string name="ob_overlay_body">This lets Fliptle show a full-screen \"blocked\" cover on top of a blocked app or website. Without it, blocking can\'t cover the screen.</string>
+    <string name="ob_overlay_action">Allow display over other apps</string>
+    <string name="ob_vpn_title">3. Website filter (VPN)</string>
+    <string name="ob_vpn_body">Fliptle runs a private, on-device VPN that filters DNS to block adult websites. It has NO remote server and does not route your traffic anywhere — it only checks the domain names your device looks up against the blocklist. You can turn it off any time.</string>
+    <string name="ob_vpn_action">Enable website filter</string>
+    <string name="ob_a11y_title">4. URL blocking (Accessibility)</string>
+    <string name="ob_a11y_body">Fliptle uses Android\'s Accessibility service to read the web address shown in your browser\'s address bar, so it can block sites on the list and enforce safe-search — but only while a freeze is running.\n\nWhat it does with that text:\n• Compares the current URL to the on-device blocklist.\n• If it matches, it leaves the page and shows a brief notice.\n\nWhat it never does:\n• It does NOT record, store, or transmit your browsing history or any page content. Every check happens on your device.\n\nThis step is optional, and you can turn it off any time in Accessibility settings.</string>
+    <string name="ob_a11y_action">Open Accessibility settings</string>
+    <string name="status_granted">✓ Granted</string>
+    <string name="status_not_granted">Not granted yet</string>
+    <string name="status_enabled">✓ Enabled</string>
+    <string name="status_not_enabled">Not enabled yet</string>
+    <string name="status_signed_in">✓ Signed in as %1$s</string>
+    <string name="status_not_signed_in">Not signed in (optional)</string>
+
+    <!-- Home -->
+    <string name="home_title">Fliptle</string>
+    <string name="home_freeze_none">No freeze active.</string>
+    <string name="home_freeze_frozen">Frozen — %1$d min remaining</string>
+    <string name="home_freeze_verifying">Locked — verifying real time after reboot</string>
+    <string name="home_freeze_review">Review available — blocks still active</string>
+    <string name="home_taper">Freeze tier: %1$d day(s)</string>
+    <string name="home_blocked_summary">Blocked apps: %1$d • Adult domains: %2$d\nWebsite filter: %3$s • URL blocking: %4$s</string>
+    <string name="home_review_banner">Review available — blocks still active. Confirm to change.</string>
+    <string name="home_open_review">Review freeze</string>
+    <string name="home_freeze_button">Freeze</string>
+    <string name="home_setup_button">Setup</string>
+    <string name="home_account_button">Account / Sign-in</string>
+    <string name="on_word">on</string>
+    <string name="off_word">off</string>
+
+    <!-- Setup -->
+    <string name="setup_title">Setup</string>
+    <string name="setup_apps">Blocked apps</string>
+    <string name="setup_domains">Blocked domains</string>
+    <string name="setup_browsers">Detected browsers</string>
+    <string name="setup_blocklist">Content blocklist</string>
+    <string name="setup_schedule">Freeze &amp; schedule</string>
+    <string name="setup_a11y">URL blocking (Accessibility)</string>
+    <string name="setup_wizard">Re-run setup wizard</string>
 </resources>
