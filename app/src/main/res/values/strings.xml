@@ -55,9 +55,9 @@
     <string name="url_blocked_title">Blocked</string>
     <string name="url_blocked_subtitle">This page is blocked during your freeze.</string>
     <string name="a11y_service_label">Focus URL Blocking</string>
-    <string name="a11y_service_description">Reads the address bar of browsers to block pages on your blocklist and enforce safe-search, but only while a freeze is running. No browsing data is stored or sent anywhere.</string>
+    <string name="a11y_service_description">Reads the address bar of browsers to block pages on your blocklist and enforce safe-search, and detects specific in-app surfaces (Instagram Reels/Stories, YouTube Shorts) to block them — but only while a freeze is running. No browsing data is stored or sent anywhere.</string>
     <string name="a11y_disclosure_title">Website URL Blocking</string>
-    <string name="a11y_disclosure_body">This feature uses Android\'s Accessibility service to read the URL shown in your browser\'s address bar.\n\nWhat it does with that text:\n• Compares the current URL against your local blocklist (shared with the VPN feature).\n• If it matches, it navigates the browser away from the page and shows a brief \"Blocked\" notice.\n• For Google, Bing, and DuckDuckGo searches it enforces safe-search, and blocks searches containing banned keywords.\n\nImportant guarantees:\n• It only reads the address bar of browser apps, and only while a freeze is running.\n• It does NOT log, store, or transmit your browsing history — matching happens entirely on-device.\n• This is a separate, optional module. You can turn it off any time in Accessibility settings without affecting the rest of the app.</string>
+    <string name="a11y_disclosure_body">This feature uses Android\'s Accessibility service to read the URL shown in your browser\'s address bar.\n\nWhat it does with that text:\n• Compares the current URL against your local blocklist (shared with the VPN feature).\n• If it matches, it navigates the browser away from the page and shows a brief \"Blocked\" notice.\n• For Google, Bing, and DuckDuckGo searches it enforces safe-search, and blocks searches containing banned keywords.\n• In Instagram and YouTube it detects specific surfaces you\'ve chosen to block (Reels, Stories, Shorts) and navigates away — the rest of those apps stays usable.\n\nImportant guarantees:\n• It only reads the address bar of browser apps, and only while a freeze is running.\n• It does NOT log, store, or transmit your browsing history — matching happens entirely on-device.\n• This is a separate, optional module. You can turn it off any time in Accessibility settings without affecting the rest of the app.</string>
     <string name="a11y_open_settings">Open Accessibility Settings</string>
     <string name="a11y_status_on">Status: ENABLED</string>
     <string name="a11y_status_off">Status: not enabled — tap below to turn it on.</string>
@@ -103,7 +103,7 @@
     <string name="ob_vpn_body">Fliptle runs a private, on-device VPN that filters DNS to block adult websites. It has NO remote server and does not route your traffic anywhere — it only checks the domain names your device looks up against the blocklist. You can turn it off any time.</string>
     <string name="ob_vpn_action">Enable website filter</string>
     <string name="ob_a11y_title">4. URL blocking (Accessibility)</string>
-    <string name="ob_a11y_body">Fliptle uses Android\'s Accessibility service to read the web address shown in your browser\'s address bar, so it can block sites on the list and enforce safe-search — but only while a freeze is running.\n\nWhat it does with that text:\n• Compares the current URL to the on-device blocklist.\n• If it matches, it leaves the page and shows a brief notice.\n\nWhat it never does:\n• It does NOT record, store, or transmit your browsing history or any page content. Every check happens on your device.\n\nThis step is optional, and you can turn it off any time in Accessibility settings.</string>
+    <string name="ob_a11y_body">Fliptle uses Android\'s Accessibility service to read the web address shown in your browser\'s address bar, so it can block sites on the list and enforce safe-search — but only while a freeze is running.\n\nWhat it does with that text:\n• Compares the current URL to the on-device blocklist.\n• If it matches, it leaves the page and shows a brief notice.\n\nIt also detects specific in-app surfaces you choose to block — Instagram Reels/Stories and YouTube Shorts — and navigates away from them, leaving the rest of those apps usable.\n\nWhat it never does:\n• It does NOT record, store, or transmit your browsing history or any page content. Every check happens on your device.\n\nThis step is optional, and you can turn it off any time in Accessibility settings.</string>
     <string name="ob_a11y_action">Open Accessibility settings</string>
     <string name="status_granted">✓ Granted</string>
     <string name="status_not_granted">Not granted yet</string>
@@ -137,4 +137,13 @@
     <string name="setup_schedule">Freeze &amp; schedule</string>
     <string name="setup_a11y">URL blocking (Accessibility)</string>
     <string name="setup_wizard">Re-run setup wizard</string>
+    <string name="setup_surfaces">In-app surfaces (Reels / Shorts)</string>
+
+    <!-- In-app surface blocking -->
+    <string name="surfaces_title">In-app surfaces</string>
+    <string name="surfaces_body">Block specific distraction surfaces inside apps while a freeze is running. Each is independent — the rest of Instagram and YouTube stays usable. Requires the Accessibility service to be on.</string>
+    <string name="surface_reels">Block Instagram Reels</string>
+    <string name="surface_stories">Block Instagram Stories</string>
+    <string name="surface_shorts">Block YouTube Shorts</string>
+    <string name="surfaces_caveat">Note: these surfaces are detected from Instagram\'s and YouTube\'s internal view IDs, which are not a public API and may break when those apps update.</string>
 </resources>
