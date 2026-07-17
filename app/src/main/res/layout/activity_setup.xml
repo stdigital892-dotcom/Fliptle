@@ -32,6 +32,13 @@
             android:text="@string/setup_domains" />
 
         <Button
+            android:id="@+id/surfacesButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/setup_surfaces" />
+
+        <Button
             android:id="@+id/browsersButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

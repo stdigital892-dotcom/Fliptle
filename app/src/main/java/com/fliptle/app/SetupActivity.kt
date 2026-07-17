@@ -15,6 +15,7 @@ class SetupActivity : AppCompatActivity() {
 
         open(R.id.blockedAppsButton, AppListActivity::class.java)
         open(R.id.blockedDomainsButton, DomainListActivity::class.java)
+        open(R.id.surfacesButton, SurfaceBlockActivity::class.java)
         open(R.id.browsersButton, BrowserListActivity::class.java)
         open(R.id.blocklistButton, BlocklistStatusActivity::class.java)
         open(R.id.scheduleButton, FreezeActivity::class.java)

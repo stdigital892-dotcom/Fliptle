@@ -57,8 +57,11 @@ class UrlBlockAccessibilityService : AccessibilityService() {
         event ?: return
         val pkg = event.packageName?.toString() ?: return
 
-        // Only browsers, and only while a freeze is running.
-        if (!BrowserDetector.isBrowser(this, pkg)) return
+        // Only browsers (URL blocking) and Instagram/YouTube (surface blocking),
+        // and only while a freeze is running.
+        val isBrowser = BrowserDetector.isBrowser(this, pkg)
+        val isSurfaceApp = SurfaceDetector.isSurfaceApp(pkg)
+        if (!isBrowser && !isSurfaceApp) return
         if (!FreezeStore(this).active) return
 
         // Throttle content-change spam; always handle window/state changes.
@@ -68,8 +71,22 @@ class UrlBlockAccessibilityService : AccessibilityService() {
         lastProcessMs = now
 
         val root = rootInActiveWindow ?: return
-        val url = extractUrl(root, pkg) ?: return
-        handleUrl(url, pkg)
+        if (isBrowser) {
+            val url = extractUrl(root, pkg) ?: return
+            handleUrl(url, pkg)
+        } else {
+            handleSurface(root, pkg)
+        }
+    }
+
+    /** Block Instagram Reels/Stories or YouTube Shorts if that surface is toggled on. */
+    private fun handleSurface(root: AccessibilityNodeInfo, pkg: String) {
+        val surface = SurfaceDetector.detect(pkg, root) ?: return
+        if (SurfaceBlocklist(this).isBlocked(surface)) {
+            // Reuse the same navigate-away + brief overlay path; back returns to
+            // the feed / normal app, so the rest of the app stays usable.
+            blockAndLeave(surface.name)
+        }
     }
 
     private fun handleUrl(url: String, pkg: String) {
