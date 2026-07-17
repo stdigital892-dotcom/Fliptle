@@ -39,6 +39,8 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Compulsory permissions: if any is missing, bounce back to onboarding.
+        if (!Permissions.gate(this)) return
         setContentView(R.layout.activity_home)
         freezeStore = FreezeStore(this)
         taper = TaperStore(this)
@@ -72,6 +74,8 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        // Re-check on every return; a revoked permission blocks the main flow.
+        if (!Permissions.gate(this)) return
         handler.post(tick)
     }
 

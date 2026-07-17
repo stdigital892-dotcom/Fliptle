@@ -8,11 +8,10 @@ import androidx.appcompat.app.AppCompatActivity
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val destination = if (OnboardingState(this).complete) {
-            HomeActivity::class.java
-        } else {
-            OnboardingActivity::class.java
-        }
+        // Onboarding must be complete AND all enforcement permissions granted,
+        // otherwise route back into onboarding (it resumes at the first gap).
+        val ready = OnboardingState(this).complete && Permissions.allEnforcementGranted(this)
+        val destination = if (ready) HomeActivity::class.java else OnboardingActivity::class.java
         startActivity(Intent(this, destination))
         finish()
     }
