@@ -75,16 +75,26 @@ class UrlBlockAccessibilityService : AccessibilityService() {
             val url = extractUrl(root, pkg) ?: return
             handleUrl(url, pkg)
         } else {
-            handleSurface(root, pkg)
+            handleSurface(root, pkg, event.eventType)
         }
     }
 
     /** Block Instagram Reels/Stories or YouTube Shorts if that surface is toggled on. */
-    private fun handleSurface(root: AccessibilityNodeInfo, pkg: String) {
-        val surface = SurfaceDetector.detect(pkg, root) ?: return
-        if (SurfaceBlocklist(this).isBlocked(surface)) {
-            // Reuse the same navigate-away + brief overlay path; back returns to
-            // the feed / normal app, so the rest of the app stays usable.
+    private fun handleSurface(root: AccessibilityNodeInfo, pkg: String, eventType: Int) {
+        val store = SurfaceBlocklist(this)
+        val debugMode = store.debug
+        val debug = if (debugMode) ArrayList<String>() else null
+
+        val surface = SurfaceDetector.detect(pkg, root, debug)
+
+        if (debug != null) {
+            SurfaceDebug(this).record(pkg, eventType, surface, debug)
+        }
+
+        // In debug mode we observe only — never block — so surfaces can be
+        // diagnosed freely. Otherwise block the full-screen player if toggled on.
+        if (!debugMode && surface != null && store.isBlocked(surface)) {
+            // Back returns to the feed / normal app, so the rest stays usable.
             blockAndLeave(surface.name)
         }
     }

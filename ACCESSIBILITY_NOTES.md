@@ -19,18 +19,33 @@ These are matched against the **current** builds of Instagram and YouTube and ar
 change with any update, which would silently break detection until the substrings
 below are updated.
 
-| Surface            | App package                     | Match |
-|--------------------|---------------------------------|-------|
-| Instagram Reels    | `com.instagram.android`         | view id contains `clips_viewer` |
-| Instagram Stories  | `com.instagram.android`         | view id contains `reel_viewer` |
-| YouTube Shorts     | `com.google.android.youtube`    | view id contains `reel_recycler` / `reel_player` / `reel_watch`, or content description contains `Shorts` |
+A block fires only when BOTH conditions hold — this is what keeps it from
+over-matching the feed / nav tabs / home shelf:
+
+1. A node's view id matches the substring below, **and**
+2. that node is **near full-screen** (≥ 90% of window width and ≥ 75% of height),
+   i.e. the immersive player — not an inline feed preview or a tab button.
+
+Content descriptions are **not** used to classify (the string "Shorts" is on
+YouTube's nav tab and home shelf, which previously blocked the whole app on
+launch).
+
+| Surface            | App package                     | View-id match (must also be full-screen) |
+|--------------------|---------------------------------|------------------------------------------|
+| Instagram Reels    | `com.instagram.android`         | contains `clips_viewer` |
+| Instagram Stories  | `com.instagram.android`         | contains `reel_viewer` |
+| YouTube Shorts     | `com.google.android.youtube`    | contains `reel_recycler` / `reel_player` / `reel_watch` |
 
 (Browser address bars are matched by per-browser view ids in
 `UrlBlockAccessibilityService.urlBarIdsFor`, with a generic node-text fallback —
 same fragility caveat applies.)
 
-If a surface stops being blocked after an app update, update the substrings in
-`SurfaceDetector.kt`.
+### Debug mode
+Setup → In-app surfaces → **"Debug: log matches, don't block"**. While on, nothing
+is blocked and the service records the view ids / content descriptions / bounds it
+sees for Instagram/YouTube into an on-device log (also Logcat tag
+`FliptleSurface`). Use it to capture the **real** ids on your device if an update
+breaks detection, then update the substrings in `SurfaceDetector.kt`.
 
 ## Enforcement
 On a match, the service performs a Back action (escalating to Home if the surface

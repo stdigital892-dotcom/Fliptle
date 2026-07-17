@@ -145,5 +145,10 @@
     <string name="surface_reels">Block Instagram Reels</string>
     <string name="surface_stories">Block Instagram Stories</string>
     <string name="surface_shorts">Block YouTube Shorts</string>
-    <string name="surfaces_caveat">Note: these surfaces are detected from Instagram\'s and YouTube\'s internal view IDs, which are not a public API and may break when those apps update.</string>
+    <string name="surfaces_caveat">Note: these surfaces are detected from Instagram\'s and YouTube\'s internal view IDs, which are not a public API and may break when those apps update. Only the full-screen player is blocked — the feed, DMs, profile, search and normal videos stay usable.</string>
+    <string name="surfaces_debug_toggle">Debug: log matches, don\'t block</string>
+    <string name="surfaces_debug_hint">With debug on, nothing is blocked; the app records the view IDs it matches so you can see exactly what triggers a block. Open Instagram/YouTube, browse around, then come back and Refresh.</string>
+    <string name="surfaces_debug_refresh">Refresh log</string>
+    <string name="surfaces_debug_clear">Clear log</string>
+    <string name="surfaces_debug_empty">No matches logged yet. Turn on debug, open Instagram/YouTube, then Refresh.</string>
 </resources>
