@@ -49,6 +49,17 @@ class OnboardingActivity : AppCompatActivity() {
         actionButton.setOnClickListener { onAction() }
         backButton.setOnClickListener { if (step > 0) { step--; render() } }
         nextButton.setOnClickListener { onNext() }
+
+        // If onboarding was already completed but a permission is now missing,
+        // resume directly at the first missing permission step.
+        if (OnboardingState(this).complete) {
+            val missing = firstMissingPermissionStep()
+            if (missing < 0) {
+                goHome()
+                return
+            }
+            step = missing
+        }
         render()
     }
 
@@ -78,10 +89,39 @@ class OnboardingActivity : AppCompatActivity() {
             step++
             render()
         } else {
-            OnboardingState(this).complete = true
-            startActivity(Intent(this, HomeActivity::class.java))
-            finish()
+            // Finishing requires every enforcement permission to be granted.
+            if (Permissions.allEnforcementGranted(this)) {
+                OnboardingState(this).complete = true
+                goHome()
+            } else {
+                step = firstMissingPermissionStep().let { if (it < 0) STEP_LAST else it }
+                render()
+            }
         }
+    }
+
+    private fun goHome() {
+        startActivity(Intent(this, HomeActivity::class.java))
+        finish()
+    }
+
+    /** Index of the first ungranted permission step, or -1 if all are granted. */
+    private fun firstMissingPermissionStep(): Int = when {
+        !Permissions.hasUsageAccess(this) -> STEP_USAGE
+        !Permissions.hasOverlay(this) -> STEP_OVERLAY
+        !Permissions.hasVpnConsent(this) -> STEP_VPN
+        !Permissions.isAccessibilityEnabled(this) -> STEP_ACCESSIBILITY
+        else -> -1
+    }
+
+    /** Whether the current step's requirement is satisfied (gates the Next button). */
+    private fun stepSatisfied(): Boolean = when (step) {
+        STEP_INTRO, STEP_SIGNIN -> true // intro has no gate; sign-in is optional
+        STEP_USAGE -> Permissions.hasUsageAccess(this)
+        STEP_OVERLAY -> Permissions.hasOverlay(this)
+        STEP_VPN -> Permissions.hasVpnConsent(this)
+        STEP_ACCESSIBILITY -> Permissions.isAccessibilityEnabled(this)
+        else -> true
     }
 
     private fun render() {
@@ -89,6 +129,8 @@ class OnboardingActivity : AppCompatActivity() {
         actionButton.visibility = View.VISIBLE
         statusText.visibility = View.VISIBLE
         nextButton.text = getString(if (step == STEP_LAST) R.string.ob_finish else R.string.ob_next)
+        // Compulsory: Next/Finish stays disabled until the step is actually satisfied.
+        nextButton.isEnabled = stepSatisfied()
 
         when (step) {
             STEP_INTRO -> {

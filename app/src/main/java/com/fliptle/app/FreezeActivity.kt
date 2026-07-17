@@ -42,6 +42,8 @@ class FreezeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Never present a freeze without enforcement permissions in place.
+        if (!Permissions.gate(this)) return
         setContentView(R.layout.activity_freeze)
         store = FreezeStore(this)
         taper = TaperStore(this)
@@ -103,6 +105,7 @@ class FreezeActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        if (!Permissions.gate(this)) return
         handler.post(tick)
     }
 
