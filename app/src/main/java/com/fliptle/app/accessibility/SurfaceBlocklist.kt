@@ -25,6 +25,11 @@ class SurfaceBlocklist(context: Context) {
         get() = prefs.getBoolean(KEY_SHORTS, true)
         set(v) = prefs.edit().putBoolean(KEY_SHORTS, v).apply()
 
+    /** When on, the service logs what it matches and does NOT block, for diagnosis. */
+    var debug: Boolean
+        get() = prefs.getBoolean(KEY_DEBUG, false)
+        set(v) = prefs.edit().putBoolean(KEY_DEBUG, v).apply()
+
     fun isBlocked(surface: SurfaceDetector.Surface): Boolean = when (surface) {
         SurfaceDetector.Surface.IG_REELS -> reels
         SurfaceDetector.Surface.IG_STORIES -> stories
@@ -35,5 +40,6 @@ class SurfaceBlocklist(context: Context) {
         private const val KEY_REELS = "reels"
         private const val KEY_STORIES = "stories"
         private const val KEY_SHORTS = "shorts"
+        private const val KEY_DEBUG = "debug"
     }
 }

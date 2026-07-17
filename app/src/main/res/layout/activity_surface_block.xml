@@ -54,5 +54,48 @@
             android:textSize="13sp"
             android:textStyle="italic" />
 
+        <CheckBox
+            android:id="@+id/debugCheck"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/surfaces_debug_toggle" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/surfaces_debug_hint"
+            android:textSize="13sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/refreshLogButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/surfaces_debug_refresh" />
+
+            <Button
+                android:id="@+id/clearLogButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/surfaces_debug_clear" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/debugLogText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:fontFamily="monospace"
+            android:textSize="12sp" />
+
     </LinearLayout>
 </ScrollView>
