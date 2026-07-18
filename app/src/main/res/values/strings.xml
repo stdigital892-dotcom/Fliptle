@@ -128,6 +128,17 @@
     <string name="on_word">on</string>
     <string name="off_word">off</string>
 
+    <!-- Protection guard -->
+    <string name="guard_title">Protection is OFF</string>
+    <string name="guard_body">Fliptle can\'t protect you right now because a required permission is turned off. Re-enable it below to continue. The app stays locked until protection is restored.</string>
+    <string name="guard_enable_accessibility">Enable Accessibility (URL blocking)</string>
+    <string name="guard_enable_vpn">Enable website filter (VPN)</string>
+    <string name="guard_enable_usage">Grant usage access</string>
+    <string name="guard_enable_overlay">Allow display over other apps</string>
+    <string name="guard_exit_hint">You can leave this screen with Back or Home at any time — your phone stays fully usable for calls and emergencies. Fliptle will keep reminding you until protection is back on.</string>
+    <string name="guard_notif_title">Fliptle protection is OFF</string>
+    <string name="guard_notif_text">Tap to re-enable protection.</string>
+
     <!-- Setup -->
     <string name="setup_title">Setup</string>
     <string name="setup_apps">Blocked apps</string>
