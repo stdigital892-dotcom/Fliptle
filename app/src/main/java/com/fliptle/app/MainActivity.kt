@@ -8,10 +8,13 @@ import androidx.appcompat.app.AppCompatActivity
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Onboarding must be complete AND all enforcement permissions granted,
-        // otherwise route back into onboarding (it resumes at the first gap).
-        val ready = OnboardingState(this).complete && Permissions.allEnforcementGranted(this)
-        val destination = if (ready) HomeActivity::class.java else OnboardingActivity::class.java
+        // Not onboarded yet -> onboarding. Onboarded but protection off -> the
+        // full-screen guard. Otherwise -> Home.
+        val destination = when {
+            !OnboardingState(this).complete -> OnboardingActivity::class.java
+            !Permissions.allEnforcementGranted(this) -> ProtectionGuardActivity::class.java
+            else -> HomeActivity::class.java
+        }
         startActivity(Intent(this, destination))
         finish()
     }

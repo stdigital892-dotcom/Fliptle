@@ -11,6 +11,7 @@ class SetupActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (!Permissions.gate(this)) return
         setContentView(R.layout.activity_setup)
 
         open(R.id.blockedAppsButton, AppListActivity::class.java)
@@ -21,6 +22,11 @@ class SetupActivity : AppCompatActivity() {
         open(R.id.scheduleButton, FreezeActivity::class.java)
         open(R.id.a11yButton, AccessibilityDisclosureActivity::class.java)
         open(R.id.wizardButton, OnboardingActivity::class.java)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Permissions.gate(this)
     }
 
     private fun open(buttonId: Int, target: Class<*>) {

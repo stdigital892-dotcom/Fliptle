@@ -19,13 +19,16 @@ object Permissions {
             isAccessibilityEnabled(context)
 
     /**
-     * If any enforcement permission is missing, send the user back to onboarding
-     * (which resumes at the first missing permission) and finish [activity].
+     * If any enforcement permission is missing, send the user to the full-screen
+     * protection guard (which offers one-tap re-enable) and finish [activity].
      * Returns true when everything is granted and the caller may proceed.
+     *
+     * The guard is used post-onboarding; initial setup uses OnboardingActivity via
+     * the launcher router.
      */
     fun gate(activity: Activity): Boolean {
         if (allEnforcementGranted(activity)) return true
-        activity.startActivity(Intent(activity, OnboardingActivity::class.java))
+        activity.startActivity(Intent(activity, ProtectionGuardActivity::class.java))
         activity.finish()
         return false
     }
