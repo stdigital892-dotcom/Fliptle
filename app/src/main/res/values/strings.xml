@@ -73,14 +73,50 @@
     <string name="update_partial">Updated to %1$d domains. %2$d source(s) ok; kept last-known for: %3$s</string>
 
     <string name="open_auth">Sign in (phone)</string>
-    <string name="auth_title">Phone Sign-In</string>
+    <string name="auth_title">Sign in (free)</string>
     <string name="phone_hint">Phone number, e.g. +15551234567</string>
     <string name="send_code">Send code</string>
     <string name="code_hint">6-digit code</string>
     <string name="verify_code">Verify &amp; sign in</string>
     <string name="enter_phone">Enter a phone number.</string>
     <string name="enter_code">Enter the code you received.</string>
-    <string name="firebase_not_configured">Firebase is not configured. Add google-services.json to enable phone sign-in. The app\'s protection features work without it.</string>
+    <string name="firebase_not_configured">Firebase is not configured. Add google-services.json to enable sign-in. The app\'s protection features work without it.</string>
+
+    <!-- Sign-in (Google + email/password) -->
+    <string name="auth_google">Sign in with Google (one tap)</string>
+    <string name="auth_or_email">Or use email &amp; password</string>
+    <string name="auth_email_hint_field">Email address</string>
+    <string name="auth_password_hint">Password (min 6 characters)</string>
+    <string name="auth_email_signin">Sign in</string>
+    <string name="auth_email_signup">Create account</string>
+    <string name="auth_email_hint">Enter an email and a password of at least 6 characters.</string>
+    <string name="auth_working">Working…</string>
+    <string name="auth_verify_sent">Account created. A verification link was sent to %1$s — tap it to verify your email.</string>
+    <string name="auth_email_failed">Email sign-in failed: %1$s</string>
+    <string name="auth_google_failed">Google sign-in failed: %1$s</string>
+    <string name="auth_google_unconfigured">Google sign-in isn\'t configured yet. Enable the Google provider in Firebase and add the SHA-1, then rebuild.</string>
+    <string name="auth_signed_in">Signed in as %1$s</string>
+    <string name="auth_verified">Email: verified ✓</string>
+    <string name="auth_unverified">Email: not verified — check your inbox for the verification link.</string>
+    <string name="auth_parent_phone_label">Parent\'s phone number (optional)</string>
+    <string name="auth_parent_phone_hint">Contact info only — not used for login or verification.</string>
+    <string name="auth_parent_phone_field">e.g. +15551234567</string>
+    <string name="auth_save_phone">Save phone number</string>
+    <string name="auth_enter_parent_phone">Enter a phone number first.</string>
+
+    <!-- Typing gate -->
+    <string name="setup_typing_gate">Typing gate (1–50)</string>
+    <string name="typing_title">Typing gate</string>
+    <string name="typing_body">Type the numbers 1 to 50 in order with no spaces or commas (123456789101112…4950). You must type each character by hand — pasting or bulk input is rejected.</string>
+    <string name="typing_hint">Start typing: 1 2 3 …</string>
+    <string name="typing_progress">Typed %1$d / %2$d characters</string>
+    <string name="typing_error_paste">Paste / bulk input is not allowed — type each digit by hand.</string>
+    <string name="typing_error_wrong">That doesn\'t match the sequence — check the last digit.</string>
+    <string name="typing_submit">Submit</string>
+    <string name="typing_submitting">Checking with the server…</string>
+    <string name="typing_done_server">Correct! Confirmed by the server and logged.</string>
+    <string name="typing_done_local">Correct! (Sign in to record this on the server.)</string>
+    <string name="typing_server_rejected">Server rejected the entry: %1$s</string>
 
     <!-- Onboarding -->
     <string name="ob_intro_title">Welcome to Fliptle</string>

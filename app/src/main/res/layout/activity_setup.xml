@@ -67,6 +67,13 @@
             android:text="@string/setup_a11y" />
 
         <Button
+            android:id="@+id/typingGateButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/setup_typing_gate" />
+
+        <Button
             android:id="@+id/wizardButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

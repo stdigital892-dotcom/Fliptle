@@ -10,8 +10,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import com.fliptle.app.auth.AuthStore
-import com.fliptle.app.auth.PhoneAuthActivity
+import com.fliptle.app.auth.SignInActivity
 
 /**
  * First-launch flow: intro -> optional phone sign-in -> permissions requested
@@ -70,7 +69,7 @@ class OnboardingActivity : AppCompatActivity() {
 
     private fun onAction() {
         when (step) {
-            STEP_SIGNIN -> startActivity(Intent(this, PhoneAuthActivity::class.java))
+            STEP_SIGNIN -> startActivity(Intent(this, SignInActivity::class.java))
             STEP_USAGE -> startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
             STEP_OVERLAY -> startActivity(
                 Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
@@ -144,9 +143,9 @@ class OnboardingActivity : AppCompatActivity() {
                 titleText.setText(R.string.ob_signin_title)
                 bodyText.setText(R.string.ob_signin_body)
                 actionButton.setText(R.string.ob_signin_action)
-                val phone = AuthStore(this).signedInPhone
-                statusText.text = if (phone != null) {
-                    getString(R.string.status_signed_in, phone)
+                val account = signedInAccount()
+                statusText.text = if (account != null) {
+                    getString(R.string.status_signed_in, account)
                 } else {
                     getString(R.string.status_not_signed_in)
                 }
@@ -177,6 +176,13 @@ class OnboardingActivity : AppCompatActivity() {
                 showEnabled(Permissions.isAccessibilityEnabled(this))
             }
         }
+    }
+
+    /** Signed-in email/uid if Firebase is configured and a user is present. */
+    private fun signedInAccount(): String? {
+        if (!com.fliptle.app.auth.FirebaseGate.isAvailable(this)) return null
+        val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser ?: return null
+        return user.email ?: user.uid
     }
 
     private fun showGranted(granted: Boolean) {

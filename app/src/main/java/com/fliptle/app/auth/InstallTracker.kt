@@ -8,17 +8,16 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 
 /**
- * Records install/reinstall history per phone number in Firestore and mirrors
- * lifecycle events to Analytics, so reinstall/churn can be analysed later.
+ * Records install/reinstall history per user in Firestore, keyed by the Firebase
+ * Auth UID (NOT the phone number — the phone is contact info only). Mirrors
+ * lifecycle events to Analytics for reinstall/churn analysis.
  *
- * Reinstall detection: each fresh install has a new local install ID. When a
- * phone number that already has a record signs in with a DIFFERENT install ID,
- * the previous install must have been removed — so we log an inferred
- * "uninstall_detected" plus a "reinstall", bump the counter, and (once the
- * configurable threshold is reached) flag the account for a price increase.
- *
- * Android provides no real-time self-uninstall callback, so the uninstall is
- * inferred at the next sign-in rather than observed live.
+ * Reinstall detection: each fresh install has a new local install ID. When a UID
+ * that already has a record signs in with a DIFFERENT install ID, the previous
+ * install must have been removed -> logged as an inferred uninstall + reinstall,
+ * and (at/above the configurable threshold) the account is flagged for a price
+ * increase. Android has no real-time self-uninstall callback, so the uninstall is
+ * inferred at the next sign-in.
  */
 object InstallTracker {
 
@@ -28,7 +27,9 @@ object InstallTracker {
 
     fun recordSignIn(
         context: Context,
-        phone: String,
+        uid: String,
+        email: String?,
+        method: String,
         installId: String,
         onResult: (String) -> Unit
     ) {
@@ -41,7 +42,7 @@ object InstallTracker {
         val analytics = FirebaseAnalytics.getInstance(context)
         val threshold = FirebaseRemoteConfig.getInstance().getLong(KEY_THRESHOLD)
             .let { if (it <= 0L) 1L else it }
-        val doc = db.collection(COLLECTION).document(sanitize(phone))
+        val doc = db.collection(COLLECTION).document(uid)
 
         db.runTransaction { txn ->
             val snap = txn.get(doc)
@@ -49,7 +50,9 @@ object InstallTracker {
             if (!snap.exists()) {
                 txn.set(
                     doc, mapOf(
-                        "phone" to phone,
+                        "uid" to uid,
+                        "email" to email,
+                        "signInMethod" to method,
                         "firstInstallAt" to now,
                         "installCount" to 1L,
                         "reinstallCount" to 0L,
@@ -61,25 +64,29 @@ object InstallTracker {
                 Outcome.Install
             } else {
                 val storedId = snap.getString("lastInstallId")
+                val common = mapOf(
+                    "email" to email,
+                    "signInMethod" to method,
+                    "lastSignInAt" to now
+                )
                 if (storedId != null && storedId != installId) {
                     val reinstalls = (snap.getLong("reinstallCount") ?: 0L) + 1
                     val installs = (snap.getLong("installCount") ?: 0L) + 1
                     val already = snap.getBoolean("priceIncreaseFlagged") ?: false
                     val flagged = already || reinstalls >= threshold
                     txn.update(
-                        doc, mapOf(
+                        doc, common + mapOf(
                             "installCount" to installs,
                             "reinstallCount" to reinstalls,
                             "lastInstallId" to installId,
                             "previousInstallId" to storedId,
                             "lastReinstallAt" to now,
-                            "lastSignInAt" to now,
                             "priceIncreaseFlagged" to flagged
                         )
                     )
                     Outcome.Reinstall(reinstalls, threshold, flaggedNow = flagged && !already, prevId = storedId)
                 } else {
-                    txn.update(doc, mapOf("lastSignInAt" to now))
+                    txn.update(doc, common)
                     Outcome.SignIn
                 }
             }
@@ -105,12 +112,24 @@ object InstallTracker {
                 }
                 is Outcome.SignIn -> {
                     logEvent(doc, analytics, "sign_in", emptyMap())
-                    onResult("Signed in. Existing install.")
+                    onResult("Signed in.")
                 }
             }
         }.addOnFailureListener { e ->
             onResult("Install tracking failed: ${e.message}")
         }
+    }
+
+    /** Save the parent's phone number as contact-only info on the user's record. */
+    fun saveParentPhone(context: Context, uid: String, phone: String, onResult: (String) -> Unit) {
+        if (!FirebaseGate.isAvailable(context)) {
+            onResult("Firebase not configured — phone not saved.")
+            return
+        }
+        FirebaseFirestore.getInstance().collection(COLLECTION).document(uid)
+            .update("parentPhone", phone)
+            .addOnSuccessListener { onResult("Parent phone saved.") }
+            .addOnFailureListener { e -> onResult("Could not save phone: ${e.message}") }
     }
 
     private fun logEvent(
@@ -128,9 +147,6 @@ object InstallTracker {
         val bundle = Bundle().apply { putString("event_type", type) }
         analytics.logEvent("install_lifecycle", bundle)
     }
-
-    private fun sanitize(phone: String): String =
-        phone.replace(Regex("[^0-9+]"), "").ifEmpty { "unknown" }
 
     private sealed class Outcome {
         object Install : Outcome()
