@@ -14,7 +14,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.fliptle.app.auth.PhoneAuthActivity
+import com.fliptle.app.auth.SignInActivity
 import kotlin.math.ceil
 
 /** Calm, minimal home: freeze state, taper tier, and what's blocked at a glance. */
@@ -58,7 +58,7 @@ class HomeActivity : AppCompatActivity() {
             startActivity(Intent(this, SetupActivity::class.java))
         }
         findViewById<Button>(R.id.accountButton).setOnClickListener {
-            startActivity(Intent(this, PhoneAuthActivity::class.java))
+            startActivity(Intent(this, SignInActivity::class.java))
         }
         reviewButton.setOnClickListener {
             startActivity(Intent(this, FreezeActivity::class.java))

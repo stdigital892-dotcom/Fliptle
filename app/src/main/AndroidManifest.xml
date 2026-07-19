@@ -78,7 +78,11 @@
             android:exported="false" />
 
         <activity
-            android:name=".auth.PhoneAuthActivity"
+            android:name=".auth.SignInActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".TypingGateActivity"
             android:exported="false" />
 
         <service

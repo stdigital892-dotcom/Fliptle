@@ -26,14 +26,48 @@ app or web upload). It contains client-side keys only; for production, restrict
 them in Google Cloud console. On the next CI build the APK will be Firebase-enabled.
 
 ## 4. Enable the services in the Firebase console
-- **Authentication → Sign-in method → Phone → Enable.**
-  - For testing without real SMS, add a test number + code under Phone →
-    *Phone numbers for testing*.
-- **Firestore Database → Create database** (start in test mode for trials; add
-  rules before production). Data is written to the `installs` collection.
+- **Authentication → Sign-in method** (all free, no billing):
+  - **Email/Password → Enable.** Verification uses Firebase's built-in email
+    link (free) — no extra setup.
+  - **Google → Enable.** This populates the OAuth client so `default_web_client_id`
+    is generated on the next build. You must also add your app's **SHA-1**
+    (Project settings → your Android app → Add fingerprint) — the debug SHA-1 is
+    printed in the GitHub Actions build log. Re-download `google-services.json`
+    after enabling Google and commit it.
+- **Firestore Database → Create database.** User records live in `installs/{uid}`
+  (keyed by Auth UID); the parent phone is stored there as `parentPhone`
+  (contact-only). Typing-gate attempts are written under
+  `typing_gate/{uid}/attempts/{autoId}`.
 - **Remote Config →** add a parameter:
   - key `reinstall_price_increase_threshold`, value `1` (change any time to move
     the reinstall threshold without rebuilding).
+
+### Firestore Security Rules (server-side validation)
+These make the **server** validate the typing gate: an attempt write is only
+accepted if the value exactly equals the 1..50 sequence, so a wrong value is
+rejected by Firestore itself.
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // A user may read/write only their own install record + events.
+    match /installs/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+      match /events/{eventId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+    // Typing gate: only accept the exact 1..50 sequence (server-side check).
+    match /typing_gate/{uid}/attempts/{attemptId} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.value ==
+           '1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950';
+    }
+  }
+}
+```
 
 ## 5. Build & install
 Merge to `main`, download the APK from the Actions artifact, install, then use

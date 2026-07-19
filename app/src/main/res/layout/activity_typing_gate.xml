@@ -13,50 +13,51 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/auth_title"
+            android:text="@string/typing_title"
             android:textSize="22sp"
             android:textStyle="bold" />
 
-        <EditText
-            android:id="@+id/phoneInput"
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:lineSpacingMultiplier="1.2"
+            android:text="@string/typing_body"
+            android:textSize="15sp" />
+
+        <com.fliptle.app.NoPasteEditText
+            android:id="@+id/typingField"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:hint="@string/phone_hint"
-            android:importantForAutofill="no"
-            android:inputType="phone" />
-
-        <Button
-            android:id="@+id/sendCodeButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/send_code" />
-
-        <EditText
-            android:id="@+id/codeInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:hint="@string/code_hint"
+            android:hint="@string/typing_hint"
             android:importantForAutofill="no"
             android:inputType="number"
-            android:visibility="gone" />
+            android:textIsSelectable="false" />
 
-        <Button
-            android:id="@+id/verifyButton"
+        <TextView
+            android:id="@+id/progressText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/errorText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="@string/verify_code"
-            android:visibility="gone" />
+            android:textColor="#B71C1C"
+            android:textSize="15sp" />
 
-        <TextView
-            android:id="@+id/authStatusText"
+        <Button
+            android:id="@+id/submitButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:textSize="15sp" />
+            android:layout_marginTop="16dp"
+            android:enabled="false"
+            android:text="@string/typing_submit" />
 
     </LinearLayout>
 </ScrollView>
