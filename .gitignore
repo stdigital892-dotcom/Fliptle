@@ -8,3 +8,10 @@ local.properties
 captures/
 .externalNativeBuild/
 .cxx/
+
+# vertical clip generator
+work/
+out/
+__pycache__/
+*.pyc
+.venv/

@@ -1,0 +1,16 @@
+# Stage 1 — transcription
+faster-whisper>=1.0.3
+
+# Stage 1 — optional, only needed for --romanize (Hinglish/Devanagari)
+indic-transliteration>=2.3.0
+
+# Stage 2 — optional, only one of these, only if you want LLM candidate
+# selection. Without a key the offline heuristic runs instead.
+anthropic>=0.40.0
+# openai>=1.40.0
+
+# Stages 5-6 (not yet implemented)
+# mediapipe>=0.10.14
+# numpy>=1.26
+
+# Also required on PATH: ffmpeg and ffprobe.
