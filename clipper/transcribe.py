@@ -49,6 +49,7 @@ def transcribe(
     device: str | None = None,
     language: str | None = None,
     romanize: bool = False,
+    lexicon: str | Path | None = None,
     force: bool = False,
 ) -> dict[str, Any]:
     """Transcribe ``video``, returning the transcript dict.
@@ -65,7 +66,7 @@ def transcribe(
         data = read_json(cache)
         if romanize and not data.get("romanized"):
             log.info("cached transcript is not romanized; re-romanizing")
-            data = _apply_romanize(data)
+            data = _apply_romanize(data, work_dir, lexicon)
             write_json(cache, data)
         write_json(out, data)
         _report_confidence(data)
@@ -123,7 +124,7 @@ def transcribe(
     }
 
     if romanize:
-        data = _apply_romanize(data)
+        data = _apply_romanize(data, work_dir, lexicon)
 
     write_json(cache, data)
     write_json(out, data)
@@ -135,21 +136,76 @@ def transcribe(
     return data
 
 
-def _apply_romanize(data: dict[str, Any]) -> dict[str, Any]:
-    """Convert Devanagari to Roman in place, keeping the original around."""
+def _apply_romanize(
+    data: dict[str, Any],
+    work_dir: Path | None = None,
+    lexicon: str | Path | None = None,
+) -> dict[str, Any]:
+    """Convert Devanagari to Roman in place, keeping the original around.
+
+    Words that miss the lexicon and fall through to the rule layer are
+    written to ``work/romanization_misses.json`` in a shape you can paste
+    straight into the lexicon after correcting the spellings.
+    """
+    r = T.Romanizer(lexicon)
     touched = 0
     for w in data["words"]:
         if T.has_devanagari(w["word"]):
             w.setdefault("word_original", w["word"])
-            w["word"] = T.romanize(w["word"])
+            w["word"] = r.text(w["word"], at=w.get("start"))
             touched += 1
     for s in data["segments"]:
         if T.has_devanagari(s["text"]):
             s.setdefault("text_original", s["text"])
-            s["text"] = T.romanize(s["text"])
+            # Segment text repeats the words; don't double-count the misses.
+            s["text"] = r.text(s["text"], record=False)
+
+    total = r.n_lexicon_hits + r.n_rule_words
     data["romanized"] = True
     data["romanized_words"] = touched
-    log.info("romanized %s Devanagari words", touched)
+    data["romanization"] = {
+        "lexicon": str(r.path),
+        "lexicon_entries": len(r.lexicon),
+        "lexicon_hits": r.n_lexicon_hits,
+        "rule_words": r.n_rule_words,
+        "distinct_misses": len(r.misses),
+    }
+    log.info(
+        "romanized %s tokens: %s lexicon hits, %s fell through to rules "
+        "(%s distinct words)",
+        touched, r.n_lexicon_hits, r.n_rule_words, len(r.misses),
+    )
+
+    if r.misses and work_dir is not None:
+        rows = r.miss_report()
+        path = work_dir / "romanization_misses.json"
+        write_json(path, {
+            "_readme": (
+                "Words that missed the lexicon and were transliterated by "
+                "rule. Check each spelling, then paste the corrected pairs "
+                "from 'paste_into_lexicon' into the 'words' object of "
+                f"{r.path.name}."
+            ),
+            "lexicon": str(r.path),
+            "counts": {
+                "lexicon_hits": r.n_lexicon_hits,
+                "rule_words": r.n_rule_words,
+                "distinct": len(rows),
+            },
+            "paste_into_lexicon": {m["word"]: m["rules_gave"] for m in rows},
+            "detail": rows,
+        })
+        pct = 100 * r.n_rule_words / total if total else 0.0
+        log.info("--- romanization misses (%.1f%% of Devanagari words) ---", pct)
+        for m in rows[:20]:
+            log.info(
+                '  x%-4d "%s": "%s"   (first at %s)',
+                m["count"], m["word"], m["rules_gave"],
+                f"{m['first_at']:.1f}s" if m["first_at"] is not None else "?",
+            )
+        if len(rows) > 20:
+            log.info("  ... and %s more", len(rows) - 20)
+        log.info("full list: %s", path)
     return data
 
 

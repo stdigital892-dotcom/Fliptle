@@ -52,6 +52,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="force a language code, e.g. hi or en (default: detect)")
     g.add_argument("--romanize", action="store_true",
                    help="transliterate Devanagari output to Roman script")
+    g.add_argument("--lexicon", type=Path, default=None,
+                   help="override the Hinglish lexicon JSON "
+                        "(default: assets/hinglish_lexicon.json)")
     g.add_argument("--force", action="store_true",
                    help="ignore the transcript cache and re-transcribe")
 
@@ -160,6 +163,7 @@ def main(argv: list[str] | None = None) -> int:
             device=None if args.device == "auto" else args.device,
             language=args.language,
             romanize=args.romanize,
+            lexicon=args.lexicon,
             force=args.force,
         )
 

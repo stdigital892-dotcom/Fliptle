@@ -59,6 +59,7 @@ every other flag. `--force` overrides that.
 | `--min-len` / `--max-len` | clip length bounds in seconds |
 | `--stage` | comma-separated stages to run; default all implemented |
 | `--romanize` | transliterate Devanagari transcript output to Roman script |
+| `--lexicon` | use a different Hinglish lexicon JSON |
 | `--language` | force a Whisper language code instead of detecting |
 | `--whisper-model` | override the model size |
 | `--no-llm` | skip the model, use the offline heuristic |
@@ -71,12 +72,46 @@ Whisper degrades on mid-sentence code-switching, and it often emits
 Devanagari where the audience reads Roman script. Two things help you see how
 bad it is on your own footage:
 
-**`--romanize`** converts Devanagari to Roman. It goes via IAST, applies Hindi
-word-final schwa deletion, and strips the remaining diacritics — so you get
-`yah mixed hindi sentence hai`, not the Sanskrit-flavoured `yaha mixed himdi
-sentence hai` that naive transliteration produces. Medial schwa is not
-deleted (`हमने` comes out `hamane`, not `humne`). The original token is kept
-alongside as `word_original`.
+**`--romanize`** converts Devanagari to Roman in three layers, in order:
+
+1. **Lexicon** — `assets/hinglish_lexicon.json`, ~1250 of the most frequent
+   Hindi words mapped to their conventional Hinglish spelling
+   (यह→`yeh`, वह→`woh`, हमने→`humne`, नहीं→`nahi`, क्यों→`kyun`). A lexicon
+   hit beats every rule. It also carries the English-in-Devanagari loanwords
+   that dominate this kind of content (बिजनेस→`business`, प्रॉफिट→`profit`),
+   which rules would otherwise mangle into `bijanes` and `prophit`.
+2. **Vowel length** — long vowels are doubled, never collapsed:
+   आ→`aa`, ई→`ee`, ऊ→`oo`. काम→`kaam`, बात→`baat`, साल→`saal`. Collapsing
+   changes the word. The one exception is word-finally, where the convention
+   is a single letter (`accha`, `bada`, `seekhi`) — that matches how every
+   lexicon entry with the same ending is spelled.
+3. **Rules** — word-final schwa deletion plus consonant fixups, as the
+   fallback for anything the lexicon has not seen. This is what turns
+   `paryaavaran sanrakshan atyant aavashyak` out of unseen literary Hindi
+   rather than Sanskrit-flavoured mush.
+
+The original token is always kept alongside as `word_original`.
+
+**Growing the lexicon.** Every word that falls through to layer 3 is logged.
+After a run you get the top misses in the terminal and the full list in
+`work/romanization_misses.json`:
+
+```json
+"paste_into_lexicon": {
+  "पर्यावरण": "paryaavaran",
+  "छोड़ी": "chhodi"
+}
+```
+
+Correct any spellings you disagree with and paste the block into the `words`
+object of `assets/hinglish_lexicon.json`. That file is the source of truth —
+edit it freely, it is never regenerated. Keys are NFC-normalised on load and
+matched with and without nukta, so both spellings of ज़/ज find the same
+entry. `--lexicon path.json` points at a different file.
+
+Known limitation: medial schwa is not deleted, so an unseen word like हमने
+would come out `hamane` rather than `humne` — which is exactly why the
+frequent ones live in the lexicon instead.
 
 **Per-word confidence** is persisted for every word and summarised after
 every transcribe run: a histogram, the fraction below 0.55 and 0.35, and the
@@ -122,8 +157,9 @@ clipper/transcribe.py    stage 1
 clipper/candidates.py    stage 2 (LLM prompt + offline heuristic + energy envelope)
 clipper/boundaries.py    stage 3
 clipper/llm.py           provider wrapper (Anthropic / OpenAI)
-clipper/text.py          sentence splitting, romanization, content-word tests
+clipper/text.py          sentence splitting, romanizer, content-word tests
 clipper/util.py          hashing, ffprobe, JSON IO
+assets/hinglish_lexicon.json   editable Devanagari -> Hinglish lexicon
 work/                    intermediate JSON (gitignored)
 out/                     final clips + clips.json (gitignored)
 ```
