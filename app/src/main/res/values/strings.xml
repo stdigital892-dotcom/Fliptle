@@ -224,6 +224,14 @@
     <string name="valve_debug">Debug: 30-second cooldown/window, 3-minute cap period</string>
     <string name="valve_save">Save settings</string>
     <string name="valve_saved">Valve settings saved.</string>
+    <string name="valve_bounds">Limits: cooldown ≥ %1$d min, window ≤ %2$d min, cap ≤ %3$d/day. Values outside are clamped.</string>
+    <string name="valve_applied_now">Tightening applied.</string>
+    <string name="valve_staged">Loosening will take effect after the delay.</string>
+    <string name="valve_loosen_blocked">Loosening blocked — a freeze is active.</string>
+    <string name="valve_clamped">Some values were clamped to the allowed limits.</string>
+    <string name="valve_no_change">No changes.</string>
+    <string name="valve_pending">Loosening change pending — takes effect in %1$s</string>
+    <string name="valve_pending_verifying">Loosening change pending — verifying real time after reboot…</string>
 
     <!-- In-app surface blocking -->
     <string name="surfaces_title">In-app surfaces</string>
