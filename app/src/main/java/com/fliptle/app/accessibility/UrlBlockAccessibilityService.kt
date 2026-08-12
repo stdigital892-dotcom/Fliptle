@@ -26,7 +26,7 @@ import com.fliptle.app.R
  * SELF-CONTAINED MODULE — URL-based blocking via Accessibility.
  *
  * This service reads the address-bar text of browsers, matches it against the
- * SHARED [DomainBlocklist] (the same list used by the VPN feature), and enforces
+ * adult-content blocklist and the user's [DomainBlocklist], and enforces
  * safe-search. It only acts while a freeze is running. Nothing else in the app
  * depends on this class; disabling the accessibility service in system settings
  * turns the whole feature off with no effect on the rest of the app.

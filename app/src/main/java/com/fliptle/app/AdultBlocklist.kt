@@ -8,7 +8,7 @@ import java.net.URL
 /**
  * Shared adult-content domain blocklist merged from MULTIPLE public sources
  * (adult category only — no ads/tracking/malware/gambling/social). Used by BOTH
- * the VPN DNS filter and the Accessibility URL blocker.
+ * the Accessibility URL blocker.
  *
  * All sources are merged into ONE deduplicated in-memory HashSet for
  * O(number-of-labels) lookups. Each source is persisted separately so a weekly

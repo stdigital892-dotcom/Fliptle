@@ -3,7 +3,6 @@ package com.fliptle.app
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.net.VpnService
 import android.provider.Settings
 import android.text.TextUtils
 import com.fliptle.app.accessibility.UrlBlockAccessibilityService
@@ -15,7 +14,6 @@ object Permissions {
     fun allEnforcementGranted(context: Context): Boolean =
         hasUsageAccess(context) &&
             hasOverlay(context) &&
-            hasVpnConsent(context) &&
             isAccessibilityEnabled(context)
 
     /**
@@ -36,9 +34,6 @@ object Permissions {
     fun hasUsageAccess(context: Context): Boolean = ForegroundApp.hasUsageAccess(context)
 
     fun hasOverlay(context: Context): Boolean = Settings.canDrawOverlays(context)
-
-    /** VpnService.prepare returns null once the user has granted VPN consent. */
-    fun hasVpnConsent(context: Context): Boolean = VpnService.prepare(context) == null
 
     fun isAccessibilityEnabled(context: Context): Boolean {
         val expected = "${context.packageName}/${UrlBlockAccessibilityService::class.java.name}"

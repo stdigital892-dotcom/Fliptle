@@ -68,8 +68,6 @@ class HomeActivity : AppCompatActivity() {
         requestNotificationPermissionIfNeeded()
         BrowserDetector.autoBlockInstalledBrowsers(this)
         BlockingService.start(this)
-        // Resume the website filter if the user already granted VPN consent.
-        if (Permissions.hasVpnConsent(this)) DnsVpnService.start(this)
     }
 
     override fun onResume() {
@@ -108,13 +106,11 @@ class HomeActivity : AppCompatActivity() {
         taperText.text = getString(R.string.home_taper, taper.currentTier())
 
         val blockedApps = BlockedAppsStore(this).get().size
-        val vpn = if (Permissions.hasVpnConsent(this)) getString(R.string.on_word) else getString(R.string.off_word)
         val a11y = if (Permissions.isAccessibilityEnabled(this)) getString(R.string.on_word) else getString(R.string.off_word)
         blockedText.text = getString(
             R.string.home_blocked_summary,
             blockedApps,
             AdultBlocklist.count,
-            vpn,
             a11y
         )
     }

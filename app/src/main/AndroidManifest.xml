@@ -94,19 +94,6 @@
                 android:value="foreground_app_blocking_overlay" />
         </service>
 
-        <service
-            android:name=".DnsVpnService"
-            android:exported="false"
-            android:permission="android.permission.BIND_VPN_SERVICE"
-            android:foregroundServiceType="specialUse">
-            <intent-filter>
-                <action android:name="android.net.VpnService" />
-            </intent-filter>
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="local_dns_website_filter" />
-        </service>
-
         <receiver
             android:name=".BootReceiver"
             android:exported="true">

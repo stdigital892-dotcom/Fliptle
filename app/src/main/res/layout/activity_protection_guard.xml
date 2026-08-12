@@ -36,13 +36,6 @@
             android:text="@string/guard_enable_accessibility" />
 
         <Button
-            android:id="@+id/enableVpnButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/guard_enable_vpn" />
-
-        <Button
             android:id="@+id/enableUsageButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

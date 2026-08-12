@@ -45,11 +45,6 @@
     <string name="add_domain">Add Domain</string>
     <string name="enter_domain">Enter a domain first.</string>
     <string name="builtin_not_removable">Built-in test domain — cannot be removed.</string>
-    <string name="enable_vpn">Enable Website Filter (VPN)</string>
-    <string name="disable_vpn">Disable Website Filter</string>
-    <string name="vpn_session">Focus Website Filter</string>
-    <string name="vpn_notif_title">Website filter active</string>
-    <string name="vpn_notif_text">Filtering DNS for blocked sites</string>
 
     <string name="open_a11y">Website URL Blocking (Accessibility)</string>
     <string name="url_blocked_title">Blocked</string>
@@ -57,7 +52,7 @@
     <string name="a11y_service_label">Focus URL Blocking</string>
     <string name="a11y_service_description">Reads the address bar of browsers to block pages on your blocklist and enforce safe-search, and detects specific in-app surfaces (Instagram Reels/Stories, YouTube Shorts) to block them — but only while a freeze is running. No browsing data is stored or sent anywhere.</string>
     <string name="a11y_disclosure_title">Website URL Blocking</string>
-    <string name="a11y_disclosure_body">This feature uses Android\'s Accessibility service to read the URL shown in your browser\'s address bar.\n\nWhat it does with that text:\n• Compares the current URL against your local blocklist (shared with the VPN feature).\n• If it matches, it navigates the browser away from the page and shows a brief \"Blocked\" notice.\n• For Google, Bing, and DuckDuckGo searches it enforces safe-search, and blocks searches containing banned keywords.\n• In Instagram and YouTube it detects specific surfaces you\'ve chosen to block (Reels, Stories, Shorts) and navigates away — the rest of those apps stays usable.\n\nImportant guarantees:\n• It only reads the address bar of browser apps, and only while a freeze is running.\n• It does NOT log, store, or transmit your browsing history — matching happens entirely on-device.\n• This is a separate, optional module. You can turn it off any time in Accessibility settings without affecting the rest of the app.</string>
+    <string name="a11y_disclosure_body">This feature uses Android\'s Accessibility service to read the URL shown in your browser\'s address bar.\n\nWhat it does with that text:\n• Compares the current URL against your local blocklist.\n• If it matches, it navigates the browser away from the page and shows a brief \"Blocked\" notice.\n• For Google, Bing, and DuckDuckGo searches it enforces safe-search, and blocks searches containing banned keywords.\n• In Instagram and YouTube it detects specific surfaces you\'ve chosen to block (Reels, Stories, Shorts) and navigates away — the rest of those apps stays usable.\n\nImportant guarantees:\n• It only reads the address bar of browser apps, and only while a freeze is running.\n• It does NOT log, store, or transmit your browsing history — matching happens entirely on-device.\n• This is a separate, optional module. You can turn it off any time in Accessibility settings without affecting the rest of the app.</string>
     <string name="a11y_open_settings">Open Accessibility Settings</string>
     <string name="a11y_status_on">Status: ENABLED</string>
     <string name="a11y_status_off">Status: not enabled — tap below to turn it on.</string>
@@ -135,10 +130,7 @@
     <string name="ob_overlay_title">2. Display over other apps</string>
     <string name="ob_overlay_body">This lets Fliptle show a full-screen \"blocked\" cover on top of a blocked app or website. Without it, blocking can\'t cover the screen.</string>
     <string name="ob_overlay_action">Allow display over other apps</string>
-    <string name="ob_vpn_title">3. Website filter (VPN)</string>
-    <string name="ob_vpn_body">Fliptle runs a private, on-device VPN that filters DNS to block adult websites. It has NO remote server and does not route your traffic anywhere — it only checks the domain names your device looks up against the blocklist. You can turn it off any time.</string>
-    <string name="ob_vpn_action">Enable website filter</string>
-    <string name="ob_a11y_title">4. URL blocking (Accessibility)</string>
+    <string name="ob_a11y_title">3. URL blocking (Accessibility)</string>
     <string name="ob_a11y_body">Fliptle uses Android\'s Accessibility service to read the web address shown in your browser\'s address bar, so it can block sites on the list and enforce safe-search — but only while a freeze is running.\n\nWhat it does with that text:\n• Compares the current URL to the on-device blocklist.\n• If it matches, it leaves the page and shows a brief notice.\n\nIt also detects specific in-app surfaces you choose to block — Instagram Reels/Stories and YouTube Shorts — and navigates away from them, leaving the rest of those apps usable.\n\nWhat it never does:\n• It does NOT record, store, or transmit your browsing history or any page content. Every check happens on your device.\n\nThis step is optional, and you can turn it off any time in Accessibility settings.</string>
     <string name="ob_a11y_action">Open Accessibility settings</string>
     <string name="status_granted">✓ Granted</string>
@@ -155,7 +147,7 @@
     <string name="home_freeze_verifying">Locked — verifying real time after reboot</string>
     <string name="home_freeze_review">Review available — blocks still active</string>
     <string name="home_taper">Freeze tier: %1$d day(s)</string>
-    <string name="home_blocked_summary">Blocked apps: %1$d • Adult domains: %2$d\nWebsite filter: %3$s • URL blocking: %4$s</string>
+    <string name="home_blocked_summary">Blocked apps: %1$d • Adult domains: %2$d\nURL blocking: %3$s</string>
     <string name="home_review_banner">Review available — blocks still active. Confirm to change.</string>
     <string name="home_open_review">Review freeze</string>
     <string name="home_freeze_button">Freeze</string>
@@ -168,7 +160,6 @@
     <string name="guard_title">Protection is OFF</string>
     <string name="guard_body">Fliptle can\'t protect you right now because a required permission is turned off. Re-enable it below to continue. The app stays locked until protection is restored.</string>
     <string name="guard_enable_accessibility">Enable Accessibility (URL blocking)</string>
-    <string name="guard_enable_vpn">Enable website filter (VPN)</string>
     <string name="guard_enable_usage">Grant usage access</string>
     <string name="guard_enable_overlay">Allow display over other apps</string>
     <string name="guard_exit_hint">You can leave this screen with Back or Home at any time — your phone stays fully usable for calls and emergencies. Fliptle will keep reminding you until protection is back on.</string>

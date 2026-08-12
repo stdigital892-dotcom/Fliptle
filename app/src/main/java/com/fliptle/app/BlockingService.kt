@@ -119,7 +119,7 @@ class BlockingService : Service() {
         val fg = ForegroundApp.current(this)
         // Skip when our own screen is up, foreground is unknown, or the user is in
         // an app we must never interrupt: the dialer (calls/emergencies), and the
-        // Settings / VPN-consent screens where they actually re-enable protection.
+        // Settings screens where they actually re-enable protection.
         if (fg == null || fg == packageName || isSkipApp(fg)) return
 
         val now = SystemClock.elapsedRealtime()
@@ -253,7 +253,7 @@ class BlockingService : Service() {
         private const val GUARD_MIN_INTERVAL_MS = 6_000L
 
         // Never nag over these: calls/emergencies must stay usable, and the
-        // Settings / VPN-consent screens are where the user re-enables protection.
+        // Settings is where the user re-enables protection.
         private val NO_NAG_PACKAGES = setOf(
             // Dialer / telephony
             "com.android.dialer",
@@ -262,10 +262,9 @@ class BlockingService : Service() {
             "com.android.server.telecom",
             "com.android.phone",
             "com.android.incallui",
-            // Settings + system consent dialogs (where protection is re-enabled)
+            // Settings (where protection is re-enabled)
             "com.android.settings",
-            "com.samsung.android.settings",
-            "com.android.vpndialogs"
+            "com.samsung.android.settings"
         )
 
         /** Start (or ensure running) the blocking service. */
