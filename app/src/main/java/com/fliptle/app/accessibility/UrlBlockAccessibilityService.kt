@@ -18,7 +18,7 @@ import android.view.accessibility.AccessibilityNodeInfo
 import com.fliptle.app.AdultBlocklist
 import com.fliptle.app.BrowserDetector
 import com.fliptle.app.DomainBlocklist
-import com.fliptle.app.FreezeStore
+import com.fliptle.app.ValveStore
 import com.fliptle.app.KeywordBlocklist
 import com.fliptle.app.R
 
@@ -77,12 +77,11 @@ class UrlBlockAccessibilityService : AccessibilityService() {
         event ?: return
         val pkg = event.packageName?.toString() ?: return
 
-        // Only browsers (URL blocking) and Instagram/YouTube (surface blocking),
-        // and only while a freeze is running.
+        // Only browsers (URL/porn blocking) and Instagram/YouTube (surface blocking).
+        // Porn/URL blocking is ALWAYS on; distraction surfaces use the valve below.
         val isBrowser = BrowserDetector.isBrowser(this, pkg)
         val isSurfaceApp = SurfaceDetector.isSurfaceApp(pkg)
         if (!isBrowser && !isSurfaceApp) return
-        if (!FreezeStore(this).active) return
 
         // Throttle content-change spam; always handle window/state changes.
         val now = SystemClock.elapsedRealtime()
@@ -112,11 +111,15 @@ class UrlBlockAccessibilityService : AccessibilityService() {
         }
 
         // In debug mode we observe only — never block — so surfaces can be
-        // diagnosed freely. Otherwise block the full-screen player if toggled on.
-        if (!debugMode && surface != null && store.isBlocked(surface)) {
-            // Back returns to the feed / normal app, so the rest stays usable.
-            blockAndLeave(surface.name)
-        }
+        // diagnosed freely.
+        if (debugMode || surface == null || !store.isBlocked(surface)) return
+
+        // Controlled-access valve: if the user has an OPEN access window for the
+        // distraction surfaces, allow it; otherwise block. (Porn never gets here.)
+        if (ValveStore(this).isAccessOpen()) return
+
+        // Back returns to the feed / normal app, so the rest stays usable.
+        blockAndLeave(surface.name)
     }
 
     private fun handleUrl(url: String, pkg: String) {

@@ -48,11 +48,11 @@
 
     <string name="open_a11y">Website URL Blocking (Accessibility)</string>
     <string name="url_blocked_title">Blocked</string>
-    <string name="url_blocked_subtitle">This page is blocked during your freeze.</string>
+    <string name="url_blocked_subtitle">This page is blocked.</string>
     <string name="a11y_service_label">Focus URL Blocking</string>
-    <string name="a11y_service_description">Reads the address bar of browsers to block pages on your blocklist and enforce safe-search, and detects specific in-app surfaces (Instagram Reels/Stories, YouTube Shorts) to block them — but only while a freeze is running. No browsing data is stored or sent anywhere.</string>
+    <string name="a11y_service_description">Reads the address bar of browsers to block pages on your blocklist and enforce safe-search, and detects specific in-app surfaces (Instagram Reels/Stories, YouTube Shorts) to block them. Adult sites are always blocked; distraction surfaces can be opened briefly via a controlled-access valve. No browsing data is stored or sent anywhere.</string>
     <string name="a11y_disclosure_title">Website URL Blocking</string>
-    <string name="a11y_disclosure_body">This feature uses Android\'s Accessibility service to read the URL shown in your browser\'s address bar.\n\nWhat it does with that text:\n• Compares the current URL against your local blocklist.\n• If it matches, it navigates the browser away from the page and shows a brief \"Blocked\" notice.\n• For Google, Bing, and DuckDuckGo searches it enforces safe-search, and blocks searches containing banned keywords.\n• In Instagram and YouTube it detects specific surfaces you\'ve chosen to block (Reels, Stories, Shorts) and navigates away — the rest of those apps stays usable.\n\nImportant guarantees:\n• It only reads the address bar of browser apps, and only while a freeze is running.\n• It does NOT log, store, or transmit your browsing history — matching happens entirely on-device.\n• This is a separate, optional module. You can turn it off any time in Accessibility settings without affecting the rest of the app.</string>
+    <string name="a11y_disclosure_body">This feature uses Android\'s Accessibility service to read the URL shown in your browser\'s address bar.\n\nWhat it does with that text:\n• Compares the current URL against your local blocklist.\n• If it matches, it navigates the browser away from the page and shows a brief \"Blocked\" notice.\n• For Google, Bing, and DuckDuckGo searches it enforces safe-search, and blocks searches containing banned keywords.\n• In Instagram and YouTube it detects specific surfaces you\'ve chosen to block (Reels, Stories, Shorts) and navigates away — the rest of those apps stays usable.\n\nImportant guarantees:\n• It reads the address bar of browser apps to block adult sites (always) and configured distraction surfaces.\n• It does NOT log, store, or transmit your browsing history — matching happens entirely on-device.\n• This is a separate, optional module. You can turn it off any time in Accessibility settings without affecting the rest of the app.</string>
     <string name="a11y_open_settings">Open Accessibility Settings</string>
     <string name="a11y_status_on">Status: ENABLED</string>
     <string name="a11y_status_off">Status: not enabled — tap below to turn it on.</string>
@@ -153,7 +153,7 @@
     <string name="ob_overlay_body">This lets Fliptle show a full-screen \"blocked\" cover on top of a blocked app or website. Without it, blocking can\'t cover the screen.</string>
     <string name="ob_overlay_action">Allow display over other apps</string>
     <string name="ob_a11y_title">3. URL blocking (Accessibility)</string>
-    <string name="ob_a11y_body">Fliptle uses Android\'s Accessibility service to read the web address shown in your browser\'s address bar, so it can block sites on the list and enforce safe-search — but only while a freeze is running.\n\nWhat it does with that text:\n• Compares the current URL to the on-device blocklist.\n• If it matches, it leaves the page and shows a brief notice.\n\nIt also detects specific in-app surfaces you choose to block — Instagram Reels/Stories and YouTube Shorts — and navigates away from them, leaving the rest of those apps usable.\n\nWhat it never does:\n• It does NOT record, store, or transmit your browsing history or any page content. Every check happens on your device.\n\nThis step is optional, and you can turn it off any time in Accessibility settings.</string>
+    <string name="ob_a11y_body">Fliptle uses Android\'s Accessibility service to read the web address shown in your browser\'s address bar, so it can block adult sites on the list and enforce safe-search.\n\nWhat it does with that text:\n• Compares the current URL to the on-device blocklist.\n• If it matches, it leaves the page and shows a brief notice.\n\nIt also detects specific in-app surfaces you choose to block — Instagram Reels/Stories and YouTube Shorts — and navigates away from them, leaving the rest of those apps usable.\n\nWhat it never does:\n• It does NOT record, store, or transmit your browsing history or any page content. Every check happens on your device.\n\nThis step is optional, and you can turn it off any time in Accessibility settings.</string>
     <string name="ob_a11y_action">Open Accessibility settings</string>
     <string name="status_granted">✓ Granted</string>
     <string name="status_not_granted">Not granted yet</string>
@@ -198,10 +198,36 @@
     <string name="setup_a11y">URL blocking (Accessibility)</string>
     <string name="setup_wizard">Re-run setup wizard</string>
     <string name="setup_surfaces">In-app surfaces (Reels / Shorts)</string>
+    <string name="setup_valve">Distraction access valve (Reels / Shorts)</string>
+
+    <!-- Reels/Shorts controlled-access valve -->
+    <string name="valve_title">Distraction access</string>
+    <string name="valve_body">Reels, Stories and Shorts are blocked. You can request a limited access window: after a cooldown, they unlock for a short time, then re-lock. A daily cap limits how often. Porn is never accessible here — it stays fully blocked.</string>
+    <string name="valve_blocked">Reels/Shorts/Stories are blocked.</string>
+    <string name="valve_cooldown">Access requested — cooling down.</string>
+    <string name="valve_open">Access OPEN — Reels/Shorts/Stories are temporarily allowed.</string>
+    <string name="valve_cap_reached">Daily access cap reached — no more windows today.</string>
+    <string name="valve_verifying">Reboot detected — verifying real time…</string>
+    <string name="valve_opens_in">Unlocks in %1$s</string>
+    <string name="valve_closes_in">Re-locks in %1$s</string>
+    <string name="valve_used">Windows used: %1$d / %2$d</string>
+    <string name="valve_request">Request access</string>
+    <string name="valve_requested">Access requested. The cooldown is the wait.</string>
+    <string name="valve_cap_toast">Daily cap reached — no override.</string>
+    <string name="valve_denied_freeze">A freeze is active — the valve is disabled to respect your commitment. (Configurable.)</string>
+    <string name="valve_verifying_toast">Verifying real time after reboot — try again shortly.</string>
+    <string name="valve_settings">Settings</string>
+    <string name="valve_cooldown_label">Cooldown (minutes)</string>
+    <string name="valve_window_label">Access window (minutes)</string>
+    <string name="valve_cap_label">Windows per day (hard cap)</string>
+    <string name="valve_allow_freeze">Allow the valve during an active freeze (default off)</string>
+    <string name="valve_debug">Debug: 30-second cooldown/window, 3-minute cap period</string>
+    <string name="valve_save">Save settings</string>
+    <string name="valve_saved">Valve settings saved.</string>
 
     <!-- In-app surface blocking -->
     <string name="surfaces_title">In-app surfaces</string>
-    <string name="surfaces_body">Block specific distraction surfaces inside apps while a freeze is running. Each is independent — the rest of Instagram and YouTube stays usable. Requires the Accessibility service to be on.</string>
+    <string name="surfaces_body">Block specific distraction surfaces inside apps. Each is independent — the rest of Instagram and YouTube stays usable. Access can be opened briefly via the valve (Setup → Distraction access). Requires the Accessibility service to be on.</string>
     <string name="surface_reels">Block Instagram Reels</string>
     <string name="surface_stories">Block Instagram Stories</string>
     <string name="surface_shorts">Block YouTube Shorts</string>
