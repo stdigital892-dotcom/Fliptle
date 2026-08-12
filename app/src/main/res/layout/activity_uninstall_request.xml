@@ -96,6 +96,48 @@
                 android:textSize="15sp" />
         </LinearLayout>
 
+        <!-- Typing session (second gate: type 1..50, per-keystroke, no paste) -->
+        <LinearLayout
+            android:id="@+id/typingSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/uninstall_typing_prompt"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/typingProgressText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textSize="15sp" />
+
+            <com.fliptle.app.NoPasteEditText
+                android:id="@+id/typingField"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/typing_hint"
+                android:importantForAutofill="no"
+                android:inputType="number"
+                android:textIsSelectable="false" />
+
+            <TextView
+                android:id="@+id/typingErrorText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="#B71C1C"
+                android:textSize="15sp" />
+        </LinearLayout>
+
         <!-- Options -->
         <CheckBox
             android:id="@+id/resetOnMissCheck"

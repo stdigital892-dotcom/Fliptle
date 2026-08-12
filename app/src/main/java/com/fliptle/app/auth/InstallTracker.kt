@@ -110,6 +110,10 @@ object InstallTracker {
                     logEvent(doc, analytics, "uninstall_detected", mapOf("previousInstallId" to outcome.prevId))
                     logEvent(doc, analytics, "reinstall", mapOf("reinstallCount" to outcome.count))
                     if (outcome.directUninstall) {
+                        // PARTNER-NOTIFICATION HOOK: when partner push is added,
+                        // trigger the "direct uninstall detected" notification to the
+                        // paired partner here (this is the direct-uninstall path,
+                        // separate from the approved path). Keyed off this uid/email.
                         logEvent(
                             doc, analytics, "direct_uninstall",
                             mapOf("darkMs" to outcome.darkMs, "previousInstallId" to outcome.prevId)
