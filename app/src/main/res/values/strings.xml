@@ -113,6 +113,27 @@
     <string name="typing_done_local">Correct! (Sign in to record this on the server.)</string>
     <string name="typing_server_rejected">Server rejected the entry: %1$s</string>
 
+    <!-- Uninstall request (math gate) -->
+    <string name="setup_uninstall">Request to uninstall the app</string>
+    <string name="uninstall_title">Request to uninstall</string>
+    <string name="uninstall_body">To uninstall, complete 10 arithmetic questions a day for 5 days in a row (50 total). Only one set unlocks per day; the next unlocks the following day. Changing the phone clock or rebooting cannot skip days.</string>
+    <string name="uninstall_status">Progress: %1$d of %2$d days complete</string>
+    <string name="uninstall_approved">Uninstall approved. You may now uninstall the app.</string>
+    <string name="uninstall_locked">Next set unlocks in %1$s</string>
+    <string name="uninstall_verifying">Reboot detected — verifying real time from the network before unlocking…</string>
+    <string name="start_day">Start day %1$d (10 questions)</string>
+    <string name="uninstall_reset_on_miss">Strict: reset progress if a day is missed (default: pause &amp; resume)</string>
+    <string name="uninstall_debug_days">Debug: 2-minute \"days\" (for testing)</string>
+    <string name="uninstall_debug_heartbeat">Debug: 2-minute heartbeat grace (for testing)</string>
+    <string name="uninstall_cancel">Cancel request</string>
+    <string name="uninstall_cancelled">Uninstall request cancelled.</string>
+    <string name="math_answer_hint">Your answer</string>
+    <string name="math_submit">Submit answer</string>
+    <string name="math_progress">Question %1$d of %2$d</string>
+    <string name="math_enter_number">Enter a number.</string>
+    <string name="math_wrong">Not quite — try again.</string>
+    <string name="math_day_done">Day %1$d complete!</string>
+
     <!-- Onboarding -->
     <string name="ob_intro_title">Welcome to Fliptle</string>
     <string name="ob_intro_body">Fliptle helps you stay off distracting and adult content. You set a freeze; while it runs, the apps and websites you chose stay blocked. A freeze can\'t be shortened once it starts — only extended. As you complete freezes, the taper lengthens the next one, up to 7 days.\n\nNext we\'ll sign you in (optional) and turn on a few permissions the blocking needs. We\'ll explain each one.</string>

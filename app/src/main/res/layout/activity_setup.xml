@@ -74,6 +74,13 @@
             android:text="@string/setup_typing_gate" />
 
         <Button
+            android:id="@+id/uninstallButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/setup_uninstall" />
+
+        <Button
             android:id="@+id/wizardButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

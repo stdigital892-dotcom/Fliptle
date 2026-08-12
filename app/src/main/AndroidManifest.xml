@@ -85,6 +85,10 @@
             android:name=".TypingGateActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".UninstallRequestActivity"
+            android:exported="false" />
+
         <service
             android:name=".BlockingService"
             android:exported="false"

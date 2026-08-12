@@ -51,10 +51,12 @@ rejected by Firestore itself.
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // A user may read/write only their own install record + events.
+    // A user may read/write only their own install record + subcollections
+    // (events, uninstall_progress). Heartbeat + uninstall_approved are merge
+    // writes to the install doc itself, covered by this rule.
     match /installs/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
-      match /events/{eventId} {
+      match /{sub}/{docId} {
         allow read, write: if request.auth != null && request.auth.uid == uid;
       }
     }
