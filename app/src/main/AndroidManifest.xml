@@ -89,6 +89,10 @@
             android:name=".UninstallRequestActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".ReelsValveActivity"
+            android:exported="false" />
+
         <service
             android:name=".BlockingService"
             android:exported="false"
