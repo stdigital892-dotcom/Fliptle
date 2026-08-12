@@ -14,7 +14,8 @@ import android.net.Uri
  *     scheme (the same query Android itself uses to find browsers).
  *
  * Chrome is deliberately EXEMPT from auto-blocking: it stays usable because it
- * will be filtered by the VPN later. Every other detected browser gets blocked.
+ * is kept usable — porn URLs inside Chrome are handled by the Accessibility URL
+ * blocker instead. Every other detected browser gets blocked as an app.
  */
 object BrowserDetector {
 

@@ -2,20 +2,18 @@ package com.fliptle.app
 
 import android.content.Intent
 import android.net.Uri
-import android.net.VpnService
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.fliptle.app.auth.SignInActivity
 
 /**
- * First-launch flow: intro -> optional phone sign-in -> permissions requested
- * one at a time in order (usage access, overlay, VPN, Accessibility), each with
- * a plain-language reason. The Accessibility step carries the full disclosure.
+ * First-launch flow: intro -> optional sign-in -> permissions requested one at a
+ * time in order (usage access, overlay, Accessibility), each with a plain-language
+ * reason. The Accessibility step carries the full disclosure.
  */
 class OnboardingActivity : AppCompatActivity() {
 
@@ -27,13 +25,6 @@ class OnboardingActivity : AppCompatActivity() {
     private lateinit var actionButton: Button
     private lateinit var backButton: Button
     private lateinit var nextButton: Button
-
-    private val vpnLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == RESULT_OK) DnsVpnService.start(this)
-        render()
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,11 +65,6 @@ class OnboardingActivity : AppCompatActivity() {
             STEP_OVERLAY -> startActivity(
                 Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
             )
-            STEP_VPN -> {
-                val consent = VpnService.prepare(this)
-                if (consent != null) vpnLauncher.launch(consent) else DnsVpnService.start(this)
-                render()
-            }
             STEP_ACCESSIBILITY -> startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
     }
@@ -108,7 +94,6 @@ class OnboardingActivity : AppCompatActivity() {
     private fun firstMissingPermissionStep(): Int = when {
         !Permissions.hasUsageAccess(this) -> STEP_USAGE
         !Permissions.hasOverlay(this) -> STEP_OVERLAY
-        !Permissions.hasVpnConsent(this) -> STEP_VPN
         !Permissions.isAccessibilityEnabled(this) -> STEP_ACCESSIBILITY
         else -> -1
     }
@@ -118,7 +103,6 @@ class OnboardingActivity : AppCompatActivity() {
         STEP_INTRO, STEP_SIGNIN -> true // intro has no gate; sign-in is optional
         STEP_USAGE -> Permissions.hasUsageAccess(this)
         STEP_OVERLAY -> Permissions.hasOverlay(this)
-        STEP_VPN -> Permissions.hasVpnConsent(this)
         STEP_ACCESSIBILITY -> Permissions.isAccessibilityEnabled(this)
         else -> true
     }
@@ -163,12 +147,6 @@ class OnboardingActivity : AppCompatActivity() {
                 actionButton.setText(R.string.ob_overlay_action)
                 showGranted(Permissions.hasOverlay(this))
             }
-            STEP_VPN -> {
-                titleText.setText(R.string.ob_vpn_title)
-                bodyText.setText(R.string.ob_vpn_body)
-                actionButton.setText(R.string.ob_vpn_action)
-                showGranted(Permissions.hasVpnConsent(this))
-            }
             STEP_ACCESSIBILITY -> {
                 titleText.setText(R.string.ob_a11y_title)
                 bodyText.setText(R.string.ob_a11y_body)
@@ -198,8 +176,7 @@ class OnboardingActivity : AppCompatActivity() {
         private const val STEP_SIGNIN = 1
         private const val STEP_USAGE = 2
         private const val STEP_OVERLAY = 3
-        private const val STEP_VPN = 4
-        private const val STEP_ACCESSIBILITY = 5
+        private const val STEP_ACCESSIBILITY = 4
         private const val STEP_LAST = STEP_ACCESSIBILITY
     }
 }
