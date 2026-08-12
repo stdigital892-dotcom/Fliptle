@@ -1,8 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Minimum-capability declaration for a URL / in-app-surface blocker.
+
+  - Event types: only window state + content changes (what we read the node tree
+    on). No text-changed / text-selection events.
+  - Flag: only flagReportViewIds (we match on viewIdResourceName). We do NOT use
+    flagRetrieveInteractiveWindows (we only read rootInActiveWindow) or
+    flagIncludeNotImportantViews.
+  - canRetrieveWindowContent is required to read the address bar / player nodes.
+  - packageNames restricts the service to browsers + Instagram/YouTube only, never
+    all apps. The service also narrows this further at runtime to the browsers
+    actually installed (see onServiceConnected).
+-->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accessibilityEventTypes="typeWindowContentChanged|typeWindowStateChanged|typeViewTextChanged|typeViewTextSelectionChanged"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged"
     android:accessibilityFeedbackType="feedbackGeneric"
-    android:accessibilityFlags="flagReportViewIds|flagIncludeNotImportantViews|flagRetrieveInteractiveWindows"
+    android:accessibilityFlags="flagReportViewIds"
     android:canRetrieveWindowContent="true"
-    android:notificationTimeout="200"
+    android:notificationTimeout="300"
+    android:packageNames="com.android.chrome,org.mozilla.firefox,com.brave.browser,com.opera.browser,com.opera.mini.native,com.microsoft.emmx,com.UCMobile.intl,com.sec.android.app.sbrowser,com.duckduckgo.mobile.android,com.vivaldi.browser,com.kiwibrowser.browser,com.instagram.android,com.google.android.youtube"
     android:description="@string/a11y_service_description" />

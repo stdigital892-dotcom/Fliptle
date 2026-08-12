@@ -49,6 +49,26 @@ class UrlBlockAccessibilityService : AccessibilityService() {
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         AdultBlocklist.ensureLoaded(this)
         KeywordBlocklist.ensureLoaded(this)
+        narrowScopeToMonitoredApps()
+    }
+
+    /**
+     * Narrow the monitored package set at runtime to the browsers actually
+     * installed plus Instagram/YouTube. This keeps the service off every other
+     * app (banking/UPI included), reinforcing the static packageNames in the XML.
+     */
+    private fun narrowScopeToMonitoredApps() {
+        try {
+            val info = serviceInfo ?: return
+            val packages = HashSet<String>()
+            packages.addAll(BrowserDetector.installedBrowsers(this))
+            packages.add(SurfaceDetector.IG_PKG)
+            packages.add(SurfaceDetector.YT_PKG)
+            info.packageNames = packages.toTypedArray()
+            serviceInfo = info
+        } catch (_: Exception) {
+            // Keep the static packageNames from the XML config on failure.
+        }
     }
 
     override fun onInterrupt() {}
