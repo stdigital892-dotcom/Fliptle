@@ -42,6 +42,7 @@ object InstallTracker {
         val analytics = FirebaseAnalytics.getInstance(context)
         val threshold = FirebaseRemoteConfig.getInstance().getLong(KEY_THRESHOLD)
             .let { if (it <= 0L) 1L else it }
+        val graceMs = Heartbeat.graceMs(context)
         val doc = db.collection(COLLECTION).document(uid)
 
         db.runTransaction { txn ->
@@ -74,6 +75,12 @@ object InstallTracker {
                     val installs = (snap.getLong("installCount") ?: 0L) + 1
                     val already = snap.getBoolean("priceIncreaseFlagged") ?: false
                     val flagged = already || reinstalls >= threshold
+                    // Direct uninstall = previous install went dark past the grace
+                    // window without ever being uninstall-approved.
+                    val approved = snap.getBoolean("uninstall_approved") ?: false
+                    val lastBeat = snap.getLong("lastHeartbeatMs") ?: 0L
+                    val darkMs = if (lastBeat > 0L) now - lastBeat else Long.MAX_VALUE
+                    val directUninstall = !approved && darkMs >= graceMs
                     txn.update(
                         doc, common + mapOf(
                             "installCount" to installs,
@@ -84,7 +91,10 @@ object InstallTracker {
                             "priceIncreaseFlagged" to flagged
                         )
                     )
-                    Outcome.Reinstall(reinstalls, threshold, flaggedNow = flagged && !already, prevId = storedId)
+                    Outcome.Reinstall(
+                        reinstalls, threshold, flaggedNow = flagged && !already,
+                        prevId = storedId, directUninstall = directUninstall, darkMs = darkMs
+                    )
                 } else {
                     txn.update(doc, common)
                     Outcome.SignIn
@@ -99,6 +109,12 @@ object InstallTracker {
                 is Outcome.Reinstall -> {
                     logEvent(doc, analytics, "uninstall_detected", mapOf("previousInstallId" to outcome.prevId))
                     logEvent(doc, analytics, "reinstall", mapOf("reinstallCount" to outcome.count))
+                    if (outcome.directUninstall) {
+                        logEvent(
+                            doc, analytics, "direct_uninstall",
+                            mapOf("darkMs" to outcome.darkMs, "previousInstallId" to outcome.prevId)
+                        )
+                    }
                     if (outcome.flaggedNow) {
                         logEvent(
                             doc, analytics, "price_increase_flagged",
@@ -107,7 +123,8 @@ object InstallTracker {
                     }
                     onResult(
                         "Reinstall #${outcome.count} detected." +
-                            if (outcome.flaggedNow) " Account flagged for a price increase." else ""
+                            (if (outcome.directUninstall) " (direct uninstall logged.)" else "") +
+                            (if (outcome.flaggedNow) " Account flagged for a price increase." else "")
                     )
                 }
                 is Outcome.SignIn -> {
@@ -155,7 +172,9 @@ object InstallTracker {
             val count: Long,
             val threshold: Long,
             val flaggedNow: Boolean,
-            val prevId: String
+            val prevId: String,
+            val directUninstall: Boolean,
+            val darkMs: Long
         ) : Outcome()
     }
 }

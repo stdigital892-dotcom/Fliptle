@@ -22,6 +22,7 @@ class SetupActivity : AppCompatActivity() {
         open(R.id.scheduleButton, FreezeActivity::class.java)
         open(R.id.a11yButton, AccessibilityDisclosureActivity::class.java)
         open(R.id.typingGateButton, TypingGateActivity::class.java)
+        open(R.id.uninstallButton, UninstallRequestActivity::class.java)
         open(R.id.wizardButton, OnboardingActivity::class.java)
     }
 

@@ -74,6 +74,7 @@ class HomeActivity : AppCompatActivity() {
         super.onResume()
         // Re-check on every return; a revoked permission blocks the main flow.
         if (!Permissions.gate(this)) return
+        com.fliptle.app.auth.Heartbeat.beat(this)
         handler.post(tick)
     }
 
