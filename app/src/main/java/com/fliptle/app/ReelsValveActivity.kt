@@ -31,6 +31,8 @@ class ReelsValveActivity : AppCompatActivity() {
     private lateinit var capInput: EditText
     private lateinit var allowFreezeCheck: CheckBox
     private lateinit var debugCheck: CheckBox
+    private lateinit var boundsText: TextView
+    private lateinit var pendingText: TextView
 
     private val handler = Handler(Looper.getMainLooper())
     private val io = Executors.newSingleThreadExecutor()
@@ -57,18 +59,28 @@ class ReelsValveActivity : AppCompatActivity() {
         capInput = findViewById(R.id.capInput)
         allowFreezeCheck = findViewById(R.id.allowFreezeCheck)
         debugCheck = findViewById(R.id.valveDebugCheck)
+        boundsText = findViewById(R.id.valveBoundsText)
+        pendingText = findViewById(R.id.valvePendingText)
 
+        syncInputsToActive()
+        debugCheck.isChecked = valve.debug
+
+        findViewById<Button>(R.id.saveValveSettingsButton).setOnClickListener { saveSettings() }
+        debugCheck.setOnCheckedChangeListener { _, v -> valve.debug = v; render() }
+        requestButton.setOnClickListener { request() }
+
+        boundsText.text = getString(
+            R.string.valve_bounds,
+            ValveStore.COOLDOWN_MIN_MINUTES, ValveStore.WINDOW_MAX_MINUTES, ValveStore.CAP_MAX
+        )
+        render()
+    }
+
+    private fun syncInputsToActive() {
         cooldownInput.setText(valve.cooldownMin.toString())
         windowInput.setText(valve.windowMin.toString())
         capInput.setText(valve.dailyCap.toString())
         allowFreezeCheck.isChecked = valve.allowDuringFreeze
-        debugCheck.isChecked = valve.debug
-
-        findViewById<Button>(R.id.saveValveSettingsButton).setOnClickListener { saveSettings() }
-        allowFreezeCheck.setOnCheckedChangeListener { _, v -> valve.allowDuringFreeze = v }
-        debugCheck.setOnCheckedChangeListener { _, v -> valve.debug = v; render() }
-        requestButton.setOnClickListener { request() }
-        render()
     }
 
     override fun onResume() {
@@ -87,10 +99,22 @@ class ReelsValveActivity : AppCompatActivity() {
     }
 
     private fun saveSettings() {
-        cooldownInput.text.toString().toIntOrNull()?.let { valve.cooldownMin = it }
-        windowInput.text.toString().toIntOrNull()?.let { valve.windowMin = it }
-        capInput.text.toString().toIntOrNull()?.let { valve.dailyCap = it }
-        Toast.makeText(this, R.string.valve_saved, Toast.LENGTH_SHORT).show()
+        val cd = cooldownInput.text.toString().toIntOrNull() ?: valve.cooldownMin
+        val win = windowInput.text.toString().toIntOrNull() ?: valve.windowMin
+        val cap = capInput.text.toString().toIntOrNull() ?: valve.dailyCap
+        val result = valve.requestSettingsChange(cd, win, cap, allowFreezeCheck.isChecked)
+
+        val msg = buildString {
+            if (result.appliedInstantly) append(getString(R.string.valve_applied_now)).append(' ')
+            if (result.staged) append(getString(R.string.valve_staged)).append(' ')
+            if (result.blockedByFreeze) append(getString(R.string.valve_loosen_blocked)).append(' ')
+            if (result.clamped) append(getString(R.string.valve_clamped)).append(' ')
+            if (isEmpty()) append(getString(R.string.valve_no_change))
+        }
+        Toast.makeText(this, msg.trim(), Toast.LENGTH_LONG).show()
+        // Inputs reflect the EFFECTIVE (active) values; a staged loosening is shown
+        // separately until it takes effect.
+        syncInputsToActive()
         render()
     }
 
@@ -107,6 +131,20 @@ class ReelsValveActivity : AppCompatActivity() {
     }
 
     private fun render() {
+        // Show any staged loosening change and its remaining delay.
+        if (valve.pendingActive()) {
+            pendingText.visibility = View.VISIBLE
+            val rem = valve.pendingRemainingMs()
+            pendingText.text = if (rem < 0) {
+                getString(R.string.valve_pending_verifying)
+            } else {
+                getString(R.string.valve_pending, hms(rem))
+            }
+        } else {
+            pendingText.visibility = View.GONE
+        }
+        if (valve.needsTimeVerification()) maybeFetchTrustedTime()
+
         val state = valve.state()
         countdownText.visibility = View.GONE
         requestButton.visibility = View.GONE

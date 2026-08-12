@@ -99,6 +99,13 @@ class BlockingService : Service() {
             blockedStore.get().contains(fg)
 
         if (shouldBlock) showOverlay() else hideOverlay()
+
+        // Bring down the website-block overlay once the user is no longer in a
+        // browser (the accessibility service can't see non-browser foregrounds
+        // because it's scoped, so this poll is what removes it on leaving).
+        if (BlockOverlay.isShowing && (fg == null || !BrowserDetector.isBrowser(this, fg))) {
+            BlockOverlay.hide()
+        }
     }
 
     /**

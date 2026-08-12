@@ -16,6 +16,7 @@ import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import com.fliptle.app.AdultBlocklist
+import com.fliptle.app.BlockOverlay
 import com.fliptle.app.BrowserDetector
 import com.fliptle.app.DomainBlocklist
 import com.fliptle.app.ValveStore
@@ -43,6 +44,8 @@ class UrlBlockAccessibilityService : AccessibilityService() {
     private var lastProcessMs = 0L
     private var lastBlockedHost: String? = null
     private var lastBlockedAtMs = 0L
+    private var lastSafeSearchUrl: String? = null
+    private var lastSafeSearchAtMs = 0L
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -123,25 +126,43 @@ class UrlBlockAccessibilityService : AccessibilityService() {
     }
 
     private fun handleUrl(url: String, pkg: String) {
-        // 1) Safe-search enforcement.
-        when (val result = SafeSearch.evaluate(url)) {
-            is SafeSearch.Result.BlockKeyword -> {
-                blockAndLeave(hostOf(url))
-                return
-            }
-            is SafeSearch.Result.Redirect -> {
-                redirectTo(result.url, pkg)
-                return
-            }
-            SafeSearch.Result.None -> { /* fall through to domain check */ }
+        val result = SafeSearch.evaluate(url)
+
+        // 1) Blocked search keyword -> one clean overlay, no navigation.
+        if (result is SafeSearch.Result.BlockKeyword) {
+            BlockOverlay.show(this)
+            return
         }
 
-        // 2) Domain blocklist match (subdomains included). Checks the shared
-        //    adult-content list AND the user's own blocked domains.
-        val host = hostOf(url) ?: return
-        if (AdultBlocklist.isBlocked(host) || DomainBlocklist(this).isBlocked(host)) {
-            blockAndLeave(host)
+        // 2) Domain/porn blocklist match (subdomains included) -> one clean overlay.
+        val host = hostOf(url)
+        val blocked = host != null &&
+            (AdultBlocklist.isBlocked(host) || DomainBlocklist(this).isBlocked(host))
+        if (blocked) {
+            // Idempotent: repeated detections of the same block do NOT stack, and
+            // we never hit back / reload / open a new tab (no tab cascade).
+            BlockOverlay.show(this)
+            return
         }
+
+        // 3) Not blocked -> make sure the block overlay is down.
+        BlockOverlay.hide()
+
+        // 4) Safe-search enforcement — apply ONCE per search, rate-limited, and
+        //    never re-fire the same target URL (prevents the redirect loop that
+        //    trips Google's "unusual traffic" CAPTCHA).
+        if (result is SafeSearch.Result.Redirect) {
+            maybeApplySafeSearch(result.url, pkg)
+        }
+    }
+
+    private fun maybeApplySafeSearch(safeUrl: String, pkg: String) {
+        val now = SystemClock.elapsedRealtime()
+        if (safeUrl == lastSafeSearchUrl) return                    // already did this exact one
+        if (now - lastSafeSearchAtMs < SAFE_SEARCH_COOLDOWN_MS) return // rate limit
+        lastSafeSearchUrl = safeUrl
+        lastSafeSearchAtMs = now
+        redirectTo(safeUrl, pkg)
     }
 
     /** Navigate the browser away from the blocked page and show a brief overlay. */
@@ -278,6 +299,7 @@ class UrlBlockAccessibilityService : AccessibilityService() {
         super.onDestroy()
         handler.removeCallbacksAndMessages(null)
         hideOverlay()
+        BlockOverlay.hide()
     }
 
     companion object {
@@ -285,5 +307,6 @@ class UrlBlockAccessibilityService : AccessibilityService() {
         private const val ESCALATE_MS = 1_500L
         private const val OVERLAY_MS = 1_500L
         private const val MAX_DEPTH = 40
+        private const val SAFE_SEARCH_COOLDOWN_MS = 20_000L
     }
 }
