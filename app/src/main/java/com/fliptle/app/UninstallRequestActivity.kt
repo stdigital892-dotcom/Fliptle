@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
@@ -17,10 +19,17 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * "Request to uninstall" math gate: 10 questions/day for 5 days, one set per day,
- * with reboot- and clock-tamper-proof per-day unlocking (see [UninstallGateStore]).
+ * "Request to uninstall" gate. Each day requires BOTH:
+ *   1) 10 basic arithmetic questions (validated app-side), then
+ *   2) typing the 1..50 sequence with no separators (validated per keystroke;
+ *      paste/bulk input rejected, paste menu disabled).
+ * Both must be finished for the day to count. One day unlocks per 24h, with the
+ * same reboot- and clock-tamper-proof timing as the freeze (see
+ * [UninstallGateStore]).
  */
 class UninstallRequestActivity : AppCompatActivity() {
+
+    private enum class Phase { NONE, MATH, TYPING }
 
     private lateinit var store: UninstallGateStore
 
@@ -34,14 +43,23 @@ class UninstallRequestActivity : AppCompatActivity() {
 
     private lateinit var mathSection: View
     private lateinit var questionText: TextView
-    private lateinit var progressText: TextView
+    private lateinit var mathProgressText: TextView
     private lateinit var answerInput: EditText
     private lateinit var submitAnswerButton: Button
-    private lateinit var errorText: TextView
+    private lateinit var mathErrorText: TextView
 
+    private lateinit var typingSection: View
+    private lateinit var typingProgressText: TextView
+    private lateinit var typingField: NoPasteEditText
+    private lateinit var typingErrorText: TextView
+
+    private var phase = Phase.NONE
     private var questions: List<MathQuestion> = emptyList()
     private var qIndex = 0
-    private var inSession = false
+
+    private val expectedSeq: String = buildString { for (i in 1..50) append(i) }
+    private val typedSeq = StringBuilder()
+    private var typingSelfEdit = false
 
     private val handler = Handler(Looper.getMainLooper())
     private val io = Executors.newSingleThreadExecutor()
@@ -50,7 +68,7 @@ class UninstallRequestActivity : AppCompatActivity() {
 
     private val tick = object : Runnable {
         override fun run() {
-            if (!inSession) render()
+            if (phase == Phase.NONE) render()
             handler.postDelayed(this, 1_000L)
         }
     }
@@ -59,7 +77,7 @@ class UninstallRequestActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_uninstall_request)
         store = UninstallGateStore(this)
-        if (!store.active) store.start() // opening the request starts it
+        if (!store.active) store.start()
 
         statusText = findViewById(R.id.uninstallStatusText)
         countdownText = findViewById(R.id.uninstallCountdownText)
@@ -71,10 +89,16 @@ class UninstallRequestActivity : AppCompatActivity() {
 
         mathSection = findViewById(R.id.mathSection)
         questionText = findViewById(R.id.questionText)
-        progressText = findViewById(R.id.mathProgressText)
+        mathProgressText = findViewById(R.id.mathProgressText)
         answerInput = findViewById(R.id.answerInput)
         submitAnswerButton = findViewById(R.id.submitAnswerButton)
-        errorText = findViewById(R.id.mathErrorText)
+        mathErrorText = findViewById(R.id.mathErrorText)
+
+        typingSection = findViewById(R.id.typingSection)
+        typingProgressText = findViewById(R.id.typingProgressText)
+        typingField = findViewById(R.id.typingField)
+        typingErrorText = findViewById(R.id.typingErrorText)
+        typingField.addTextChangedListener(typingWatcher)
 
         resetOnMissCheck.isChecked = store.resetOnMiss
         resetOnMissCheck.setOnCheckedChangeListener { _, v -> store.resetOnMiss = v }
@@ -108,35 +132,81 @@ class UninstallRequestActivity : AppCompatActivity() {
         io.shutdownNow()
     }
 
+    // ---- Day flow: MATH then TYPING ----
+
     private fun startDay() {
         questions = MathQuestions.generateSet()
         qIndex = 0
-        inSession = true
-        errorText.text = ""
+        phase = Phase.MATH
+        mathErrorText.text = ""
         answerInput.text.clear()
         render()
     }
 
     private fun submitAnswer() {
-        if (!inSession) return
+        if (phase != Phase.MATH) return
         val entered = answerInput.text.toString().trim().toIntOrNull()
         if (entered == null) {
-            errorText.setText(R.string.math_enter_number)
+            mathErrorText.setText(R.string.math_enter_number)
             return
         }
         if (entered == questions[qIndex].answer) {
             qIndex++
             answerInput.text.clear()
-            errorText.text = ""
-            if (qIndex >= questions.size) finishDay() else render()
+            mathErrorText.text = ""
+            if (qIndex >= questions.size) beginTypingPhase() else render()
         } else {
-            errorText.setText(R.string.math_wrong)
+            mathErrorText.setText(R.string.math_wrong)
+        }
+    }
+
+    private fun beginTypingPhase() {
+        phase = Phase.TYPING
+        typedSeq.setLength(0)
+        typingSelfEdit = true
+        typingField.setText("")
+        typingSelfEdit = false
+        typingErrorText.text = ""
+        render()
+    }
+
+    private val typingWatcher = object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        override fun afterTextChanged(s: Editable?) {
+            if (typingSelfEdit || phase != Phase.TYPING) return
+            val current = s?.toString() ?: ""
+            when {
+                current.length == typedSeq.length + 1 &&
+                    typedSeq.length < expectedSeq.length &&
+                    current.startsWith(typedSeq) &&
+                    current.last() == expectedSeq[typedSeq.length] -> {
+                    typedSeq.append(current.last())
+                    typingErrorText.text = ""
+                }
+                current.length == typedSeq.length - 1 && typedSeq.startsWith(current) -> {
+                    typedSeq.setLength(current.length)
+                    typingErrorText.text = ""
+                }
+                current == typedSeq.toString() -> { /* no-op */ }
+                else -> {
+                    val bulk = current.length > typedSeq.length + 1
+                    typingSelfEdit = true
+                    typingField.setText(typedSeq.toString())
+                    typingField.setSelection(typedSeq.length)
+                    typingSelfEdit = false
+                    typingErrorText.setText(if (bulk) R.string.typing_error_paste else R.string.typing_error_wrong)
+                }
+            }
+            typingProgressText.text = getString(R.string.typing_progress, typedSeq.length, expectedSeq.length)
+            if (typedSeq.toString() == expectedSeq) finishDay()
         }
     }
 
     private fun finishDay() {
-        inSession = false
+        phase = Phase.NONE
         val done = store.completeDay()
+        // Each day's completion is logged to Firestore keyed to email/UID.
         UninstallLog.logDayComplete(this, done, UninstallGateStore.DAYS_REQUIRED)
         if (done >= UninstallGateStore.DAYS_REQUIRED) {
             UninstallLog.logApproved(this)
@@ -145,14 +215,21 @@ class UninstallRequestActivity : AppCompatActivity() {
         render()
     }
 
+    // ---- Rendering ----
+
     private fun render() {
-        if (inSession) {
-            showMath(true)
+        mathSection.visibility = if (phase == Phase.MATH) View.VISIBLE else View.GONE
+        typingSection.visibility = if (phase == Phase.TYPING) View.VISIBLE else View.GONE
+
+        if (phase == Phase.MATH) {
             questionText.text = questions[qIndex].text
-            progressText.text = getString(R.string.math_progress, qIndex + 1, questions.size)
+            mathProgressText.text = getString(R.string.math_progress, qIndex + 1, questions.size)
             return
         }
-        showMath(false)
+        if (phase == Phase.TYPING) {
+            typingProgressText.text = getString(R.string.typing_progress, typedSeq.length, expectedSeq.length)
+            return
+        }
 
         val state = store.state()
         statusText.text = getString(R.string.uninstall_status, store.daysDone, UninstallGateStore.DAYS_REQUIRED)
@@ -179,10 +256,6 @@ class UninstallRequestActivity : AppCompatActivity() {
             }
             UninstallGateStore.State.INACTIVE -> { /* just started; treated as available */ }
         }
-    }
-
-    private fun showMath(show: Boolean) {
-        mathSection.visibility = if (show) View.VISIBLE else View.GONE
     }
 
     private fun maybeFetchTrustedTime() {

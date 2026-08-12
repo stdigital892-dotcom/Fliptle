@@ -32,6 +32,9 @@ object UninstallLog {
 
     fun logApproved(context: Context) {
         withUser(context) { db, uid, email ->
+            // PARTNER-NOTIFICATION HOOK: when partner push is added, trigger the
+            // "uninstall approved" notification to the paired partner here (this is
+            // the approved-path event). Attach off the uid/email written below.
             val doc = db.collection(COLLECTION).document(uid)
             doc.set(
                 mapOf(

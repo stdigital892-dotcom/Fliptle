@@ -116,7 +116,8 @@
     <!-- Uninstall request (math gate) -->
     <string name="setup_uninstall">Request to uninstall the app</string>
     <string name="uninstall_title">Request to uninstall</string>
-    <string name="uninstall_body">To uninstall, complete 10 arithmetic questions a day for 5 days in a row (50 total). Only one set unlocks per day; the next unlocks the following day. Changing the phone clock or rebooting cannot skip days.</string>
+    <string name="uninstall_body">To uninstall, complete BOTH gates each day for 5 days in a row: (1) 10 arithmetic questions, then (2) type the numbers 1 to 50 with no spaces. Both are required for the day to count. Only one day unlocks every 24 hours; changing the phone clock or rebooting cannot skip days.</string>
+    <string name="uninstall_typing_prompt">Second gate: type the numbers 1 to 50 in order, no spaces (paste is blocked).</string>
     <string name="uninstall_status">Progress: %1$d of %2$d days complete</string>
     <string name="uninstall_approved">Uninstall approved. You may now uninstall the app.</string>
     <string name="uninstall_locked">Next set unlocks in %1$s</string>
