@@ -49,6 +49,9 @@
     <string name="open_a11y">Website URL Blocking (Accessibility)</string>
     <string name="url_blocked_title">Blocked</string>
     <string name="url_blocked_subtitle">This page is blocked.</string>
+    <string name="website_blocked_title">Website blocked</string>
+    <string name="website_blocked_subtitle">This site is on your blocklist.</string>
+    <string name="website_blocked_home">Go to home screen</string>
     <string name="a11y_service_label">Focus URL Blocking</string>
     <string name="a11y_service_description">Reads the address bar of browsers to block pages on your blocklist and enforce safe-search, and detects specific in-app surfaces (Instagram Reels/Stories, YouTube Shorts) to block them. Adult sites are always blocked; distraction surfaces can be opened briefly via a controlled-access valve. No browsing data is stored or sent anywhere.</string>
     <string name="a11y_disclosure_title">Website URL Blocking</string>
