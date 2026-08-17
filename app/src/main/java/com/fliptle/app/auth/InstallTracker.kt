@@ -141,16 +141,31 @@ object InstallTracker {
         }
     }
 
-    /** Save the parent's phone number as contact-only info on the user's record. */
+    /** Save the parent's phone number as contact-only info on the user's record.
+     *  Uses set()+merge so it succeeds even if the install doc hasn't been created
+     *  yet (the sign-in transaction that creates it runs asynchronously). */
     fun saveParentPhone(context: Context, uid: String, phone: String, onResult: (String) -> Unit) {
         if (!FirebaseGate.isAvailable(context)) {
-            onResult("Firebase not configured — phone not saved.")
+            onResult("Firebase not configured — phone saved on device only.")
             return
         }
         FirebaseFirestore.getInstance().collection(COLLECTION).document(uid)
-            .update("parentPhone", phone)
+            .set(mapOf("parentPhone" to phone), com.google.firebase.firestore.SetOptions.merge())
             .addOnSuccessListener { onResult("Parent phone saved.") }
-            .addOnFailureListener { e -> onResult("Could not save phone: ${e.message}") }
+            .addOnFailureListener { e -> onResult("Could not sync phone (saved on device): ${e.message}") }
+    }
+
+    /** Best-effort read of any parent phone already stored for this user, so a
+     *  returning/reinstalled user who already provided one isn't re-prompted. */
+    fun fetchParentPhone(context: Context, uid: String, onResult: (String?) -> Unit) {
+        if (!FirebaseGate.isAvailable(context)) {
+            onResult(null)
+            return
+        }
+        FirebaseFirestore.getInstance().collection(COLLECTION).document(uid)
+            .get()
+            .addOnSuccessListener { onResult(it.getString("parentPhone")) }
+            .addOnFailureListener { onResult(null) }
     }
 
     private fun logEvent(

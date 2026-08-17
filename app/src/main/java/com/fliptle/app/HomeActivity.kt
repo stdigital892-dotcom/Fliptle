@@ -41,6 +41,8 @@ class HomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         // Compulsory permissions: if any is missing, bounce back to onboarding.
         if (!Permissions.gate(this)) return
+        // Mandatory after sign-in: no reaching Home without a parent phone number.
+        if (!PhoneGate.gate(this)) return
         setContentView(R.layout.activity_home)
         freezeStore = FreezeStore(this)
         taper = TaperStore(this)
@@ -74,6 +76,8 @@ class HomeActivity : AppCompatActivity() {
         super.onResume()
         // Re-check on every return; a revoked permission blocks the main flow.
         if (!Permissions.gate(this)) return
+        // A signed-in user who backed out without a phone is bounced right back.
+        if (!PhoneGate.gate(this)) return
         com.fliptle.app.auth.Heartbeat.beat(this)
         handler.post(tick)
     }
