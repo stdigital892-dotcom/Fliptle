@@ -32,6 +32,7 @@ class SignInActivity : AppCompatActivity() {
     private lateinit var statusText: TextView
     private lateinit var emailInput: EditText
     private lateinit var passwordInput: EditText
+    private lateinit var signInControls: LinearLayout
     private lateinit var phoneSection: LinearLayout
     private lateinit var parentPhoneInput: EditText
 
@@ -63,6 +64,7 @@ class SignInActivity : AppCompatActivity() {
         statusText = findViewById(R.id.authStatusText)
         emailInput = findViewById(R.id.emailInput)
         passwordInput = findViewById(R.id.passwordInput)
+        signInControls = findViewById(R.id.signInControls)
         phoneSection = findViewById(R.id.phoneSection)
         parentPhoneInput = findViewById(R.id.parentPhoneInput)
 
@@ -154,20 +156,70 @@ class SignInActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * After any sign-in method, reveal the mandatory phone section identically. The
+     * sign-in controls are hidden so the phone number is the only way forward — the
+     * user cannot reach the main app until it is provided (enforced by [PhoneGate]).
+     */
     private fun showSignedInState() {
+        signInControls.visibility = View.GONE
         phoneSection.visibility = View.VISIBLE
+
+        val store = AuthStore(this)
+        // Prefill any number we already have on device.
+        if (parentPhoneInput.text.isNullOrEmpty()) {
+            store.signedInPhone?.let { parentPhoneInput.setText(it) }
+        }
+        // Best-effort: if this user already stored a phone (e.g. after a reinstall),
+        // adopt it so they aren't needlessly re-prompted.
+        val user = auth?.currentUser
+        if (user != null && !store.parentPhoneProvided) {
+            InstallTracker.fetchParentPhone(this, user.uid) { existing ->
+                runOnUiThread {
+                    if (!existing.isNullOrBlank()) {
+                        store.signedInPhone = existing
+                        store.parentPhoneProvided = true
+                        if (parentPhoneInput.text.isNullOrEmpty()) parentPhoneInput.setText(existing)
+                    }
+                }
+            }
+        }
     }
 
     private fun saveParentPhone() {
-        val user = auth?.currentUser ?: return
-        val phone = parentPhoneInput.text.toString().trim()
-        if (phone.isEmpty()) {
-            Toast.makeText(this, R.string.auth_enter_parent_phone, Toast.LENGTH_SHORT).show()
+        val user = auth?.currentUser
+        if (user == null) {
+            Toast.makeText(this, R.string.auth_email_hint, Toast.LENGTH_SHORT).show()
             return
         }
-        InstallTracker.saveParentPhone(this, user.uid, phone) { msg ->
+        val normalized = normalizePhone(parentPhoneInput.text.toString())
+        if (normalized == null) {
+            Toast.makeText(this, R.string.auth_phone_invalid, Toast.LENGTH_SHORT).show()
+            return
+        }
+        // Save locally first (optimistic) so an offline user is never trapped by
+        // the mandatory gate, then sync to Firestore under the same UID key.
+        val store = AuthStore(this)
+        store.signedInPhone = normalized
+        store.parentPhoneProvided = true
+        parentPhoneInput.setText(normalized)
+        InstallTracker.saveParentPhone(this, user.uid, normalized) { msg ->
             runOnUiThread { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() }
         }
+        Toast.makeText(this, R.string.auth_phone_saved, Toast.LENGTH_SHORT).show()
+        finish()
+    }
+
+    /**
+     * Validate and normalize a plausible phone number. Keeps an optional single
+     * leading '+' and the digits; requires 7–15 digits (E.164 caps at 15). Returns
+     * null if it doesn't look like a real number.
+     */
+    private fun normalizePhone(raw: String): String? {
+        val trimmed = raw.trim()
+        val digits = trimmed.filter { it.isDigit() }
+        if (digits.length < 7 || digits.length > 15) return null
+        return if (trimmed.startsWith("+")) "+$digits" else digits
     }
 
     private fun disableAll() {
