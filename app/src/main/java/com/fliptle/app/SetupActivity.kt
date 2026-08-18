@@ -4,9 +4,19 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import com.fliptle.app.accessibility.AccessibilityDisclosureActivity
 
-/** Setup hub: manage what's blocked, the freeze schedule, and permissions. */
+/**
+ * Setup hub, grouped into three sections:
+ *   Blocking       — blocked apps, blocked domains, in-app surfaces
+ *   Commitment     — the freeze cycle & schedule
+ *   Account safety — request to uninstall
+ *
+ * Deliberately NOT here: detected browsers (handled automatically by
+ * [BrowserDetector]), the content-blocklist status page, the URL-blocking
+ * disclosure (shown during onboarding where consent is actually given), and the
+ * setup wizard re-run. The typing gate is likewise not a standalone entry — it is
+ * reachable only as a step inside "Request to uninstall".
+ */
 class SetupActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,14 +27,8 @@ class SetupActivity : AppCompatActivity() {
         open(R.id.blockedAppsButton, AppListActivity::class.java)
         open(R.id.blockedDomainsButton, DomainListActivity::class.java)
         open(R.id.surfacesButton, SurfaceBlockActivity::class.java)
-        open(R.id.valveButton, ReelsValveActivity::class.java)
-        open(R.id.browsersButton, BrowserListActivity::class.java)
-        open(R.id.blocklistButton, BlocklistStatusActivity::class.java)
         open(R.id.scheduleButton, FreezeActivity::class.java)
-        open(R.id.a11yButton, AccessibilityDisclosureActivity::class.java)
-        open(R.id.typingGateButton, TypingGateActivity::class.java)
         open(R.id.uninstallButton, UninstallRequestActivity::class.java)
-        open(R.id.wizardButton, OnboardingActivity::class.java)
     }
 
     override fun onResume() {

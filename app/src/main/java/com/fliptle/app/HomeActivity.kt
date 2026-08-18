@@ -15,19 +15,27 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.fliptle.app.auth.SignInActivity
-import kotlin.math.ceil
 
-/** Calm, minimal home: freeze state, taper tier, and what's blocked at a glance. */
+/**
+ * Home has two faces:
+ *
+ *  • First launch — nothing committed yet: a single "Let's start this journey"
+ *    action, and nothing else to read or decide.
+ *  • Once set up — the status the user actually returns for: the "Day X since you
+ *    enabled Porn Blocking" streak and the current freeze state, with the review
+ *    surfaced as a banner when day 3 arrives.
+ */
 class HomeActivity : AppCompatActivity() {
 
     private lateinit var freezeStore: FreezeStore
-    private lateinit var taper: TaperStore
+    private lateinit var pornBlock: PornBlockStore
 
+    private lateinit var startSection: View
+    private lateinit var statusSection: View
+    private lateinit var pornDayText: TextView
     private lateinit var freezeStatusText: TextView
-    private lateinit var taperText: TextView
-    private lateinit var blockedText: TextView
+    private lateinit var freezeDetailText: TextView
     private lateinit var reviewBanner: LinearLayout
-    private lateinit var reviewButton: Button
 
     private val handler = Handler(Looper.getMainLooper())
     private val tick = object : Runnable {
@@ -39,20 +47,27 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Compulsory permissions: if any is missing, bounce back to onboarding.
+        // Compulsory permissions: if any is missing, bounce to the guard.
         if (!Permissions.gate(this)) return
-        // Mandatory after sign-in: no reaching Home without a parent phone number.
-        if (!PhoneGate.gate(this)) return
+        // Sign-in is mandatory; an unauthenticated user is sent to sign in.
+        if (!AuthGate.gate(this)) return
         setContentView(R.layout.activity_home)
         freezeStore = FreezeStore(this)
-        taper = TaperStore(this)
+        pornBlock = PornBlockStore(this)
 
+        startSection = findViewById(R.id.startSection)
+        statusSection = findViewById(R.id.statusSection)
+        pornDayText = findViewById(R.id.pornDayText)
         freezeStatusText = findViewById(R.id.freezeStatusText)
-        taperText = findViewById(R.id.taperText)
-        blockedText = findViewById(R.id.blockedText)
+        freezeDetailText = findViewById(R.id.freezeDetailText)
         reviewBanner = findViewById(R.id.reviewBanner)
-        reviewButton = findViewById(R.id.reviewButton)
 
+        // Hidden developer unlock (debug builds only; inert in release).
+        DevMode.attachUnlockGesture(findViewById(R.id.homeTitle))
+
+        findViewById<Button>(R.id.startJourneyButton).setOnClickListener {
+            startActivity(Intent(this, PornBlockActivity::class.java))
+        }
         findViewById<Button>(R.id.freezeButton).setOnClickListener {
             startActivity(Intent(this, FreezeActivity::class.java))
         }
@@ -62,7 +77,7 @@ class HomeActivity : AppCompatActivity() {
         findViewById<Button>(R.id.accountButton).setOnClickListener {
             startActivity(Intent(this, SignInActivity::class.java))
         }
-        reviewButton.setOnClickListener {
+        findViewById<Button>(R.id.reviewButton).setOnClickListener {
             startActivity(Intent(this, FreezeActivity::class.java))
         }
 
@@ -76,8 +91,7 @@ class HomeActivity : AppCompatActivity() {
         super.onResume()
         // Re-check on every return; a revoked permission blocks the main flow.
         if (!Permissions.gate(this)) return
-        // A signed-in user who backed out without a phone is bounced right back.
-        if (!PhoneGate.gate(this)) return
+        if (!AuthGate.gate(this)) return
         com.fliptle.app.auth.Heartbeat.beat(this)
         handler.post(tick)
     }
@@ -87,37 +101,54 @@ class HomeActivity : AppCompatActivity() {
         handler.removeCallbacks(tick)
     }
 
+    /** "Set up" = the journey has begun: porn blocking on, or a cycle running. */
+    private fun isSetUp(): Boolean = pornBlock.enabled || freezeStore.active
+
     private fun render() {
+        if (!isSetUp()) {
+            startSection.visibility = View.VISIBLE
+            statusSection.visibility = View.GONE
+            return
+        }
+        startSection.visibility = View.GONE
+        statusSection.visibility = View.VISIBLE
+
+        pornDayText.text = if (pornBlock.enabled) {
+            getString(R.string.porn_day_counter, pornBlock.dayCount())
+        } else {
+            getString(R.string.home_porn_off)
+        }
+
         when (freezeStore.state()) {
             FreezeStore.State.NONE -> {
                 freezeStatusText.setText(R.string.home_freeze_none)
+                freezeDetailText.text = getString(R.string.freeze_none_detail, freezeStore.cycleDays())
                 reviewBanner.visibility = View.GONE
             }
-            FreezeStore.State.FROZEN -> {
-                val minutes = ceil(freezeStore.remainingMs() / 60_000.0).toLong()
-                freezeStatusText.text = getString(R.string.home_freeze_frozen, minutes)
-                reviewBanner.visibility = View.GONE
-            }
-            FreezeStore.State.VERIFYING -> {
-                freezeStatusText.setText(R.string.home_freeze_verifying)
+            FreezeStore.State.LOCKED -> {
+                freezeStatusText.text = getString(
+                    R.string.home_freeze_locked, freezeStore.dayNumber(), freezeStore.cycleDays()
+                )
+                freezeDetailText.text = getString(R.string.home_freeze_locked_detail, blockedSummary())
                 reviewBanner.visibility = View.GONE
             }
             FreezeStore.State.REVIEW -> {
-                freezeStatusText.setText(R.string.home_freeze_review)
+                freezeStatusText.text = getString(R.string.home_freeze_review, freezeStore.dayNumber())
+                freezeDetailText.text = getString(R.string.home_freeze_locked_detail, blockedSummary())
                 reviewBanner.visibility = View.VISIBLE
             }
+            FreezeStore.State.VERIFYING -> {
+                freezeStatusText.setText(R.string.home_freeze_verifying)
+                freezeDetailText.setText(R.string.verifying_locked)
+                reviewBanner.visibility = View.GONE
+            }
         }
+    }
 
-        taperText.text = getString(R.string.home_taper, taper.currentTier())
-
-        val blockedApps = BlockedAppsStore(this).get().size
-        val a11y = if (Permissions.isAccessibilityEnabled(this)) getString(R.string.on_word) else getString(R.string.off_word)
-        blockedText.text = getString(
-            R.string.home_blocked_summary,
-            blockedApps,
-            AdultBlocklist.count,
-            a11y
-        )
+    private fun blockedSummary(): String {
+        val apps = BlockedAppsStore(this).get().size
+        val allowance = ReelsAllowance(this)
+        return getString(R.string.home_blocked_summary, apps, allowance.sessionMin, allowance.perDay)
     }
 
     private fun requestNotificationPermissionIfNeeded() {

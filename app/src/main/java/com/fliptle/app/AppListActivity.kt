@@ -59,14 +59,21 @@ class AppListActivity : AppCompatActivity() {
     }
 
     private fun save() {
+        // Blocked apps are a committed setting: frozen during the 3-day lock.
+        if (!Commitment.guard(this)) return
+
         val selected = HashSet<String>()
         val checked = listView.checkedItemPositions
         for (i in entries.indices) {
             if (checked.get(i)) selected.add(entries[i].pkg)
         }
-        BlockedAppsStore(this).set(selected)
+        val store = BlockedAppsStore(this)
+        val changed = store.get() != selected
+        store.set(selected)
         BlockingService.start(this) // make sure enforcement is running
         Toast.makeText(this, R.string.apps_saved, Toast.LENGTH_SHORT).show()
+        // Changing what's blocked at review starts the next 3-day cycle.
+        if (changed) Commitment.onChanged(this)
         finish()
     }
 }

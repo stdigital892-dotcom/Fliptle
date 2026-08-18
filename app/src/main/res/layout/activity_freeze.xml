@@ -11,6 +11,7 @@
         android:padding="24dp">
 
         <TextView
+            android:id="@+id/freezeTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/freeze_title"
@@ -18,72 +19,92 @@
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/taperStatusText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:lineSpacingMultiplier="1.2"
-            android:textSize="16sp"
+            android:text="@string/freeze_body"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/cycleStatusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:textSize="20sp"
             android:textStyle="bold" />
 
-        <Button
-            android:id="@+id/taperStartButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="@string/taper_start" />
-
-        <CheckBox
-            android:id="@+id/debugModeCheck"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="@string/debug_mode" />
-
         <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="@string/manual_freeze_label"
-            android:textSize="14sp" />
-
-        <EditText
-            android:id="@+id/minutesInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:hint="@string/minutes_hint"
-            android:inputType="number"
-            android:importantForAutofill="no" />
-
-        <Button
-            android:id="@+id/startButton"
+            android:id="@+id/cycleDetailText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="@string/start_freeze" />
+            android:lineSpacingMultiplier="1.2"
+            android:textSize="15sp" />
+
+        <Button
+            android:id="@+id/startCycleButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/freeze_start" />
+
+        <LinearLayout
+            android:id="@+id/reviewSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="#33FF9800"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/freeze_review_title"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:lineSpacingMultiplier="1.2"
+                android:text="@string/freeze_review_body"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/reviewAppsButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/setup_apps" />
+
+            <Button
+                android:id="@+id/reviewDomainsButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/setup_domains" />
+
+            <Button
+                android:id="@+id/reviewSurfacesButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/setup_surfaces" />
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/countdownText"
+            android:id="@+id/devStatusText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:gravity="center"
-            android:textSize="20sp" />
-
-        <Button
-            android:id="@+id/extendButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="@string/extend_freeze" />
-
-        <Button
-            android:id="@+id/cancelButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/reduce_cancel_freeze" />
+            android:layout_marginTop="20dp"
+            android:textColor="#B71C1C"
+            android:textSize="13sp"
+            android:textStyle="italic"
+            android:visibility="gone" />
 
     </LinearLayout>
 </ScrollView>

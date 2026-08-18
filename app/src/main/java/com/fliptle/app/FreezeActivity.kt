@@ -1,32 +1,31 @@
 package com.fliptle.app
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.View
 import android.widget.Button
-import android.widget.CheckBox
-import android.widget.EditText
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.math.ceil
 
+/**
+ * The commitment screen: start a 3-day cycle, watch it run, and review it once
+ * day 3 arrives. There is no cancel and no timer to shorten — the cycle only ends
+ * by being replaced with a new one when the user changes a committed setting.
+ */
 class FreezeActivity : AppCompatActivity() {
 
     private lateinit var store: FreezeStore
-    private lateinit var taper: TaperStore
-    private lateinit var minutesInput: EditText
+
+    private lateinit var statusText: TextView
+    private lateinit var detailText: TextView
     private lateinit var startButton: Button
-    private lateinit var taperStartButton: Button
-    private lateinit var taperStatusText: TextView
-    private lateinit var debugModeCheck: CheckBox
-    private lateinit var countdownText: TextView
-    private lateinit var extendButton: Button
-    private lateinit var cancelButton: Button
+    private lateinit var reviewSection: View
+    private lateinit var devStatusText: TextView
 
     private val handler = Handler(Looper.getMainLooper())
     private val io = Executors.newSingleThreadExecutor()
@@ -42,64 +41,31 @@ class FreezeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Never present a freeze without enforcement permissions in place.
         if (!Permissions.gate(this)) return
         setContentView(R.layout.activity_freeze)
         store = FreezeStore(this)
-        taper = TaperStore(this)
 
-        minutesInput = findViewById(R.id.minutesInput)
-        startButton = findViewById(R.id.startButton)
-        taperStartButton = findViewById(R.id.taperStartButton)
-        taperStatusText = findViewById(R.id.taperStatusText)
-        debugModeCheck = findViewById(R.id.debugModeCheck)
-        countdownText = findViewById(R.id.countdownText)
-        extendButton = findViewById(R.id.extendButton)
-        cancelButton = findViewById(R.id.cancelButton)
+        statusText = findViewById(R.id.cycleStatusText)
+        detailText = findViewById(R.id.cycleDetailText)
+        startButton = findViewById(R.id.startCycleButton)
+        reviewSection = findViewById(R.id.reviewSection)
+        devStatusText = findViewById(R.id.devStatusText)
 
-        debugModeCheck.isChecked = taper.debugMode
-        debugModeCheck.setOnCheckedChangeListener { _, checked ->
-            taper.debugMode = checked
-            render()
-        }
+        // Hidden developer unlock (debug builds only; inert in release).
+        DevMode.attachUnlockGesture(findViewById(R.id.freezeTitle))
 
         startButton.setOnClickListener {
-            val ms = enteredMinutesMs() ?: return@setOnClickListener
-            taper.onManualFreezeStarted() // a manual freeze does not count as a cycle
-            store.start(ms)
-            minutesInput.text.clear()
+            store.startCycle()
             render()
         }
+        open(R.id.reviewAppsButton, AppListActivity::class.java)
+        open(R.id.reviewDomainsButton, DomainListActivity::class.java)
+        open(R.id.reviewSurfacesButton, SurfaceBlockActivity::class.java)
+    }
 
-        taperStartButton.setOnClickListener {
-            taper.onTaperFreezeStarted()
-            store.start(taper.currentDurationMs())
-            render()
-        }
-
-        extendButton.setOnClickListener {
-            // Tightening is always allowed, even while VERIFYING.
-            val ms = enteredMinutesMs() ?: return@setOnClickListener
-            store.extend(ms)
-            minutesInput.text.clear()
-            render()
-        }
-
-        cancelButton.setOnClickListener {
-            // Only reachable in REVIEW state (disabled while frozen/verifying).
-            if (store.state() == FreezeStore.State.REVIEW) {
-                // Actively confirming a COMPLETED taper freeze advances the tier.
-                val newTier = taper.onCycleConfirmed()
-                store.confirmClear()
-                render()
-                if (newTier != null) {
-                    Toast.makeText(
-                        this,
-                        getString(R.string.cycle_complete, newTier),
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
+    private fun open(buttonId: Int, target: Class<*>) {
+        findViewById<Button>(buttonId).setOnClickListener {
+            startActivity(Intent(this, target))
         }
     }
 
@@ -119,87 +85,51 @@ class FreezeActivity : AppCompatActivity() {
         io.shutdownNow()
     }
 
-    private fun enteredMinutesMs(): Long? {
-        val minutes = minutesInput.text.toString().trim().toLongOrNull()
-        if (minutes == null || minutes <= 0) {
-            Toast.makeText(this, R.string.enter_valid_minutes, Toast.LENGTH_SHORT).show()
-            return null
-        }
-        return minutes * 60_000L
-    }
-
     private fun render() {
-        renderTaperStatus()
-        when (store.state()) {
+        val state = store.state()
+        startButton.visibility = if (state == FreezeStore.State.NONE) View.VISIBLE else View.GONE
+        reviewSection.visibility = if (state == FreezeStore.State.REVIEW) View.VISIBLE else View.GONE
+
+        when (state) {
             FreezeStore.State.NONE -> {
-                startButton.visibility = View.VISIBLE
-                taperStartButton.visibility = View.VISIBLE
-                debugModeCheck.visibility = View.VISIBLE
-                countdownText.visibility = View.GONE
-                extendButton.visibility = View.GONE
-                cancelButton.visibility = View.GONE
-                minutesInput.hint = getString(R.string.minutes_hint)
+                statusText.setText(R.string.freeze_none_status)
+                detailText.text = getString(R.string.freeze_none_detail, store.cycleDays())
             }
 
-            FreezeStore.State.FROZEN -> {
-                showActiveControls()
-                val remaining = store.remainingMs()
-                val minutes = ceil(remaining / 60_000.0).toLong()
-                countdownText.text = getString(R.string.locked_for, minutes, mmss(remaining))
-                extendButton.isEnabled = true
-                cancelButton.isEnabled = false
+            FreezeStore.State.LOCKED -> {
+                statusText.text = getString(R.string.freeze_day, store.dayNumber(), store.cycleDays())
+                detailText.text = getString(R.string.freeze_locked_detail, dhm(store.remainingMs()))
                 // Correct any start-time clock offset against trusted time (once).
                 if (!store.wallTrusted) maybeFetchTrustedTime(reboot = false)
             }
 
+            FreezeStore.State.REVIEW -> {
+                statusText.text = getString(R.string.freeze_day_review, store.dayNumber())
+                detailText.setText(R.string.freeze_review_detail)
+            }
+
             FreezeStore.State.VERIFYING -> {
-                showActiveControls()
-                countdownText.text = getString(R.string.verifying_locked)
-                extendButton.isEnabled = true   // tightening still allowed
-                cancelButton.isEnabled = false  // cannot loosen while locked
+                statusText.setText(R.string.freeze_verifying_status)
+                detailText.setText(R.string.verifying_locked)
                 // Reboot detected: only trusted network time can re-anchor.
                 maybeFetchTrustedTime(reboot = true)
             }
-
-            FreezeStore.State.REVIEW -> {
-                showActiveControls()
-                countdownText.text = getString(R.string.review_available)
-                extendButton.isEnabled = true
-                cancelButton.isEnabled = true // confirm-to-change
-            }
         }
-    }
 
-    private fun showActiveControls() {
-        startButton.visibility = View.GONE
-        taperStartButton.visibility = View.GONE
-        debugModeCheck.visibility = View.GONE
-        countdownText.visibility = View.VISIBLE
-        extendButton.visibility = View.VISIBLE
-        cancelButton.visibility = View.VISIBLE
-        minutesInput.hint = getString(R.string.minutes_to_add_hint)
-    }
-
-    private fun renderTaperStatus() {
-        val cur = taper.currentTier()
-        val next = if (taper.isAtMax()) {
-            getString(R.string.taper_next_max)
+        // Developer-mode banner: only ever visible after the hidden unlock in a
+        // debug build, so normal users never see it.
+        if (DevMode.enabled(this)) {
+            devStatusText.visibility = View.VISIBLE
+            devStatusText.text = getString(R.string.dev_mode_on, dhm(store.cycleMs()))
         } else {
-            getString(R.string.taper_next, taper.nextTier())
+            devStatusText.visibility = View.GONE
         }
-        val sb = StringBuilder()
-        sb.append(getString(R.string.taper_status, cur, next))
-        sb.append("\n").append(getString(R.string.taper_cycles, taper.completedCycles()))
-        if (taper.debugMode) {
-            sb.append("\n").append(getString(R.string.taper_debug, mmss(taper.currentDurationMs())))
-        }
-        taperStatusText.text = sb.toString()
     }
 
     /**
      * Fetch trusted network time off the main thread, throttled. On success,
-     * re-anchor (after reboot) or correct the wall end (same boot). On failure the
-     * state is untouched, so a reboot stays LOCKED until verification succeeds.
+     * re-anchor (after reboot) or correct the wall deadline (same boot). On
+     * failure nothing changes, so a reboot stays LOCKED until it succeeds.
      */
     private fun maybeFetchTrustedTime(reboot: Boolean) {
         val now = SystemClock.elapsedRealtime()
@@ -220,9 +150,17 @@ class FreezeActivity : AppCompatActivity() {
         }
     }
 
-    private fun mmss(ms: Long): String {
-        val totalSeconds = ms / 1000
-        return String.format("%02d:%02d", totalSeconds / 60, totalSeconds % 60)
+    /** Coarse "2d 04h" / "04h 12m" / "12m 30s" formatting for long waits. */
+    private fun dhm(ms: Long): String {
+        val s = ms / 1000
+        val d = s / 86_400
+        val h = (s % 86_400) / 3600
+        val m = (s % 3600) / 60
+        return when {
+            d > 0 -> String.format("%dd %02dh", d, h)
+            h > 0 -> String.format("%02dh %02dm", h, m)
+            else -> String.format("%02dm %02ds", m, s % 60)
+        }
     }
 
     companion object {

@@ -29,9 +29,12 @@ object Heartbeat {
     fun graceMs(context: Context): Long =
         if (isDebug(context)) DEBUG_GRACE_MS else GRACE_MS
 
+    /** Fast grace window for testing. Gated on DevMode, so a stale flag cannot
+     *  shorten the real 24h grace in a shipped build. */
     fun isDebug(context: Context): Boolean =
-        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getBoolean(KEY_DEBUG, false)
+        com.fliptle.app.DevMode.enabled(context) &&
+            context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getBoolean(KEY_DEBUG, false)
 
     fun setDebug(context: Context, value: Boolean) {
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)

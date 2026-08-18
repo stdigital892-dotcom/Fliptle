@@ -33,13 +33,24 @@ android {
         }
     }
 
+    buildFeatures {
+        buildConfig true
+    }
+
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
+            // Developer tools (fast freeze cycles, fast Reels cooldowns, surface
+            // id logging) exist ONLY in debug builds. Even here they stay hidden
+            // behind a gesture — see DevMode.
+            buildConfigField "boolean", "DEV_TOOLS", "true"
         }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // Hard off in release: DevMode short-circuits, so no debug timing or
+            // developer UI is reachable in a shipped build.
+            buildConfigField "boolean", "DEV_TOOLS", "false"
         }
     }
 

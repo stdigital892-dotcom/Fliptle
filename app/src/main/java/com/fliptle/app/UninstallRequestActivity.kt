@@ -102,10 +102,20 @@ class UninstallRequestActivity : AppCompatActivity() {
 
         resetOnMissCheck.isChecked = store.resetOnMiss
         resetOnMissCheck.setOnCheckedChangeListener { _, v -> store.resetOnMiss = v }
-        debugCheck.isChecked = store.debugMode
-        debugCheck.setOnCheckedChangeListener { _, v -> store.debugMode = v; render() }
-        heartbeatDebugCheck.isChecked = Heartbeat.isDebug(this)
-        heartbeatDebugCheck.setOnCheckedChangeListener { _, v -> Heartbeat.setDebug(this, v) }
+
+        // Short-day / fast-heartbeat testing switches are developer tools: hidden
+        // unless DevMode is unlocked, and absent entirely from release builds.
+        if (DevMode.enabled(this)) {
+            debugCheck.visibility = View.VISIBLE
+            heartbeatDebugCheck.visibility = View.VISIBLE
+            debugCheck.isChecked = store.debugMode
+            debugCheck.setOnCheckedChangeListener { _, v -> store.debugMode = v; render() }
+            heartbeatDebugCheck.isChecked = Heartbeat.isDebug(this)
+            heartbeatDebugCheck.setOnCheckedChangeListener { _, v -> Heartbeat.setDebug(this, v) }
+        } else {
+            debugCheck.visibility = View.GONE
+            heartbeatDebugCheck.visibility = View.GONE
+        }
 
         startDayButton.setOnClickListener { startDay() }
         submitAnswerButton.setOnClickListener { submitAnswer() }

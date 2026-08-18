@@ -25,8 +25,10 @@ class UninstallGateStore(context: Context) {
     val approved: Boolean get() = prefs.getBoolean(KEY_APPROVED, false)
     val daysDone: Int get() = prefs.getInt(KEY_DAYS, 0)
 
+    /** Short "days" for testing. Reads false unless DevMode is unlocked, so a flag
+     *  left set can never shorten the real 5-day gate in a shipped build. */
     var debugMode: Boolean
-        get() = prefs.getBoolean(KEY_DEBUG, false)
+        get() = DevMode.enabled(appContext) && prefs.getBoolean(KEY_DEBUG, false)
         set(v) = prefs.edit().putBoolean(KEY_DEBUG, v).apply()
 
     /** Strict mode: reset to day 0 if a whole extra day window is missed. */

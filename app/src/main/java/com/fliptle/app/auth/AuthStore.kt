@@ -28,10 +28,11 @@ class AuthStore(context: Context) {
         set(value) = prefs.edit().putString(KEY_PHONE, value).apply()
 
     /**
-     * Whether the mandatory parent phone number has been provided for the current
-     * signed-in user. Set optimistically on a valid entry (so an offline user is
-     * never trapped) and cleared on a fresh install (prefs wiped). Gated on by
-     * [com.fliptle.app.PhoneGate] to force the phone screen after any sign-in.
+     * Whether the parent phone step has been handled for the current signed-in
+     * user — either a number was entered or it was skipped. Set optimistically on
+     * a valid entry (so an offline user is never trapped) and cleared on a fresh
+     * install (prefs wiped). Read by [com.fliptle.app.PhoneGate], whose
+     * enforcement is currently off (the phone number is optional for now).
      */
     var parentPhoneProvided: Boolean
         get() = prefs.getBoolean(KEY_PHONE_PROVIDED, false)
