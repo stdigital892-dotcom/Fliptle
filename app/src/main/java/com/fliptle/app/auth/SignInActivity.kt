@@ -79,6 +79,7 @@ class SignInActivity : AppCompatActivity() {
         findViewById<Button>(R.id.emailSignUpButton).setOnClickListener { signUpEmail() }
         findViewById<Button>(R.id.emailSignInButton).setOnClickListener { signInEmail() }
         findViewById<Button>(R.id.savePhoneButton).setOnClickListener { saveParentPhone() }
+        findViewById<Button>(R.id.skipPhoneButton).setOnClickListener { skipPhone() }
 
         auth?.currentUser?.let { showSignedInState() }
     }
@@ -207,6 +208,16 @@ class SignInActivity : AppCompatActivity() {
             runOnUiThread { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() }
         }
         Toast.makeText(this, R.string.auth_phone_saved, Toast.LENGTH_SHORT).show()
+        finish()
+    }
+
+    /**
+     * Skip the phone step for now (optional until the partner system ships). Marks
+     * the phone as "handled" so the gate — if it is ever re-enabled — is satisfied,
+     * and proceeds to the main app without saving a number.
+     */
+    private fun skipPhone() {
+        AuthStore(this).parentPhoneProvided = true
         finish()
     }
 

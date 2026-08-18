@@ -9,21 +9,23 @@ import com.fliptle.app.auth.SignInActivity
 import com.google.firebase.auth.FirebaseAuth
 
 /**
- * Enforces the mandatory parent phone number after sign-in.
+ * Optional (for now) parent phone number after sign-in.
  *
- * Auth itself is optional — a user who never signs in is never asked for a phone.
- * But once a user HAS signed in (by any method: Google or email/password), a valid
- * parent phone number is required before they can reach the main app. This gate
- * bounces such a user to [SignInActivity], where the phone step blocks progress
- * until a plausible number is entered.
- *
- * The device is never trapped: SignInActivity remains exitable (back/home work),
- * the gate simply refuses to let the main app open until the number is provided.
+ * The phone step still appears after every sign-in, but it is currently SKIPPABLE:
+ * the user can proceed to the main app without entering a number. Enforcement is
+ * off ([ENFORCED] = false) until the partner system is built. Flip [ENFORCED] to
+ * true to make the number mandatory again — the gate then bounces a signed-in user
+ * with no phone to [SignInActivity] (which stays exitable, so the device is never
+ * trapped) until a plausible number is entered.
  */
 object PhoneGate {
 
+    /** Master switch. false = phone is optional/skippable; true = mandatory. */
+    private const val ENFORCED = false
+
     /** True when a user is signed in but has not yet provided a parent phone. */
     fun required(context: Context): Boolean {
+        if (!ENFORCED) return false
         if (!FirebaseGate.isAvailable(context)) return false
         FirebaseAuth.getInstance().currentUser ?: return false
         return !AuthStore(context).parentPhoneProvided
