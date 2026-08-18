@@ -25,6 +25,7 @@ class OnboardingActivity : AppCompatActivity() {
     private lateinit var actionButton: Button
     private lateinit var backButton: Button
     private lateinit var nextButton: Button
+    private lateinit var tutorialButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,7 +36,9 @@ class OnboardingActivity : AppCompatActivity() {
         actionButton = findViewById(R.id.actionButton)
         backButton = findViewById(R.id.backButton)
         nextButton = findViewById(R.id.nextButton)
+        tutorialButton = findViewById(R.id.tutorialButton)
 
+        tutorialButton.setOnClickListener { openTutorial() }
         actionButton.setOnClickListener { onAction() }
         backButton.setOnClickListener { if (step > 0) { step--; render() } }
         nextButton.setOnClickListener { onNext() }
@@ -100,17 +103,32 @@ class OnboardingActivity : AppCompatActivity() {
 
     /** Whether the current step's requirement is satisfied (gates the Next button). */
     private fun stepSatisfied(): Boolean = when (step) {
-        STEP_INTRO, STEP_SIGNIN -> true // intro has no gate; sign-in is optional
+        STEP_INTRO -> true
+        // Sign-in is MANDATORY — Next stays disabled until a user is signed in.
+        // (If Firebase isn't configured, signing in is impossible, so the step
+        // stands down rather than trapping the user on an unusable screen.)
+        STEP_SIGNIN -> !AuthGate.required(this)
         STEP_USAGE -> Permissions.hasUsageAccess(this)
         STEP_OVERLAY -> Permissions.hasOverlay(this)
         STEP_ACCESSIBILITY -> Permissions.isAccessibilityEnabled(this)
         else -> true
     }
 
+    /** Placeholder tutorial link — swap for the real video when it's published. */
+    private fun openTutorial() {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(TUTORIAL_URL)))
+        } catch (_: Exception) {
+            // No browser/YouTube available; nothing to do.
+        }
+    }
+
     private fun render() {
         backButton.visibility = if (step > STEP_INTRO) View.VISIBLE else View.GONE
         actionButton.visibility = View.VISIBLE
         statusText.visibility = View.VISIBLE
+        // The tutorial link belongs on the welcome screen only.
+        tutorialButton.visibility = if (step == STEP_INTRO) View.VISIBLE else View.GONE
         nextButton.text = getString(if (step == STEP_LAST) R.string.ob_finish else R.string.ob_next)
         // Compulsory: Next/Finish stays disabled until the step is actually satisfied.
         nextButton.isEnabled = stepSatisfied()
@@ -127,13 +145,13 @@ class OnboardingActivity : AppCompatActivity() {
                 titleText.setText(R.string.ob_signin_title)
                 bodyText.setText(R.string.ob_signin_body)
                 actionButton.setText(R.string.ob_signin_action)
+                nextButton.setText(R.string.ob_continue)
                 val account = signedInAccount()
                 statusText.text = if (account != null) {
                     getString(R.string.status_signed_in, account)
                 } else {
                     getString(R.string.status_not_signed_in)
                 }
-                nextButton.setText(R.string.ob_continue)
             }
             STEP_USAGE -> {
                 titleText.setText(R.string.ob_usage_title)
@@ -172,6 +190,9 @@ class OnboardingActivity : AppCompatActivity() {
     }
 
     companion object {
+        /** PLACEHOLDER — replace with the real Fliptle tutorial video URL. */
+        private const val TUTORIAL_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+
         private const val STEP_INTRO = 0
         private const val STEP_SIGNIN = 1
         private const val STEP_USAGE = 2

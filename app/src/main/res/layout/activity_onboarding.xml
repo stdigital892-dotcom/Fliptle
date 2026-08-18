@@ -10,6 +10,7 @@
         android:id="@+id/stepTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:lineSpacingMultiplier="1.15"
         android:textSize="22sp"
         android:textStyle="bold" />
 
@@ -26,6 +27,14 @@
             android:lineSpacingMultiplier="1.2"
             android:textSize="16sp" />
     </ScrollView>
+
+    <Button
+        android:id="@+id/tutorialButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:text="@string/ob_watch_tutorial"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/stepStatus"

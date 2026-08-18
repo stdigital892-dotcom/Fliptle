@@ -29,6 +29,8 @@ class DomainListActivity : AppCompatActivity() {
             if (text.isBlank()) {
                 Toast.makeText(this, R.string.enter_domain, Toast.LENGTH_SHORT).show()
             } else {
+                // Adding a domain TIGHTENS, so it is always allowed — the lock
+                // exists to stop loosening, never to stop blocking more.
                 store.add(text)
                 input.text.clear()
                 refresh()
@@ -40,8 +42,11 @@ class DomainListActivity : AppCompatActivity() {
             if (store.isBuiltIn(domain)) {
                 Toast.makeText(this, R.string.builtin_not_removable, Toast.LENGTH_SHORT).show()
             } else {
+                // Removing a domain LOOSENS: committed, so frozen during the lock.
+                if (!Commitment.guard(this)) return@setOnItemClickListener
                 store.removeUser(domain)
                 refresh()
+                Commitment.onChanged(this)
             }
         }
 

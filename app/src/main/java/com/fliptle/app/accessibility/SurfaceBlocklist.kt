@@ -10,8 +10,8 @@ import android.content.Context
  */
 class SurfaceBlocklist(context: Context) {
 
-    private val prefs = context.applicationContext
-        .getSharedPreferences("surface_blocks", Context.MODE_PRIVATE)
+    private val appContext = context.applicationContext
+    private val prefs = appContext.getSharedPreferences("surface_blocks", Context.MODE_PRIVATE)
 
     var reels: Boolean
         get() = prefs.getBoolean(KEY_REELS, true)
@@ -25,9 +25,11 @@ class SurfaceBlocklist(context: Context) {
         get() = prefs.getBoolean(KEY_SHORTS, true)
         set(v) = prefs.edit().putBoolean(KEY_SHORTS, v).apply()
 
-    /** When on, the service logs what it matches and does NOT block, for diagnosis. */
+    /** When on, the service logs what it matches and does NOT block, for diagnosis.
+     *  Developer tool: reads false unless DevMode is unlocked, so a stale flag can
+     *  never leave a shipped build in observe-only (non-blocking) mode. */
     var debug: Boolean
-        get() = prefs.getBoolean(KEY_DEBUG, false)
+        get() = com.fliptle.app.DevMode.enabled(appContext) && prefs.getBoolean(KEY_DEBUG, false)
         set(v) = prefs.edit().putBoolean(KEY_DEBUG, v).apply()
 
     fun isBlocked(surface: SurfaceDetector.Surface): Boolean = when (surface) {

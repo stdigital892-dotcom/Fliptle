@@ -25,11 +25,20 @@
             android:textSize="15sp"
             android:lineSpacingMultiplier="1.2" />
 
+        <TextView
+            android:id="@+id/surfaceLockText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textColor="#0D47A1"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
         <CheckBox
             android:id="@+id/reelsCheck"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="16dp"
             android:text="@string/surface_reels" />
 
         <CheckBox
@@ -46,6 +55,98 @@
             android:layout_marginTop="8dp"
             android:text="@string/surface_shorts" />
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="24dp"
+            android:background="#33000000" />
+
+        <!-- Reels allowance: part of the freeze commitment, not a separate valve. -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/allowance_title"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/allowanceStatusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/allowanceCountdownText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="15sp"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/startSessionButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/allowance_start" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/allowance_session_label" />
+
+        <EditText
+            android:id="@+id/sessionInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:importantForAutofill="no"
+            android:inputType="number" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/allowance_perday_label" />
+
+        <EditText
+            android:id="@+id/perDayInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:importantForAutofill="no"
+            android:inputType="number" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/allowance_cooldown_label" />
+
+        <EditText
+            android:id="@+id/cooldownInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:importantForAutofill="no"
+            android:inputType="number" />
+
+        <TextView
+            android:id="@+id/allowanceBoundsText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="13sp"
+            android:textStyle="italic" />
+
+        <Button
+            android:id="@+id/saveAllowanceButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/allowance_save" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -54,48 +155,58 @@
             android:textSize="13sp"
             android:textStyle="italic" />
 
-        <CheckBox
-            android:id="@+id/debugCheck"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="@string/surfaces_debug_toggle" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/surfaces_debug_hint"
-            android:textSize="13sp" />
-
+        <!-- Developer diagnostics. Hidden unless DevMode is unlocked (debug builds
+             only) — normal users never see this block. -->
         <LinearLayout
+            android:id="@+id/devSection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:visibility="gone">
 
-            <Button
-                android:id="@+id/refreshLogButton"
-                android:layout_width="0dp"
+            <CheckBox
+                android:id="@+id/debugCheck"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/surfaces_debug_refresh" />
+                android:layout_marginTop="24dp"
+                android:text="@string/surfaces_debug_toggle" />
 
-            <Button
-                android:id="@+id/clearLogButton"
-                android:layout_width="0dp"
+            <TextView
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/surfaces_debug_clear" />
+                android:layout_marginTop="8dp"
+                android:text="@string/surfaces_debug_hint"
+                android:textSize="13sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/refreshLogButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/surfaces_debug_refresh" />
+
+                <Button
+                    android:id="@+id/clearLogButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/surfaces_debug_clear" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/debugLogText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:fontFamily="monospace"
+                android:textSize="12sp" />
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/debugLogText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:fontFamily="monospace"
-            android:textSize="12sp" />
 
     </LinearLayout>
 </ScrollView>

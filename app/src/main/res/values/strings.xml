@@ -1,33 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Fliptle</string>
-    <string name="grant_button">Grant Usage Access</string>
-    <string name="permission_needed">Permission needed — tap the button above.</string>
-    <string name="foreground_label">Foreground app:</string>
 
-    <string name="open_freeze">Open Freeze</string>
-    <string name="freeze_title">Freeze</string>
-    <string name="minutes_hint">Duration in minutes</string>
-    <string name="minutes_to_add_hint">Minutes to add</string>
-    <string name="start_freeze">Start Freeze</string>
-    <string name="extend_freeze">Extend Freeze</string>
-    <string name="reduce_cancel_freeze">Reduce / Cancel Freeze</string>
-    <string name="locked_for">Locked for %1$d more minutes.\n(%2$s remaining)</string>
-    <string name="review_available">Review available — freeze still active. Confirm to change.</string>
-    <string name="verifying_locked">Reboot detected — freeze stays LOCKED until real time is verified from the network.\nConnect to the internet to verify. (Extending is still allowed.)</string>
-    <string name="enter_valid_minutes">Enter a positive number of minutes.</string>
+    <!-- Freeze: fixed 3-day commitment cycle -->
+    <string name="freeze_title">Your commitment</string>
+    <string name="freeze_body">A commitment runs in fixed 3-day cycles. While a cycle is running, your blocked apps, blocked domains and Reels allowance are locked — they can\'t be loosened. On day 3 a review opens and you can change anything; changing something starts a fresh 3-day cycle.</string>
+    <string name="freeze_start">Start my 3-day commitment</string>
+    <string name="freeze_none_status">No commitment running.</string>
+    <string name="freeze_none_detail">Start one and your choices stay locked for %1$d days.</string>
+    <string name="freeze_day">Day %1$d of %2$d — locked</string>
+    <string name="freeze_day_review">Day %1$d — review open</string>
+    <string name="freeze_locked_detail">Settings unlock for review in %1$s. Until then they can\'t be changed.</string>
+    <string name="freeze_review_detail">Your blocks are still running. Change any setting below to commit to a fresh 3-day cycle. If you change nothing, the current cycle simply keeps going.</string>
+    <string name="freeze_verifying_status">Locked — verifying real time</string>
+    <string name="freeze_review_title">Review is open</string>
+    <string name="freeze_review_body">Change what you\'re blocking, or leave it as it is. Any change starts a new 3-day cycle immediately.</string>
+    <string name="verifying_locked">Reboot detected — settings stay LOCKED until real time is verified from the network.\nConnect to the internet to verify.</string>
 
-    <string name="taper_status">Current freeze: %1$d day(s). Next tier: %2$s</string>
-    <string name="taper_next">%1$d days after this cycle</string>
-    <string name="taper_next_max">7 days (maximum reached)</string>
-    <string name="taper_cycles">Completed cycles: %1$d</string>
-    <string name="taper_debug">[DEBUG] current freeze length: %1$s (mm:ss)</string>
-    <string name="taper_start">Start Taper Freeze (current tier)</string>
-    <string name="debug_mode">Debug mode (short cycles for testing)</string>
-    <string name="manual_freeze_label">Or start a manual freeze (does not advance the taper):</string>
-    <string name="cycle_complete">Cycle complete! Freeze tier is now %1$d day(s).</string>
+    <!-- Commitment lock messages (shared by every committed setting) -->
+    <string name="commit_locked">Locked — day %1$d of %2$d. You can change this when the review opens on day %2$d.</string>
+    <string name="commit_locked_verifying">Locked — verifying real time after a reboot. Connect to the internet.</string>
+    <string name="commit_not_started">No commitment running — changes apply immediately.</string>
+    <string name="commit_review_open">Day %1$d — review open. A change starts a new 3-day cycle.</string>
+    <string name="commit_restarted">Change saved. A fresh %1$d-day cycle has started.</string>
 
-    <string name="grant_overlay">Grant Overlay Permission</string>
+    <!-- Porn blocking: one-way switch -->
+    <string name="porn_title">Porn blocking</string>
+    <string name="porn_off_status">Not enabled yet</string>
+    <string name="porn_off_body">Turning this on blocks adult sites across your browsers using an on-device list of 282,000+ domains, plus safe-search enforcement and blocked search keywords.</string>
+    <string name="porn_warning">This is permanent.\n\nOnce enabled, porn blocking CANNOT be turned off — there is no off switch anywhere in the app. The only way to remove it is uninstalling Fliptle, which itself takes 5 days of daily gates.</string>
+    <string name="porn_understand">I understand this cannot be undone</string>
+    <string name="porn_enable">Enable porn blocking permanently</string>
+    <string name="porn_confirm_title">Enable permanently?</string>
+    <string name="porn_confirm_body">There is no way to turn this off later. Continue?</string>
+    <string name="porn_confirm_ok">Enable permanently</string>
+    <string name="porn_confirm_cancel">Not yet</string>
+    <string name="porn_day_counter">Day %1$d since you enabled Porn Blocking</string>
+    <string name="porn_on_body">Porn blocking is on and cannot be turned off. This counter only ever counts up — it has no reset.</string>
+
+    <!-- Reels/Shorts allowance (part of the commitment) -->
+    <string name="allowance_title">Reels / Shorts allowance</string>
+    <string name="allowance_start">Start a session</string>
+    <string name="allowance_locked">Reels, Stories and Shorts are blocked.</string>
+    <string name="allowance_open">Session OPEN — Reels/Shorts/Stories are allowed.</string>
+    <string name="allowance_cooldown">Session over — cooling down.</string>
+    <string name="allowance_cap_reached">Daily allowance used up.</string>
+    <string name="allowance_verifying">Reboot detected — verifying real time…</string>
+    <string name="allowance_closes_in">Ends in %1$s</string>
+    <string name="allowance_ready_in">Next session in %1$s</string>
+    <string name="allowance_used">Sessions used: %1$d / %2$d today</string>
+    <string name="allowance_session_label">Session length (minutes)</string>
+    <string name="allowance_perday_label">Sessions per day</string>
+    <string name="allowance_cooldown_label">Cooldown between sessions (minutes)</string>
+    <string name="allowance_bounds">Limits: session ≤ %1$d min, ≤ %2$d per day, cooldown ≥ %3$d min. Values outside are clamped.</string>
+    <string name="allowance_save">Save allowance</string>
+    <string name="allowance_saved">Allowance saved.</string>
+    <string name="allowance_no_change">No changes.</string>
+    <string name="allowance_started">Session started.</string>
+    <string name="allowance_cap_toast">Daily allowance used up — no override.</string>
+    <string name="allowance_cooldown_toast">Still cooling down — wait for the cooldown to finish.</string>
+
+    <!-- Developer mode (debug builds only, hidden behind a gesture) -->
+    <string name="dev_mode_on">[DEV MODE] Short timers active — one cycle is %1$s.</string>
+
     <string name="select_apps">Select Apps to Block</string>
     <string name="save">Save</string>
     <string name="apps_saved">Blocked apps saved.</string>
@@ -46,14 +81,13 @@
     <string name="enter_domain">Enter a domain first.</string>
     <string name="builtin_not_removable">Built-in test domain — cannot be removed.</string>
 
-    <string name="open_a11y">Website URL Blocking (Accessibility)</string>
     <string name="url_blocked_title">Blocked</string>
     <string name="url_blocked_subtitle">This page is blocked.</string>
     <string name="website_blocked_title">Website blocked</string>
     <string name="website_blocked_subtitle">This site is on your blocklist.</string>
     <string name="website_blocked_home">Go to home screen</string>
     <string name="a11y_service_label">Focus URL Blocking</string>
-    <string name="a11y_service_description">Reads the address bar of browsers to block pages on your blocklist and enforce safe-search, and detects specific in-app surfaces (Instagram Reels/Stories, YouTube Shorts) to block them. Adult sites are always blocked; distraction surfaces can be opened briefly via a controlled-access valve. No browsing data is stored or sent anywhere.</string>
+    <string name="a11y_service_description">Reads the address bar of browsers to block pages on your blocklist and enforce safe-search, and detects specific in-app surfaces (Instagram Reels/Stories, YouTube Shorts) to block them. Once you enable porn blocking it can never be switched off; distraction surfaces can be opened briefly via your daily Reels allowance. No browsing data is stored or sent anywhere.</string>
     <string name="a11y_disclosure_title">Website URL Blocking</string>
     <string name="a11y_disclosure_body">This feature uses Android\'s Accessibility service to read the URL shown in your browser\'s address bar.\n\nWhat it does with that text:\n• Compares the current URL against your local blocklist.\n• If it matches, it navigates the browser away from the page and shows a brief \"Blocked\" notice.\n• For Google, Bing, and DuckDuckGo searches it enforces safe-search, and blocks searches containing banned keywords.\n• In Instagram and YouTube it detects specific surfaces you\'ve chosen to block (Reels, Stories, Shorts) and navigates away — the rest of those apps stays usable.\n\nImportant guarantees:\n• It reads the address bar of browser apps to block adult sites (always) and configured distraction surfaces.\n• It does NOT log, store, or transmit your browsing history — matching happens entirely on-device.\n• This is a separate, optional module. You can turn it off any time in Accessibility settings without affecting the rest of the app.</string>
     <string name="a11y_open_settings">Open Accessibility Settings</string>
@@ -70,14 +104,7 @@
     <string name="update_done">Updated. %1$d unique domains merged.</string>
     <string name="update_partial">Updated to %1$d domains. %2$d source(s) ok; kept last-known for: %3$s</string>
 
-    <string name="open_auth">Sign in (phone)</string>
     <string name="auth_title">Sign in (free)</string>
-    <string name="phone_hint">Phone number, e.g. +15551234567</string>
-    <string name="send_code">Send code</string>
-    <string name="code_hint">6-digit code</string>
-    <string name="verify_code">Verify &amp; sign in</string>
-    <string name="enter_phone">Enter a phone number.</string>
-    <string name="enter_code">Enter the code you received.</string>
     <string name="firebase_not_configured">Firebase is not configured. Add google-services.json to enable sign-in. The app\'s protection features work without it.</string>
 
     <!-- Sign-in (Google + email/password) -->
@@ -101,12 +128,10 @@
     <string name="auth_parent_phone_field">e.g. +15551234567</string>
     <string name="auth_save_phone">Save and continue</string>
     <string name="auth_skip_phone">Skip for now</string>
-    <string name="auth_enter_parent_phone">Enter a phone number first.</string>
     <string name="auth_phone_invalid">Enter a valid phone number (7–15 digits, e.g. +15551234567).</string>
     <string name="auth_phone_saved">Phone number saved.</string>
 
     <!-- Typing gate -->
-    <string name="setup_typing_gate">Typing gate (1–50)</string>
     <string name="typing_title">Typing gate</string>
     <string name="typing_body">Type the numbers 1 to 50 in order with no spaces or commas (123456789101112…4950). You must type each character by hand — pasting or bulk input is rejected.</string>
     <string name="typing_hint">Start typing: 1 2 3 …</string>
@@ -142,11 +167,14 @@
     <string name="math_day_done">Day %1$d complete!</string>
 
     <!-- Onboarding -->
-    <string name="ob_intro_title">Welcome to Fliptle</string>
-    <string name="ob_intro_body">Fliptle helps you stay off distracting and adult content. You set a freeze; while it runs, the apps and websites you chose stay blocked. A freeze can\'t be shortened once it starts — only extended. As you complete freezes, the taper lengthens the next one, up to 7 days.\n\nNext we\'ll sign you in (optional) and turn on a few permissions the blocking needs. We\'ll explain each one.</string>
-    <string name="ob_signin_title">Sign in (optional)</string>
-    <string name="ob_signin_body">Phone sign-in lets Fliptle recognise your account across reinstalls. It\'s optional — all protection works without it, and nothing about your browsing is tied to your number.</string>
-    <string name="ob_signin_action">Sign in with phone</string>
+    <string name="ob_watch_tutorial">▶  Watch tutorial</string>
+    <string name="ob_intro_title">Take your focus back.</string>
+    <string name="ob_intro_body">Fliptle blocks porn permanently and puts your distractions on a 3-day lock.
+
+No willpower required — just commitment you can\'t undo on a bad day.</string>
+    <string name="ob_signin_title">Sign in</string>
+    <string name="ob_signin_body">Sign in with Google or an email and password. This is required — it keys your commitment and uninstall history to your account so it survives a reinstall.</string>
+    <string name="ob_signin_action">Sign in with Google or email</string>
     <string name="ob_get_started">Get started</string>
     <string name="ob_continue">Continue</string>
     <string name="ob_next">Next</string>
@@ -166,23 +194,24 @@
     <string name="status_enabled">✓ Enabled</string>
     <string name="status_not_enabled">Not enabled yet</string>
     <string name="status_signed_in">✓ Signed in as %1$s</string>
-    <string name="status_not_signed_in">Not signed in (optional)</string>
+    <string name="status_not_signed_in">Not signed in — required to continue</string>
 
     <!-- Home -->
-    <string name="home_title">Fliptle</string>
-    <string name="home_freeze_none">No freeze active.</string>
-    <string name="home_freeze_frozen">Frozen — %1$d min remaining</string>
+    <string name="home_journey_title">Let\'s start this journey</string>
+    <string name="home_journey_body">One decision, and the hardest part is behind you.</string>
+    <string name="home_journey_start">Start</string>
+    <string name="home_porn_off">Porn blocking is not enabled yet</string>
+    <string name="home_freeze_locked">Commitment: day %1$d of %2$d</string>
+    <string name="home_freeze_locked_detail">%1$s</string>
+    <string name="home_freeze_none">No commitment running.</string>
     <string name="home_freeze_verifying">Locked — verifying real time after reboot</string>
-    <string name="home_freeze_review">Review available — blocks still active</string>
-    <string name="home_taper">Freeze tier: %1$d day(s)</string>
-    <string name="home_blocked_summary">Blocked apps: %1$d • Adult domains: %2$d\nURL blocking: %3$s</string>
-    <string name="home_review_banner">Review available — blocks still active. Confirm to change.</string>
-    <string name="home_open_review">Review freeze</string>
-    <string name="home_freeze_button">Freeze</string>
+    <string name="home_freeze_review">Day %1$d — review open</string>
+    <string name="home_blocked_summary">Blocked apps: %1$d • Reels: %2$d min × %3$d/day</string>
+    <string name="home_review_banner">Review open — your blocks are still running.</string>
+    <string name="home_open_review">Open review</string>
+    <string name="home_freeze_button">Commitment</string>
     <string name="home_setup_button">Setup</string>
     <string name="home_account_button">Account / Sign-in</string>
-    <string name="on_word">on</string>
-    <string name="off_word">off</string>
 
     <!-- Protection guard -->
     <string name="guard_title">Protection is OFF</string>
@@ -195,53 +224,18 @@
     <string name="guard_notif_text">Tap to re-enable protection.</string>
 
     <!-- Setup -->
+    <string name="setup_section_blocking">Blocking</string>
+    <string name="setup_section_commitment">Commitment</string>
+    <string name="setup_section_account">Account safety</string>
     <string name="setup_title">Setup</string>
     <string name="setup_apps">Blocked apps</string>
     <string name="setup_domains">Blocked domains</string>
-    <string name="setup_browsers">Detected browsers</string>
-    <string name="setup_blocklist">Content blocklist</string>
     <string name="setup_schedule">Freeze &amp; schedule</string>
-    <string name="setup_a11y">URL blocking (Accessibility)</string>
-    <string name="setup_wizard">Re-run setup wizard</string>
     <string name="setup_surfaces">In-app surfaces (Reels / Shorts)</string>
-    <string name="setup_valve">Distraction access valve (Reels / Shorts)</string>
-
-    <!-- Reels/Shorts controlled-access valve -->
-    <string name="valve_title">Distraction access</string>
-    <string name="valve_body">Reels, Stories and Shorts are blocked. You can request a limited access window: after a cooldown, they unlock for a short time, then re-lock. A daily cap limits how often. Porn is never accessible here — it stays fully blocked.</string>
-    <string name="valve_blocked">Reels/Shorts/Stories are blocked.</string>
-    <string name="valve_cooldown">Access requested — cooling down.</string>
-    <string name="valve_open">Access OPEN — Reels/Shorts/Stories are temporarily allowed.</string>
-    <string name="valve_cap_reached">Daily access cap reached — no more windows today.</string>
-    <string name="valve_verifying">Reboot detected — verifying real time…</string>
-    <string name="valve_opens_in">Unlocks in %1$s</string>
-    <string name="valve_closes_in">Re-locks in %1$s</string>
-    <string name="valve_used">Windows used: %1$d / %2$d</string>
-    <string name="valve_request">Request access</string>
-    <string name="valve_requested">Access requested. The cooldown is the wait.</string>
-    <string name="valve_cap_toast">Daily cap reached — no override.</string>
-    <string name="valve_denied_freeze">A freeze is active — the valve is disabled to respect your commitment. (Configurable.)</string>
-    <string name="valve_verifying_toast">Verifying real time after reboot — try again shortly.</string>
-    <string name="valve_settings">Settings</string>
-    <string name="valve_cooldown_label">Cooldown (minutes)</string>
-    <string name="valve_window_label">Access window (minutes)</string>
-    <string name="valve_cap_label">Windows per day (hard cap)</string>
-    <string name="valve_allow_freeze">Allow the valve during an active freeze (default off)</string>
-    <string name="valve_debug">Debug: 30-second cooldown/window, 3-minute cap period</string>
-    <string name="valve_save">Save settings</string>
-    <string name="valve_saved">Valve settings saved.</string>
-    <string name="valve_bounds">Limits: cooldown ≥ %1$d min, window ≤ %2$d min, cap ≤ %3$d/day. Values outside are clamped.</string>
-    <string name="valve_applied_now">Tightening applied.</string>
-    <string name="valve_staged">Loosening will take effect after the delay.</string>
-    <string name="valve_loosen_blocked">Loosening blocked — a freeze is active.</string>
-    <string name="valve_clamped">Some values were clamped to the allowed limits.</string>
-    <string name="valve_no_change">No changes.</string>
-    <string name="valve_pending">Loosening change pending — takes effect in %1$s</string>
-    <string name="valve_pending_verifying">Loosening change pending — verifying real time after reboot…</string>
 
     <!-- In-app surface blocking -->
     <string name="surfaces_title">In-app surfaces</string>
-    <string name="surfaces_body">Block specific distraction surfaces inside apps. Each is independent — the rest of Instagram and YouTube stays usable. Access can be opened briefly via the valve (Setup → Distraction access). Requires the Accessibility service to be on.</string>
+    <string name="surfaces_body">Block specific distraction surfaces inside apps. Each is independent — the rest of Instagram and YouTube stays usable. Access is governed by the Reels allowance below, which is part of your commitment. Requires the Accessibility service to be on.</string>
     <string name="surface_reels">Block Instagram Reels</string>
     <string name="surface_stories">Block Instagram Stories</string>
     <string name="surface_shorts">Block YouTube Shorts</string>

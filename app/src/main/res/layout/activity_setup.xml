@@ -17,47 +17,44 @@
             android:textSize="22sp"
             android:textStyle="bold" />
 
+        <!-- ── Blocking ─────────────────────────────────────────────── -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/setup_section_blocking"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
         <Button
             android:id="@+id/blockedAppsButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="8dp"
             android:text="@string/setup_apps" />
 
         <Button
             android:id="@+id/blockedDomainsButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="4dp"
             android:text="@string/setup_domains" />
 
         <Button
             android:id="@+id/surfacesButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="4dp"
             android:text="@string/setup_surfaces" />
 
-        <Button
-            android:id="@+id/valveButton"
+        <!-- ── Commitment ───────────────────────────────────────────── -->
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/setup_valve" />
-
-        <Button
-            android:id="@+id/browsersButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/setup_browsers" />
-
-        <Button
-            android:id="@+id/blocklistButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/setup_blocklist" />
+            android:layout_marginTop="24dp"
+            android:text="@string/setup_section_commitment"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
         <Button
             android:id="@+id/scheduleButton"
@@ -66,19 +63,14 @@
             android:layout_marginTop="8dp"
             android:text="@string/setup_schedule" />
 
-        <Button
-            android:id="@+id/a11yButton"
+        <!-- ── Account safety ───────────────────────────────────────── -->
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/setup_a11y" />
-
-        <Button
-            android:id="@+id/typingGateButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/setup_typing_gate" />
+            android:layout_marginTop="24dp"
+            android:text="@string/setup_section_account"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
         <Button
             android:id="@+id/uninstallButton"
@@ -86,13 +78,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="@string/setup_uninstall" />
-
-        <Button
-            android:id="@+id/wizardButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/setup_wizard" />
 
     </LinearLayout>
 </ScrollView>

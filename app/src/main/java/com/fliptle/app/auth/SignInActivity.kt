@@ -158,9 +158,10 @@ class SignInActivity : AppCompatActivity() {
     }
 
     /**
-     * After any sign-in method, reveal the mandatory phone section identically. The
-     * sign-in controls are hidden so the phone number is the only way forward — the
-     * user cannot reach the main app until it is provided (enforced by [PhoneGate]).
+     * After any sign-in method, reveal the parent-phone section identically. The
+     * sign-in controls are hidden because sign-in is done. The phone number itself
+     * is OPTIONAL for now — "Skip for now" proceeds without one (see PhoneGate,
+     * whose enforcement switch is currently off).
      */
     private fun showSignedInState() {
         signInControls.visibility = View.GONE

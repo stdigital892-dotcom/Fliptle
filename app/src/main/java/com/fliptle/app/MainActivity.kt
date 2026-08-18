@@ -13,8 +13,8 @@ class MainActivity : AppCompatActivity() {
         val destination = when {
             !OnboardingState(this).complete -> OnboardingActivity::class.java
             !Permissions.allEnforcementGranted(this) -> ProtectionGuardActivity::class.java
-            // Signed in but no parent phone yet -> force the mandatory phone screen.
-            PhoneGate.required(this) -> com.fliptle.app.auth.SignInActivity::class.java
+            // Sign-in is mandatory (Google or email/password); no skip.
+            AuthGate.required(this) -> com.fliptle.app.auth.SignInActivity::class.java
             else -> HomeActivity::class.java
         }
         startActivity(Intent(this, destination))

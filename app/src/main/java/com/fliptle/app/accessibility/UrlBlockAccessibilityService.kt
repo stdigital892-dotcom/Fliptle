@@ -19,7 +19,8 @@ import com.fliptle.app.AdultBlocklist
 import com.fliptle.app.BlockOverlay
 import com.fliptle.app.BrowserDetector
 import com.fliptle.app.DomainBlocklist
-import com.fliptle.app.ValveStore
+import com.fliptle.app.PornBlockStore
+import com.fliptle.app.ReelsAllowance
 import com.fliptle.app.KeywordBlocklist
 import com.fliptle.app.R
 
@@ -28,9 +29,11 @@ import com.fliptle.app.R
  *
  * This service reads the address-bar text of browsers, matches it against the
  * adult-content blocklist and the user's [DomainBlocklist], and enforces
- * safe-search. It only acts while a freeze is running. Nothing else in the app
- * depends on this class; disabling the accessibility service in system settings
- * turns the whole feature off with no effect on the rest of the app.
+ * safe-search. The adult list and safe-search apply once the user has switched on
+ * porn blocking ([PornBlockStore]) — permanently, independent of any freeze. The
+ * user's own domain list always applies. Nothing else in the app depends on this
+ * class; disabling the accessibility service in system settings turns the whole
+ * feature off with no effect on the rest of the app.
  *
  * Reads are used ONLY to compare the current URL against the local blocklist.
  * No browsing data is stored or transmitted (see the in-app disclosure screen).
@@ -81,7 +84,7 @@ class UrlBlockAccessibilityService : AccessibilityService() {
         val pkg = event.packageName?.toString() ?: return
 
         // Only browsers (URL/porn blocking) and Instagram/YouTube (surface blocking).
-        // Porn/URL blocking is ALWAYS on; distraction surfaces use the valve below.
+        // Porn blocking is one-way once enabled; Reels use the allowance below.
         val isBrowser = BrowserDetector.isBrowser(this, pkg)
         val isSurfaceApp = SurfaceDetector.isSurfaceApp(pkg)
         if (!isBrowser && !isSurfaceApp) return
@@ -104,7 +107,9 @@ class UrlBlockAccessibilityService : AccessibilityService() {
     /** Block Instagram Reels/Stories or YouTube Shorts if that surface is toggled on. */
     private fun handleSurface(root: AccessibilityNodeInfo, pkg: String, eventType: Int) {
         val store = SurfaceBlocklist(this)
-        val debugMode = store.debug
+        // Observe-only diagnosis is a developer tool: unreachable in release builds
+        // and off until the hidden gesture is used, so normal users always block.
+        val debugMode = com.fliptle.app.DevMode.enabled(this) && store.debug
         val debug = if (debugMode) ArrayList<String>() else null
 
         val surface = SurfaceDetector.detect(pkg, root, debug)
@@ -117,19 +122,23 @@ class UrlBlockAccessibilityService : AccessibilityService() {
         // diagnosed freely.
         if (debugMode || surface == null || !store.isBlocked(surface)) return
 
-        // Controlled-access valve: if the user has an OPEN access window for the
-        // distraction surfaces, allow it; otherwise block. (Porn never gets here.)
-        if (ValveStore(this).isAccessOpen()) return
+        // Reels allowance (part of the freeze commitment): allow only during an
+        // open session. (Porn never gets here — it has no allowance.)
+        if (ReelsAllowance(this).isOpen()) return
 
         // Back returns to the feed / normal app, so the rest stays usable.
         blockAndLeave(surface.name)
     }
 
     private fun handleUrl(url: String, pkg: String) {
+        // Adult blocking is a one-way switch the user turns on once; it can never
+        // be turned back off from anywhere in the app. The user's own domain list
+        // is separate and always applies.
+        val pornBlocking = PornBlockStore(this).enabled
         val result = SafeSearch.evaluate(url)
 
         // 1) Blocked search keyword -> one clean overlay, no navigation.
-        if (result is SafeSearch.Result.BlockKeyword) {
+        if (pornBlocking && result is SafeSearch.Result.BlockKeyword) {
             BlockOverlay.show(this)
             return
         }
@@ -137,7 +146,7 @@ class UrlBlockAccessibilityService : AccessibilityService() {
         // 2) Domain/porn blocklist match (subdomains included) -> one clean overlay.
         val host = hostOf(url)
         val blocked = host != null &&
-            (AdultBlocklist.isBlocked(host) || DomainBlocklist(this).isBlocked(host))
+            ((pornBlocking && AdultBlocklist.isBlocked(host)) || DomainBlocklist(this).isBlocked(host))
         if (blocked) {
             // Idempotent: repeated detections of the same block do NOT stack, and
             // we never hit back / reload / open a new tab (no tab cascade).
@@ -151,7 +160,7 @@ class UrlBlockAccessibilityService : AccessibilityService() {
         // 4) Safe-search enforcement — apply ONCE per search, rate-limited, and
         //    never re-fire the same target URL (prevents the redirect loop that
         //    trips Google's "unusual traffic" CAPTCHA).
-        if (result is SafeSearch.Result.Redirect) {
+        if (pornBlocking && result is SafeSearch.Result.Redirect) {
             maybeApplySafeSearch(result.url, pkg)
         }
     }
