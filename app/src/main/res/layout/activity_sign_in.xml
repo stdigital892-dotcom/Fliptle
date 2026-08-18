@@ -108,6 +108,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/auth_save_phone" />
+
+            <Button
+                android:id="@+id/skipPhoneButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:background="@android:color/transparent"
+                android:text="@string/auth_skip_phone" />
         </LinearLayout>
 
         <TextView
