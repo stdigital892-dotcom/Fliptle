@@ -24,7 +24,8 @@ class FreezeActivity : AppCompatActivity() {
     private lateinit var statusText: TextView
     private lateinit var detailText: TextView
     private lateinit var startButton: Button
-    private lateinit var reviewSection: View
+    private lateinit var reviewNotice: TextView
+    private lateinit var coversLockText: TextView
     private lateinit var devStatusText: TextView
 
     private val handler = Handler(Looper.getMainLooper())
@@ -48,7 +49,8 @@ class FreezeActivity : AppCompatActivity() {
         statusText = findViewById(R.id.cycleStatusText)
         detailText = findViewById(R.id.cycleDetailText)
         startButton = findViewById(R.id.startCycleButton)
-        reviewSection = findViewById(R.id.reviewSection)
+        reviewNotice = findViewById(R.id.reviewNoticeText)
+        coversLockText = findViewById(R.id.coversLockText)
         devStatusText = findViewById(R.id.devStatusText)
 
         // Hidden developer unlock (debug builds only; inert in release).
@@ -59,9 +61,10 @@ class FreezeActivity : AppCompatActivity() {
             CloudState.backup(this)
             render()
         }
-        open(R.id.reviewAppsButton, AppListActivity::class.java)
-        open(R.id.reviewDomainsButton, DomainListActivity::class.java)
-        open(R.id.reviewSurfacesButton, SurfaceBlockActivity::class.java)
+        // The three things the freeze governs — reachable only from here.
+        open(R.id.blockedAppsButton, AppListActivity::class.java)
+        open(R.id.blockedDomainsButton, DomainListActivity::class.java)
+        open(R.id.surfacesButton, SurfaceBlockActivity::class.java)
     }
 
     private fun open(buttonId: Int, target: Class<*>) {
@@ -89,7 +92,15 @@ class FreezeActivity : AppCompatActivity() {
     private fun render() {
         val state = store.state()
         startButton.visibility = if (state == FreezeStore.State.NONE) View.VISIBLE else View.GONE
-        reviewSection.visibility = if (state == FreezeStore.State.REVIEW) View.VISIBLE else View.GONE
+        reviewNotice.visibility = if (state == FreezeStore.State.REVIEW) View.VISIBLE else View.GONE
+
+        // Caption under the "what this covers" buttons: are edits allowed right now?
+        coversLockText.text = when (state) {
+            FreezeStore.State.NONE -> getString(R.string.commit_not_started)
+            FreezeStore.State.REVIEW -> getString(R.string.commit_review_open, store.dayNumber())
+            FreezeStore.State.VERIFYING -> getString(R.string.commit_locked_verifying)
+            FreezeStore.State.LOCKED -> getString(R.string.commit_locked, store.dayNumber(), store.cycleDays())
+        }
 
         when (state) {
             FreezeStore.State.NONE -> {

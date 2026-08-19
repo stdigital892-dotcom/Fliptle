@@ -13,7 +13,6 @@
     <string name="freeze_locked_detail">Settings unlock for review in %1$s. Until then they can\'t be changed.</string>
     <string name="freeze_review_detail">Your blocks are still running. Change any setting below to commit to a fresh 3-day cycle. If you change nothing, the current cycle simply keeps going.</string>
     <string name="freeze_verifying_status">Locked — verifying real time</string>
-    <string name="freeze_review_title">Review is open</string>
     <string name="freeze_review_body">Change what you\'re blocking, or leave it as it is. Any change starts a new 3-day cycle immediately.</string>
     <string name="verifying_locked">Reboot detected — settings stay LOCKED until real time is verified from the network.\nConnect to the internet to verify.</string>
 
@@ -39,7 +38,7 @@
     <string name="porn_on_body">Porn blocking is on and cannot be turned off. This counter only ever counts up — it has no reset.</string>
 
     <!-- Reels/Shorts allowance (part of the commitment) -->
-    <string name="allowance_title">Reels / Shorts allowance</string>
+    <string name="allowance_title">Shorts and Reels allowance</string>
     <string name="allowance_start">Start a session</string>
     <string name="allowance_locked">Reels, Stories and Shorts are blocked.</string>
     <string name="allowance_open">Session OPEN — Reels/Shorts/Stories are allowed.</string>
@@ -154,7 +153,6 @@
     <string name="uninstall_locked">Next set unlocks in %1$s</string>
     <string name="uninstall_verifying">Reboot detected — verifying real time from the network before unlocking…</string>
     <string name="start_day">Start day %1$d (10 questions)</string>
-    <string name="uninstall_reset_on_miss">Strict: reset progress if a day is missed (default: pause &amp; resume)</string>
     <string name="uninstall_debug_days">Debug: 2-minute \"days\" (for testing)</string>
     <string name="uninstall_debug_heartbeat">Debug: 2-minute heartbeat grace (for testing)</string>
     <string name="uninstall_cancel">Cancel request</string>
@@ -202,16 +200,10 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="home_journey_start">Start</string>
     <string name="home_porn_off">Porn blocking is not enabled yet</string>
     <string name="home_freeze_locked">Commitment: day %1$d of %2$d</string>
-    <string name="home_freeze_locked_detail">%1$s</string>
     <string name="home_freeze_none">No commitment running.</string>
     <string name="home_freeze_verifying">Locked — verifying real time after reboot</string>
     <string name="home_freeze_review">Day %1$d — review open</string>
-    <string name="home_blocked_summary">Blocked apps: %1$d • Reels: %2$d min × %3$d/day</string>
-    <string name="home_review_banner">Review open — your blocks are still running.</string>
-    <string name="home_open_review">Open review</string>
-    <string name="home_freeze_button">Commitment</string>
     <string name="home_setup_button">Setup</string>
-    <string name="home_account_button">Account</string>
 
     <!-- Protection guard -->
     <string name="guard_title">Protection is OFF</string>
@@ -230,10 +222,10 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="setup_apps">Blocked apps</string>
     <string name="setup_domains">Blocked domains</string>
     <string name="setup_schedule">Freeze &amp; schedule</string>
-    <string name="setup_surfaces">In-app surfaces (Reels / Shorts)</string>
+    <string name="setup_surfaces">Shorts and Reels</string>
 
     <!-- In-app surface blocking -->
-    <string name="surfaces_title">In-app surfaces</string>
+    <string name="surfaces_title">Shorts and Reels</string>
     <string name="surfaces_body">Block specific distraction surfaces inside apps. Each is independent — the rest of Instagram and YouTube stays usable. Access is governed by the Reels allowance below, which is part of your commitment. Requires the Accessibility service to be on.</string>
     <string name="surface_reels">Block Instagram Reels</string>
     <string name="surface_stories">Block Instagram Stories</string>
@@ -250,4 +242,13 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="auth_sign_out_note">Your progress (porn-blocking streak, freeze, blocked apps and domains) is saved to your account and to this device. Signing out keeps all of it — signing back in re-syncs it from the cloud.</string>
     <!-- Setup: combined Freeze section subtitle -->
     <string name="setup_freeze_caption">Blocked apps, blocked domains and in-app surfaces are all governed together by the 3-day freeze cycle.</string>
+    <!-- Sign out warning -->
+    <string name="sign_out_title">Sign out?</string>
+    <string name="sign_out_warning">Your protection stays active on this device regardless of which account you use. Signing out only affects your account tracking — not your blocking.</string>
+    <string name="sign_out_confirm">Sign out</string>
+    <string name="sign_out_cancel">Cancel</string>
+    <!-- Freeze: what it covers -->
+    <string name="freeze_covers_title">What this freeze covers</string>
+    <!-- Uninstall hard reset -->
+    <string name="uninstall_reset_toast">A day was missed — progress has reset to day 1.</string>
 </resources>

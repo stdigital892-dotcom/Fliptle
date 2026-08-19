@@ -5,14 +5,19 @@ import android.os.SystemClock
 import android.provider.Settings
 
 /**
- * State for the "Request to uninstall" math gate: 10 questions/day for 5 days,
- * one set per day. The per-day unlock uses the SAME tamper resistance as the
- * freeze — monotonic elapsedRealtime + a stored wall anchor + the OS boot counter
- * — so changing the system clock can't skip days, and a reboot is handled by
- * re-anchoring against trusted network time (VERIFYING until then).
+ * State for the "Request to uninstall" gate: BOTH gates (10 math questions +
+ * typing 1..50) each day for 5 days, one set per day. The per-day unlock uses the
+ * SAME tamper resistance as the freeze — monotonic elapsedRealtime + a stored wall
+ * anchor + the OS boot counter — so changing the system clock can't skip days, and
+ * a reboot is handled by re-anchoring against trusted network time (VERIFYING
+ * until then).
  *
- * Missing a day defaults to PAUSE (resume where left off); a configurable strict
- * mode instead resets progress if a whole extra day window is missed.
+ * Missing a day is a HARD RESET (no pause, no configuration): each day unlocks 24h
+ * after the previous day's completion and must then be completed within the next
+ * 24h. Let that window lapse — i.e. a full extra day passes with the set available
+ * but not done — and progress resets all the way to day 1. The 24h window is timed
+ * with the same reboot-proof monotonic anchor, so the reset can't be dodged by
+ * changing the clock or rebooting.
  */
 class UninstallGateStore(context: Context) {
 
@@ -31,18 +36,19 @@ class UninstallGateStore(context: Context) {
         get() = DevMode.enabled(appContext) && prefs.getBoolean(KEY_DEBUG, false)
         set(v) = prefs.edit().putBoolean(KEY_DEBUG, v).apply()
 
-    /** Strict mode: reset to day 0 if a whole extra day window is missed. */
-    var resetOnMiss: Boolean
-        get() = prefs.getBoolean(KEY_RESET_ON_MISS, false)
-        set(v) = prefs.edit().putBoolean(KEY_RESET_ON_MISS, v).apply()
-
     fun unitMs(): Long = if (debugMode) DEBUG_DAY_MS else DAY_MS
+
+    /** True if the most recent [state] evaluation reset progress on a missed day. */
+    val justReset: Boolean get() = prefs.getBoolean(KEY_JUST_RESET, false)
+
+    fun clearJustReset() = prefs.edit().putBoolean(KEY_JUST_RESET, false).apply()
 
     fun start() {
         prefs.edit()
             .putBoolean(KEY_ACTIVE, true)
             .putInt(KEY_DAYS, 0)
             .putBoolean(KEY_APPROVED, false)
+            .putBoolean(KEY_JUST_RESET, false)
             .remove(KEY_ELAPSED_ANCHOR).remove(KEY_ELAPSED_UNLOCK)
             .remove(KEY_WALL_UNLOCK).remove(KEY_BOOT_COUNT).remove(KEY_LAST_COMPLETE)
             .apply()
@@ -55,7 +61,7 @@ class UninstallGateStore(context: Context) {
     fun state(): State {
         if (!active) return State.INACTIVE
         if (daysDone >= DAYS_REQUIRED || approved) return State.APPROVED
-        applyMissIfConfigured()
+        applyMissReset()
         if (daysDone == 0) return State.AVAILABLE // first set is immediate
         if (rebooted()) return State.VERIFYING
         return if (SystemClock.elapsedRealtime() >= elapsedUnlock()) State.AVAILABLE else State.LOCKED
@@ -97,15 +103,31 @@ class UninstallGateStore(context: Context) {
             .apply()
     }
 
-    private fun applyMissIfConfigured() {
-        if (!resetOnMiss || daysDone == 0 || daysDone >= DAYS_REQUIRED) return
-        val last = prefs.getLong(KEY_LAST_COMPLETE, 0L)
-        if (last == 0L) return
-        // Missed if more than TWO full day windows elapsed since the last completion.
-        if (System.currentTimeMillis() - last > unitMs() * 2) {
+    /**
+     * HARD RESET on a missed day (always on — no pause, no config). A day unlocks
+     * one window (24h) after the last completion and must be done within the next
+     * window; if TWO full windows pass with the set still not completed, the day
+     * was missed and all progress resets to day 1.
+     *
+     * Timing is reboot-proof: within a boot the monotonic elapsed clock is
+     * authoritative; a reboot (VERIFYING) suspends the miss check until trusted
+     * network time re-anchors, so the reset can be neither dodged nor forced early
+     * by changing the clock or rebooting.
+     */
+    private fun applyMissReset() {
+        if (daysDone == 0 || daysDone >= DAYS_REQUIRED) return
+        if (rebooted()) return // don't judge a miss on an untrusted post-reboot clock
+        if (prefs.getLong(KEY_ELAPSED_ANCHOR, 0L) == 0L) return
+        // Deadline = unlock + one more window. elapsedUnlock() is re-anchored from
+        // trusted wall time after a reboot (see applyTrustedTime), so this deadline
+        // is correct within and across boots.
+        val deadline = elapsedUnlock() + unitMs()
+        if (SystemClock.elapsedRealtime() > deadline) {
             prefs.edit().putInt(KEY_DAYS, 0)
+                .putBoolean(KEY_JUST_RESET, true)
                 .remove(KEY_ELAPSED_ANCHOR).remove(KEY_ELAPSED_UNLOCK)
-                .remove(KEY_WALL_UNLOCK).remove(KEY_BOOT_COUNT).apply()
+                .remove(KEY_WALL_UNLOCK).remove(KEY_BOOT_COUNT).remove(KEY_LAST_COMPLETE)
+                .apply()
         }
     }
 
@@ -131,7 +153,7 @@ class UninstallGateStore(context: Context) {
         private const val KEY_DAYS = "days_done"
         private const val KEY_APPROVED = "approved"
         private const val KEY_DEBUG = "debug"
-        private const val KEY_RESET_ON_MISS = "reset_on_miss"
+        private const val KEY_JUST_RESET = "just_reset"
         private const val KEY_ELAPSED_ANCHOR = "elapsed_anchor"
         private const val KEY_ELAPSED_UNLOCK = "elapsed_unlock"
         private const val KEY_WALL_UNLOCK = "wall_unlock"

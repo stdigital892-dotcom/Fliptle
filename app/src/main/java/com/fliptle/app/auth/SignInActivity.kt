@@ -197,26 +197,8 @@ class SignInActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Sign out: clear Firebase (and Google) auth WITHOUT touching local progress,
-     * then restart the whole flow from the top. The router sends the user to the
-     * mandatory sign-in screen, exactly as on a fresh launch. Progress is preserved
-     * locally and in the cloud, and is re-synced when they sign back in.
-     */
-    private fun signOut() {
-        auth?.signOut()
-        try {
-            GoogleSignIn.getClient(this, GoogleSignInOptions.DEFAULT_SIGN_IN).signOut()
-        } catch (_: Exception) {
-        }
-        // The parent-phone step is per-session; require it again after re-sign-in.
-        AuthStore(this).parentPhoneProvided = false
-        startActivity(
-            Intent(this, MainActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        )
-        finish()
-    }
+    /** Sign out (with the required warning) via the shared flow. */
+    private fun signOut() = com.fliptle.app.SignOut.confirm(this)
 
     /**
      * After a sign-in ACTION here, reveal the parent-phone section. The sign-in

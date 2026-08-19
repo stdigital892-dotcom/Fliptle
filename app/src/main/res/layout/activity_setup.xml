@@ -17,7 +17,7 @@
             android:textSize="22sp"
             android:textStyle="bold" />
 
-        <!-- ── Freeze (blocking + commitment, governed together) ────────── -->
+        <!-- ── Freeze ───────────────────────────────────────────────── -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -41,35 +41,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:text="@string/setup_schedule" />
-
-        <!-- Nested under the freeze: the three things it governs. -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:orientation="vertical">
-
-            <Button
-                android:id="@+id/blockedAppsButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/setup_apps" />
-
-            <Button
-                android:id="@+id/blockedDomainsButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/setup_domains" />
-
-            <Button
-                android:id="@+id/surfacesButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/setup_surfaces" />
-        </LinearLayout>
 
         <!-- ── Account safety ───────────────────────────────────────── -->
         <TextView

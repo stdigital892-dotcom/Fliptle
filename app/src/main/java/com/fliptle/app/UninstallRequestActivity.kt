@@ -37,7 +37,6 @@ class UninstallRequestActivity : AppCompatActivity() {
     private lateinit var countdownText: TextView
     private lateinit var startDayButton: Button
     private lateinit var cancelButton: Button
-    private lateinit var resetOnMissCheck: CheckBox
     private lateinit var debugCheck: CheckBox
     private lateinit var heartbeatDebugCheck: CheckBox
 
@@ -83,7 +82,6 @@ class UninstallRequestActivity : AppCompatActivity() {
         countdownText = findViewById(R.id.uninstallCountdownText)
         startDayButton = findViewById(R.id.startDayButton)
         cancelButton = findViewById(R.id.cancelRequestButton)
-        resetOnMissCheck = findViewById(R.id.resetOnMissCheck)
         debugCheck = findViewById(R.id.debugDaysCheck)
         heartbeatDebugCheck = findViewById(R.id.heartbeatDebugCheck)
 
@@ -99,9 +97,6 @@ class UninstallRequestActivity : AppCompatActivity() {
         typingField = findViewById(R.id.typingField)
         typingErrorText = findViewById(R.id.typingErrorText)
         typingField.addTextChangedListener(typingWatcher)
-
-        resetOnMissCheck.isChecked = store.resetOnMiss
-        resetOnMissCheck.setOnCheckedChangeListener { _, v -> store.resetOnMiss = v }
 
         // Short-day / fast-heartbeat testing switches are developer tools: hidden
         // unless DevMode is unlocked, and absent entirely from release builds.
@@ -242,6 +237,10 @@ class UninstallRequestActivity : AppCompatActivity() {
         }
 
         val state = store.state()
+        if (store.justReset) {
+            store.clearJustReset()
+            Toast.makeText(this, R.string.uninstall_reset_toast, Toast.LENGTH_LONG).show()
+        }
         statusText.text = getString(R.string.uninstall_status, store.daysDone, UninstallGateStore.DAYS_REQUIRED)
         countdownText.visibility = View.GONE
         startDayButton.visibility = View.GONE
