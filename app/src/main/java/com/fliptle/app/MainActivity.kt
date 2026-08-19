@@ -8,6 +8,14 @@ import androidx.appcompat.app.AppCompatActivity
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Enforcement runs independently of auth: (re)start it here in the launcher
+        // so blocking is active no matter where routing sends the user — including
+        // the mandatory sign-in screen after a sign-out. Auth never gates blocking.
+        if (Permissions.allEnforcementGranted(this)) {
+            BrowserDetector.autoBlockInstalledBrowsers(this)
+            BlockingService.start(this)
+        }
+
         // Not onboarded yet -> onboarding. Onboarded but protection off -> the
         // full-screen guard. Otherwise -> Home.
         val destination = when {

@@ -138,18 +138,12 @@
                 android:textSize="15sp" />
         </LinearLayout>
 
-        <!-- Options -->
-        <CheckBox
-            android:id="@+id/resetOnMissCheck"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="@string/uninstall_reset_on_miss" />
-
+        <!-- Developer-only switches (hidden unless DevMode is unlocked). -->
         <CheckBox
             android:id="@+id/debugDaysCheck"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
             android:text="@string/uninstall_debug_days" />
 
         <CheckBox
