@@ -41,6 +41,8 @@ object Commitment {
      * their commitment explicitly from the freeze screen).
      */
     fun onChanged(context: Context) {
+        // Any committed change is worth backing up (whether or not a cycle restarts).
+        CloudState.backup(context)
         val store = FreezeStore(context)
         if (!store.active) return
         if (store.restartCycle()) {

@@ -23,6 +23,7 @@ class PackageInstallReceiver : BroadcastReceiver() {
         if (set.add(pkg)) {
             store.set(set)
             BlockingService.start(context)
+            CloudState.backup(context) // keep the cloud copy of blocked apps current
         }
     }
 }

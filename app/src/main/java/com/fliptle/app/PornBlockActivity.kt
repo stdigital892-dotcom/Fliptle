@@ -54,6 +54,7 @@ class PornBlockActivity : AppCompatActivity() {
             .setNegativeButton(R.string.porn_confirm_cancel, null)
             .setPositiveButton(R.string.porn_confirm_ok) { _, _ ->
                 store.enable()
+                CloudState.backup(this) // preserve the streak across reinstall/sign-out
                 render()
             }
             .show()

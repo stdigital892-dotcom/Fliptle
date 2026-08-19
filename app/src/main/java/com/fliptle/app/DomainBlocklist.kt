@@ -32,6 +32,17 @@ class DomainBlocklist(context: Context) {
         if (set.remove(domain)) prefs.edit().putStringSet(KEY_DOMAINS, set).apply()
     }
 
+    /** Merge in domains from a cloud backup (union — never drops existing blocks). */
+    fun addAll(domains: Collection<String>) {
+        val set = userDomains().toMutableSet()
+        var changed = false
+        for (d in domains) {
+            val n = normalize(d)
+            if (n.isNotEmpty() && set.add(n)) changed = true
+        }
+        if (changed) prefs.edit().putStringSet(KEY_DOMAINS, set).apply()
+    }
+
     fun isBlocked(host: String): Boolean {
         val h = host.lowercase().trimEnd('.')
         return allDomains().any { d -> h == d || h.endsWith(".$d") }

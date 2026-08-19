@@ -11,11 +11,53 @@
         android:padding="24dp">
 
         <TextView
+            android:id="@+id/authTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/auth_title"
             android:textSize="22sp"
             android:textStyle="bold" />
+
+        <!-- Shown only when already signed in (opened from Home → Account). -->
+        <LinearLayout
+            android:id="@+id/accountSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/accountEmailText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/accountDetailText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:lineSpacingMultiplier="1.2"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/signOutButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/auth_sign_out" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:lineSpacingMultiplier="1.2"
+                android:text="@string/auth_sign_out_note"
+                android:textSize="13sp"
+                android:textStyle="italic" />
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/signInControls"

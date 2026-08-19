@@ -56,6 +56,7 @@ class FreezeActivity : AppCompatActivity() {
 
         startButton.setOnClickListener {
             store.startCycle()
+            CloudState.backup(this)
             render()
         }
         open(R.id.reviewAppsButton, AppListActivity::class.java)
