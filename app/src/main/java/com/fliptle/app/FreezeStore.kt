@@ -162,6 +162,38 @@ class FreezeStore(context: Context) {
             .apply()
     }
 
+    /** Portable state for cloud backup (empty when nothing is running). The wall
+     *  anchors are what survive across devices; the monotonic ones are rebuilt. */
+    fun backupState(): Map<String, Any?> =
+        if (!active) emptyMap()
+        else mapOf(
+            "freezeActive" to true,
+            "freezeWallStart" to prefs.getLong(KEY_WALL_START, 0L),
+            "freezeWallUnlock" to prefs.getLong(KEY_WALL_UNLOCK, 0L),
+            "freezeMaxDay" to prefs.getInt(KEY_MAX_DAY, 1)
+        )
+
+    /**
+     * Restore a running cycle from a cloud backup on a fresh install. Writes the
+     * portable wall anchors and forces VERIFYING (by parking the monotonic start
+     * in the future, which [rebooted] treats as a reboot), so the cycle re-anchors
+     * from a TRUSTED network time before it will ever count down — it can never be
+     * shortened by the restore. Skipped if a local cycle is already running.
+     */
+    fun restoreFromCloud(wallStart: Long, wallUnlock: Long, maxDay: Int) {
+        if (active || wallUnlock <= 0L) return
+        prefs.edit()
+            .putBoolean(KEY_ACTIVE, true)
+            .putLong(KEY_WALL_START, wallStart)
+            .putLong(KEY_WALL_UNLOCK, wallUnlock)
+            .putLong(KEY_ELAPSED_START, Long.MAX_VALUE) // force VERIFYING until re-anchored
+            .putLong(KEY_ELAPSED_UNLOCK, 0L)
+            .putInt(KEY_BOOT_COUNT, currentBootCount())
+            .putBoolean(KEY_WALL_TRUSTED, false)
+            .putInt(KEY_MAX_DAY, maxDay.coerceAtLeast(1))
+            .apply()
+    }
+
     private fun remainingLockMs(): Long =
         (prefs.getLong(KEY_ELAPSED_UNLOCK, 0L) - SystemClock.elapsedRealtime()).coerceAtLeast(0L)
 

@@ -61,6 +61,29 @@ class PornBlockStore(context: Context) {
         return day.coerceAtLeast(1)
     }
 
+    /** Portable state for cloud backup (empty when never enabled). */
+    fun backupState(): Map<String, Any?> =
+        if (!enabled) emptyMap()
+        else mapOf(
+            "pornEnabled" to true,
+            "pornEnabledAt" to prefs.getLong(KEY_ENABLED_AT, 0L),
+            "pornMaxDays" to prefs.getInt(KEY_MAX_DAYS, 1)
+        )
+
+    /**
+     * Restore from a cloud backup after signing in on a fresh install. Only ever
+     * turns blocking ON (never off) and never re-anchors an already-enabled local
+     * copy, preserving the one-way guarantee and the existing streak.
+     */
+    fun restore(enabledAt: Long, maxDays: Int) {
+        if (enabled) return
+        prefs.edit()
+            .putBoolean(KEY_ENABLED, true)
+            .putLong(KEY_ENABLED_AT, if (enabledAt > 0L) enabledAt else System.currentTimeMillis())
+            .putInt(KEY_MAX_DAYS, maxDays.coerceAtLeast(1))
+            .apply()
+    }
+
     companion object {
         private const val KEY_ENABLED = "enabled"
         private const val KEY_ENABLED_AT = "enabled_at"

@@ -32,6 +32,7 @@ class DomainListActivity : AppCompatActivity() {
                 // Adding a domain TIGHTENS, so it is always allowed — the lock
                 // exists to stop loosening, never to stop blocking more.
                 store.add(text)
+                CloudState.backup(this)
                 input.text.clear()
                 refresh()
             }

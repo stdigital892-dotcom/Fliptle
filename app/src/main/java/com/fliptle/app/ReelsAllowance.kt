@@ -57,6 +57,23 @@ class ReelsAllowance(context: Context) {
         return true
     }
 
+    /** Portable allowance settings for cloud backup. */
+    fun backupState(): Map<String, Any?> = mapOf(
+        "reelsSession" to sessionMin,
+        "reelsPerDay" to perDay,
+        "reelsCooldown" to cooldownMin
+    )
+
+    /** Apply allowance settings from a cloud backup, bypassing the commitment lock
+     *  (restore is not a user edit). Clamped to the same hard bounds. */
+    fun restoreSettings(session: Int, perDayReq: Int, cooldown: Int) {
+        prefs.edit()
+            .putInt(KEY_SESSION, session.coerceIn(SESSION_MIN, SESSION_MAX))
+            .putInt(KEY_PER_DAY, perDayReq.coerceIn(PER_DAY_MIN, PER_DAY_MAX))
+            .putInt(KEY_COOLDOWN, cooldown.coerceIn(COOLDOWN_MIN, COOLDOWN_MAX))
+            .apply()
+    }
+
     private fun minuteMs(): Long = if (DevMode.enabled(appContext)) DEBUG_MINUTE_MS else 60_000L
     private fun dayMs(): Long = if (DevMode.enabled(appContext)) DEBUG_DAY_MS else DAY_MS
 

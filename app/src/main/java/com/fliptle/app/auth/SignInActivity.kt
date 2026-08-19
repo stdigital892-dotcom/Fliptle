@@ -1,6 +1,7 @@
 package com.fliptle.app.auth
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -10,6 +11,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import com.fliptle.app.CloudState
+import com.fliptle.app.MainActivity
 import com.fliptle.app.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -23,16 +26,27 @@ import com.google.firebase.auth.GoogleAuthProvider
  * keyed off the Firebase Auth UID. An optional parent phone number is collected
  * after sign-in as contact-only info (never used for login/verification).
  *
- * Auth is optional — core protection never depends on it.
+ * Three faces, chosen by auth state:
+ *  • ALREADY signed in (opened from Home → Account): the account view — email +
+ *    "Sign out". Never shows a sign-in prompt to an authenticated user.
+ *  • NOT signed in (the mandatory gate): the sign-in controls.
+ *  • JUST signed in via an action here: the optional parent-phone step.
+ *
+ * Sign-in is mandatory app-wide (see AuthGate); this screen is also the account
+ * screen once authenticated.
  */
 class SignInActivity : AppCompatActivity() {
 
     private var auth: FirebaseAuth? = null
 
+    private lateinit var titleText: TextView
     private lateinit var statusText: TextView
     private lateinit var emailInput: EditText
     private lateinit var passwordInput: EditText
     private lateinit var signInControls: LinearLayout
+    private lateinit var accountSection: LinearLayout
+    private lateinit var accountEmailText: TextView
+    private lateinit var accountDetailText: TextView
     private lateinit var phoneSection: LinearLayout
     private lateinit var parentPhoneInput: EditText
 
@@ -61,10 +75,14 @@ class SignInActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sign_in)
 
+        titleText = findViewById(R.id.authTitle)
         statusText = findViewById(R.id.authStatusText)
         emailInput = findViewById(R.id.emailInput)
         passwordInput = findViewById(R.id.passwordInput)
         signInControls = findViewById(R.id.signInControls)
+        accountSection = findViewById(R.id.accountSection)
+        accountEmailText = findViewById(R.id.accountEmailText)
+        accountDetailText = findViewById(R.id.accountDetailText)
         phoneSection = findViewById(R.id.phoneSection)
         parentPhoneInput = findViewById(R.id.parentPhoneInput)
 
@@ -80,8 +98,10 @@ class SignInActivity : AppCompatActivity() {
         findViewById<Button>(R.id.emailSignInButton).setOnClickListener { signInEmail() }
         findViewById<Button>(R.id.savePhoneButton).setOnClickListener { saveParentPhone() }
         findViewById<Button>(R.id.skipPhoneButton).setOnClickListener { skipPhone() }
+        findViewById<Button>(R.id.signOutButton).setOnClickListener { signOut() }
 
-        auth?.currentUser?.let { showSignedInState() }
+        // Already authenticated -> this is the Account screen, not a sign-in prompt.
+        if (auth?.currentUser != null) showAccountState()
     }
 
     // ---- Google ----
@@ -147,7 +167,10 @@ class SignInActivity : AppCompatActivity() {
 
     private fun onSignedIn(method: String) {
         val user = auth?.currentUser ?: return
-        showSignedInState()
+        showPhoneStep()
+        // Re-sync this account's progress from the cloud (restores after a reinstall
+        // or a previous sign-out; a no-op for a brand-new account).
+        CloudState.restore(this) {}
         InstallTracker.recordSignIn(this, user.uid, user.email, method, AuthStore(this).installId()) { msg ->
             runOnUiThread {
                 val verified = if (user.isEmailVerified) getString(R.string.auth_verified)
@@ -157,13 +180,51 @@ class SignInActivity : AppCompatActivity() {
         }
     }
 
+    /** Account view for an already-authenticated user: email + sign out. */
+    private fun showAccountState() {
+        titleText.setText(R.string.auth_account_title)
+        signInControls.visibility = View.GONE
+        phoneSection.visibility = View.GONE
+        statusText.visibility = View.GONE
+        accountSection.visibility = View.VISIBLE
+
+        val user = auth?.currentUser
+        accountEmailText.text = getString(R.string.auth_signed_in, user?.email ?: user?.uid ?: "")
+        accountDetailText.text = if (user?.isEmailVerified == true) {
+            getString(R.string.auth_verified)
+        } else {
+            getString(R.string.auth_unverified)
+        }
+    }
+
     /**
-     * After any sign-in method, reveal the parent-phone section identically. The
-     * sign-in controls are hidden because sign-in is done. The phone number itself
-     * is OPTIONAL for now — "Skip for now" proceeds without one (see PhoneGate,
-     * whose enforcement switch is currently off).
+     * Sign out: clear Firebase (and Google) auth WITHOUT touching local progress,
+     * then restart the whole flow from the top. The router sends the user to the
+     * mandatory sign-in screen, exactly as on a fresh launch. Progress is preserved
+     * locally and in the cloud, and is re-synced when they sign back in.
      */
-    private fun showSignedInState() {
+    private fun signOut() {
+        auth?.signOut()
+        try {
+            GoogleSignIn.getClient(this, GoogleSignInOptions.DEFAULT_SIGN_IN).signOut()
+        } catch (_: Exception) {
+        }
+        // The parent-phone step is per-session; require it again after re-sign-in.
+        AuthStore(this).parentPhoneProvided = false
+        startActivity(
+            Intent(this, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        )
+        finish()
+    }
+
+    /**
+     * After a sign-in ACTION here, reveal the parent-phone section. The sign-in
+     * controls are hidden because sign-in is done. The phone number itself is
+     * OPTIONAL — "Skip for now" proceeds without one (see PhoneGate, whose
+     * enforcement switch is currently off).
+     */
+    private fun showPhoneStep() {
         signInControls.visibility = View.GONE
         phoneSection.visibility = View.VISIBLE
 
@@ -209,7 +270,7 @@ class SignInActivity : AppCompatActivity() {
             runOnUiThread { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() }
         }
         Toast.makeText(this, R.string.auth_phone_saved, Toast.LENGTH_SHORT).show()
-        finish()
+        proceed()
     }
 
     /**
@@ -219,6 +280,22 @@ class SignInActivity : AppCompatActivity() {
      */
     private fun skipPhone() {
         AuthStore(this).parentPhoneProvided = true
+        proceed()
+    }
+
+    /**
+     * Continue into the app after the phone step. If this screen is the task root
+     * (reached via the mandatory sign-in gate, e.g. right after a sign-out), route
+     * through the launcher so the user lands on Home. Otherwise it was opened on top
+     * of onboarding/Home, so just return there.
+     */
+    private fun proceed() {
+        if (isTaskRoot) {
+            startActivity(
+                Intent(this, MainActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            )
+        }
         finish()
     }
 

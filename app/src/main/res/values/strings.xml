@@ -211,7 +211,7 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="home_open_review">Open review</string>
     <string name="home_freeze_button">Commitment</string>
     <string name="home_setup_button">Setup</string>
-    <string name="home_account_button">Account / Sign-in</string>
+    <string name="home_account_button">Account</string>
 
     <!-- Protection guard -->
     <string name="guard_title">Protection is OFF</string>
@@ -224,8 +224,7 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="guard_notif_text">Tap to re-enable protection.</string>
 
     <!-- Setup -->
-    <string name="setup_section_blocking">Blocking</string>
-    <string name="setup_section_commitment">Commitment</string>
+    <string name="setup_section_blocking">Freeze</string>
     <string name="setup_section_account">Account safety</string>
     <string name="setup_title">Setup</string>
     <string name="setup_apps">Blocked apps</string>
@@ -245,4 +244,10 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="surfaces_debug_refresh">Refresh log</string>
     <string name="surfaces_debug_clear">Clear log</string>
     <string name="surfaces_debug_empty">No matches logged yet. Turn on debug, open Instagram/YouTube, then Refresh.</string>
+    <!-- Account screen -->
+    <string name="auth_account_title">Account</string>
+    <string name="auth_sign_out">Sign out</string>
+    <string name="auth_sign_out_note">Your progress (porn-blocking streak, freeze, blocked apps and domains) is saved to your account and to this device. Signing out keeps all of it — signing back in re-syncs it from the cloud.</string>
+    <!-- Setup: combined Freeze section subtitle -->
+    <string name="setup_freeze_caption">Blocked apps, blocked domains and in-app surfaces are all governed together by the 3-day freeze cycle.</string>
 </resources>
