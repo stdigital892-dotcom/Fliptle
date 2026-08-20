@@ -2,7 +2,7 @@ package com.fliptle.app
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 
 /**
@@ -35,8 +35,8 @@ class SetupActivity : AppCompatActivity() {
         Permissions.gate(this)
     }
 
-    private fun open(buttonId: Int, target: Class<*>) {
-        findViewById<Button>(buttonId).setOnClickListener {
+    private fun open(viewId: Int, target: Class<*>) {
+        findViewById<View>(viewId).setOnClickListener {
             startActivity(Intent(this, target))
         }
     }

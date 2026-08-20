@@ -1,4 +1,138 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <style name="Theme.HelloApp" parent="Theme.Material3.DayNight.NoActionBar" />
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Fliptle dark identity. Committed dark (the app is dark-only by design). -->
+    <style name="Theme.HelloApp" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorOnPrimary">@color/on_accent</item>
+        <item name="colorSecondary">@color/accent</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/ink</item>
+        <item name="android:colorBackground">@color/graphite</item>
+        <item name="colorOnBackground">@color/ink</item>
+        <item name="android:textColorPrimary">@color/ink</item>
+        <item name="android:textColorSecondary">@color/ink_dim</item>
+        <item name="android:textColorHint">@color/ink_dim</item>
+
+        <!-- Shared functional-screen depth (glow + grain) behind every window.
+             Roots stay transparent so this shows through. Welcome overrides it. -->
+        <item name="android:windowBackground">@drawable/bg_app</item>
+        <item name="android:statusBarColor">@color/graphite</item>
+        <item name="android:navigationBarColor">@color/graphite</item>
+
+        <!-- Bare <Button> defaults to the neutral pill; primary/text are tagged. -->
+        <item name="materialButtonStyle">@style/Widget.Fliptle.Button.Secondary</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <!-- ===================== Buttons (soft full-radius pills) ===================== -->
+
+    <style name="Widget.Fliptle.Button.Primary" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/accent</item>
+        <item name="android:textColor">@color/on_accent</item>
+        <item name="cornerRadius">28dp</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:paddingTop">15dp</item>
+        <item name="android:paddingBottom">15dp</item>
+        <item name="android:paddingLeft">26dp</item>
+        <item name="android:paddingRight">26dp</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.01</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="elevation">0dp</item>
+    </style>
+
+    <style name="Widget.Fliptle.Button.Secondary" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/elevated</item>
+        <item name="android:textColor">@color/ink</item>
+        <item name="cornerRadius">28dp</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:paddingTop">15dp</item>
+        <item name="android:paddingBottom">15dp</item>
+        <item name="android:paddingLeft">26dp</item>
+        <item name="android:paddingRight">26dp</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.01</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="elevation">0dp</item>
+    </style>
+
+    <style name="Widget.Fliptle.Button.Outline" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:textColor">@color/ink</item>
+        <item name="strokeColor">@color/border</item>
+        <item name="cornerRadius">28dp</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.01</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <style name="Widget.Fliptle.Button.Text" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textColor">@color/accent_ico</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0.01</item>
+    </style>
+
+    <!-- ===================== Text roles ===================== -->
+
+    <style name="Text.Display" parent="">
+        <item name="android:textColor">@color/ink</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">34sp</item>
+        <item name="android:letterSpacing">-0.02</item>
+        <item name="android:lineSpacingMultiplier">1.03</item>
+    </style>
+
+    <style name="Text.Title" parent="">
+        <item name="android:textColor">@color/ink</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">25sp</item>
+        <item name="android:letterSpacing">-0.01</item>
+    </style>
+
+    <style name="Text.CardTitle" parent="">
+        <item name="android:textColor">@color/ink</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">17sp</item>
+    </style>
+
+    <style name="Text.Body" parent="">
+        <item name="android:textColor">@color/ink_dim</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+
+    <style name="Text.Caption" parent="">
+        <item name="android:textColor">@color/ink_dim</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+
+    <style name="Text.SectionLabel" parent="">
+        <item name="android:textColor">@color/ink</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:letterSpacing">0.02</item>
+    </style>
+
+    <!-- Cards -->
+    <style name="Card.Fliptle" parent="">
+        <item name="android:background">@drawable/card_bg</item>
+        <item name="android:padding">18dp</item>
+    </style>
+
+    <!-- EditText fields on dark -->
+    <style name="Field.Fliptle" parent="Widget.Material3.TextInputEditText.OutlinedBox">
+        <item name="android:textColor">@color/ink</item>
+        <item name="android:textColorHint">@color/ink_dim</item>
+    </style>
 </resources>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared functional-screen background: graphite ground + a soft top-biased ochre
+     glow + a faint grain tile. Set as the window background so every screen
+     inherits the same subtle depth (roots stay transparent over it). -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/graphite" />
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:centerX="0.5"
+                android:centerY="-0.05"
+                android:gradientRadius="85%p"
+                android:startColor="#24C98A3F"
+                android:centerColor="#0AC98A3F"
+                android:endColor="#00C98A3F" />
+        </shape>
+    </item>
+    <item>
+        <bitmap
+            android:src="@drawable/grain"
+            android:gravity="fill"
+            android:tileMode="repeat" />
+    </item>
+</layer-list>

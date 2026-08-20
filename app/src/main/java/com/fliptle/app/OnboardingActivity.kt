@@ -26,10 +26,12 @@ class OnboardingActivity : AppCompatActivity() {
     private lateinit var backButton: Button
     private lateinit var nextButton: Button
     private lateinit var tutorialButton: Button
+    private lateinit var root: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_onboarding)
+        root = findViewById(R.id.onboardingRoot)
         titleText = findViewById(R.id.stepTitle)
         bodyText = findViewById(R.id.stepBody)
         statusText = findViewById(R.id.stepStatus)
@@ -127,8 +129,10 @@ class OnboardingActivity : AppCompatActivity() {
         backButton.visibility = if (step > STEP_INTRO) View.VISIBLE else View.GONE
         actionButton.visibility = View.VISIBLE
         statusText.visibility = View.VISIBLE
-        // The tutorial link belongs on the welcome screen only.
+        // The tutorial link — and the atmospheric Welcome illustration — belong on
+        // the intro step only. Other steps fall back to the shared window glow.
         tutorialButton.visibility = if (step == STEP_INTRO) View.VISIBLE else View.GONE
+        root.setBackgroundResource(if (step == STEP_INTRO) R.drawable.bg_welcome else 0)
         nextButton.text = getString(if (step == STEP_LAST) R.string.ob_finish else R.string.ob_next)
         // Compulsory: Next/Finish stays disabled until the step is actually satisfied.
         nextButton.isEnabled = stepSatisfied()

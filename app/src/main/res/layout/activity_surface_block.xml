@@ -11,92 +11,106 @@
         android:padding="24dp">
 
         <TextView
+            style="@style/Text.Title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/surfaces_title"
-            android:textSize="22sp"
-            android:textStyle="bold" />
+            android:text="@string/surfaces_title" />
 
         <TextView
+            style="@style/Text.Body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="@string/surfaces_body"
-            android:textSize="15sp"
-            android:lineSpacingMultiplier="1.2" />
+            android:text="@string/surfaces_body" />
 
         <TextView
             android:id="@+id/surfaceLockText"
+            style="@style/Text.Caption"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:textColor="#0D47A1"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:layout_marginTop="14dp"
+            android:textColor="@color/accent_ico"
+            android:lineSpacingMultiplier="1.4" />
 
         <CheckBox
             android:id="@+id/reelsCheck"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
+            android:buttonTint="@color/accent"
+            android:textColor="@color/ink"
             android:text="@string/surface_reels" />
 
         <CheckBox
             android:id="@+id/storiesCheck"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:buttonTint="@color/accent"
+            android:textColor="@color/ink"
             android:text="@string/surface_stories" />
 
         <CheckBox
             android:id="@+id/shortsCheck"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:buttonTint="@color/accent"
+            android:textColor="@color/ink"
             android:text="@string/surface_shorts" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="24dp"
-            android:background="#33000000" />
-
-        <!-- Reels allowance: part of the freeze commitment, not a separate valve. -->
-        <TextView
+        <!-- Allowance card -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/allowance_title"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:layout_marginTop="20dp"
+            android:background="@drawable/card_bg"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                style="@style/Text.CardTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/allowance_title" />
+
+            <TextView
+                android:id="@+id/allowanceStatusText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="@color/ink"
+                android:textStyle="bold"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/allowanceCountdownText"
+                style="@style/Text.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/startSessionButton"
+                style="@style/Widget.Fliptle.Button.Primary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="@string/allowance_start" />
+        </LinearLayout>
+
+        <!-- Allowance settings -->
+        <TextView
+            style="@style/Text.SectionLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/allowance_title" />
 
         <TextView
-            android:id="@+id/allowanceStatusText"
+            style="@style/Text.Caption"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/allowanceCountdownText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textSize="15sp"
-            android:visibility="gone" />
-
-        <Button
-            android:id="@+id/startSessionButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="@string/allowance_start" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
             android:text="@string/allowance_session_label" />
 
         <EditText
@@ -104,9 +118,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:importantForAutofill="no"
+            android:textColor="@color/ink"
             android:inputType="number" />
 
         <TextView
+            style="@style/Text.Caption"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -117,9 +133,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:importantForAutofill="no"
+            android:textColor="@color/ink"
             android:inputType="number" />
 
         <TextView
+            style="@style/Text.Caption"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -130,33 +148,34 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:importantForAutofill="no"
+            android:textColor="@color/ink"
             android:inputType="number" />
 
         <TextView
             android:id="@+id/allowanceBoundsText"
+            style="@style/Text.Caption"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textSize="13sp"
+            android:layout_marginTop="6dp"
             android:textStyle="italic" />
 
         <Button
             android:id="@+id/saveAllowanceButton"
+            style="@style/Widget.Fliptle.Button.Secondary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:text="@string/allowance_save" />
 
         <TextView
+            style="@style/Text.Caption"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="@string/surfaces_caveat"
-            android:textSize="13sp"
-            android:textStyle="italic" />
+            android:textStyle="italic"
+            android:text="@string/surfaces_caveat" />
 
-        <!-- Developer diagnostics. Hidden unless DevMode is unlocked (debug builds
-             only) — normal users never see this block. -->
+        <!-- Developer diagnostics (hidden unless DevMode unlocked) -->
         <LinearLayout
             android:id="@+id/devSection"
             android:layout_width="match_parent"
@@ -168,15 +187,17 @@
                 android:id="@+id/debugCheck"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="20dp"
+                android:buttonTint="@color/accent"
+                android:textColor="@color/ink"
                 android:text="@string/surfaces_debug_toggle" />
 
             <TextView
+                style="@style/Text.Caption"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="@string/surfaces_debug_hint"
-                android:textSize="13sp" />
+                android:text="@string/surfaces_debug_hint" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -186,6 +207,7 @@
 
                 <Button
                     android:id="@+id/refreshLogButton"
+                    style="@style/Widget.Fliptle.Button.Outline"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -193,8 +215,10 @@
 
                 <Button
                     android:id="@+id/clearLogButton"
+                    style="@style/Widget.Fliptle.Button.Outline"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
                     android:layout_weight="1"
                     android:text="@string/surfaces_debug_clear" />
             </LinearLayout>
@@ -205,6 +229,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:fontFamily="monospace"
+                android:textColor="@color/ink_dim"
                 android:textSize="12sp" />
         </LinearLayout>
 
