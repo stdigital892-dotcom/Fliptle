@@ -27,7 +27,7 @@
     <string name="porn_title">Porn blocking</string>
     <string name="porn_off_status">Not enabled yet</string>
     <string name="porn_off_body">Turning this on blocks adult sites across your browsers using an on-device list of 282,000+ domains, plus safe-search enforcement and blocked search keywords.</string>
-    <string name="porn_warning">This is permanent.\n\nOnce enabled, porn blocking CANNOT be turned off — there is no off switch anywhere in the app. The only way to remove it is uninstalling Fliptle, which itself takes 5 days of daily gates.</string>
+    <string name="porn_warning">This is permanent.\n\nOnce enabled, porn blocking CANNOT be turned off — there is no off switch anywhere in the app. The only way to remove it is uninstalling this app, which itself takes 5 days of daily gates.</string>
     <string name="porn_understand">I understand this cannot be undone</string>
     <string name="porn_enable">Enable porn blocking permanently</string>
     <string name="porn_confirm_title">Enable permanently?</string>
@@ -167,7 +167,7 @@
     <!-- Onboarding -->
     <string name="ob_watch_tutorial">▶  Watch tutorial</string>
     <string name="ob_intro_title">Take your focus back.</string>
-    <string name="ob_intro_body">Fliptle blocks porn permanently and puts your distractions on a 3-day lock.
+    <string name="ob_intro_body">This app blocks porn permanently and puts your distractions on a 3-day lock.
 
 No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="ob_signin_title">Sign in</string>
@@ -179,13 +179,13 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="ob_back">Back</string>
     <string name="ob_finish">Finish setup</string>
     <string name="ob_usage_title">1. Usage access</string>
-    <string name="ob_usage_body">Fliptle needs Usage Access to see which app is currently in the foreground, so it can cover apps you\'ve chosen to block during a freeze. It only reads the name of the current app — nothing else.</string>
+    <string name="ob_usage_body">This app needs Usage Access to see which app is currently in the foreground, so it can cover apps you\'ve chosen to block during a freeze. It only reads the name of the current app — nothing else.</string>
     <string name="ob_usage_action">Grant usage access</string>
     <string name="ob_overlay_title">2. Display over other apps</string>
-    <string name="ob_overlay_body">This lets Fliptle show a full-screen \"blocked\" cover on top of a blocked app or website. Without it, blocking can\'t cover the screen.</string>
+    <string name="ob_overlay_body">This lets this app show a full-screen \"blocked\" cover on top of a blocked app or website. Without it, blocking can\'t cover the screen.</string>
     <string name="ob_overlay_action">Allow display over other apps</string>
     <string name="ob_a11y_title">3. URL blocking (Accessibility)</string>
-    <string name="ob_a11y_body">Fliptle uses Android\'s Accessibility service to read the web address shown in your browser\'s address bar, so it can block adult sites on the list and enforce safe-search.\n\nWhat it does with that text:\n• Compares the current URL to the on-device blocklist.\n• If it matches, it leaves the page and shows a brief notice.\n\nIt also detects specific in-app surfaces you choose to block — Instagram Reels/Stories and YouTube Shorts — and navigates away from them, leaving the rest of those apps usable.\n\nWhat it never does:\n• It does NOT record, store, or transmit your browsing history or any page content. Every check happens on your device.\n\nThis step is optional, and you can turn it off any time in Accessibility settings.</string>
+    <string name="ob_a11y_body">This app uses Android\'s Accessibility service to read the web address shown in your browser\'s address bar, so it can block adult sites on the list and enforce safe-search.\n\nWhat it does with that text:\n• Compares the current URL to the on-device blocklist.\n• If it matches, it leaves the page and shows a brief notice.\n\nIt also detects specific in-app surfaces you choose to block — Instagram Reels/Stories and YouTube Shorts — and navigates away from them, leaving the rest of those apps usable.\n\nWhat it never does:\n• It does NOT record, store, or transmit your browsing history or any page content. Every check happens on your device.\n\nThis step is optional, and you can turn it off any time in Accessibility settings.</string>
     <string name="ob_a11y_action">Open Accessibility settings</string>
     <string name="status_granted">✓ Granted</string>
     <string name="status_not_granted">Not granted yet</string>
@@ -207,12 +207,12 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
 
     <!-- Protection guard -->
     <string name="guard_title">Protection is OFF</string>
-    <string name="guard_body">Fliptle can\'t protect you right now because a required permission is turned off. Re-enable it below to continue. The app stays locked until protection is restored.</string>
+    <string name="guard_body">This app can\'t protect you right now because a required permission is turned off. Re-enable it below to continue. The app stays locked until protection is restored.</string>
     <string name="guard_enable_accessibility">Enable Accessibility (URL blocking)</string>
     <string name="guard_enable_usage">Grant usage access</string>
     <string name="guard_enable_overlay">Allow display over other apps</string>
-    <string name="guard_exit_hint">You can leave this screen with Back or Home at any time — your phone stays fully usable for calls and emergencies. Fliptle will keep reminding you until protection is back on.</string>
-    <string name="guard_notif_title">Fliptle protection is OFF</string>
+    <string name="guard_exit_hint">You can leave this screen with Back or Home at any time — your phone stays fully usable for calls and emergencies. This app will keep reminding you until protection is back on.</string>
+    <string name="guard_notif_title">Protection is OFF</string>
     <string name="guard_notif_text">Tap to re-enable protection.</string>
 
     <!-- Setup -->
@@ -251,4 +251,10 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="freeze_covers_title">What this freeze covers</string>
     <!-- Uninstall hard reset -->
     <string name="uninstall_reset_toast">A day was missed — progress has reset to day 1.</string>
+    <string name="setup_freeze_sub">Start a cycle and manage what it holds.</string>
+    <string name="setup_uninstall_sub">Five days of daily gates before removal.</string>
+    <string name="setup_account_caption">A slow, deliberate path — here when you truly need it.</string>
+    <string name="freeze_apps_sub">Apps you choose to cover</string>
+    <string name="freeze_domains_sub">Adult list + your sites</string>
+    <string name="freeze_shorts_sub">Timed sessions only</string>
 </resources>

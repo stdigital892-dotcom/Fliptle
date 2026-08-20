@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Fliptle dark design system — confirmed palette.
+  Graphite ground (not pure black), warm off-white ink, one ochre accent.
+-->
+<resources>
+    <color name="graphite">#1A1917</color>       <!-- app background -->
+    <color name="surface">#24231F</color>        <!-- cards (subtle elevation) -->
+    <color name="elevated">#2D2B26</color>        <!-- secondary buttons / chips / pressed -->
+    <color name="border">#34322C</color>          <!-- hairlines / card edges -->
+
+    <color name="ink">#ECE5D7</color>             <!-- primary text (warm off-white) -->
+    <color name="ink_dim">#A6A093</color>         <!-- secondary text (warm grey) -->
+
+    <color name="accent">#C98A3F</color>          <!-- ochre — primary actions -->
+    <color name="accent_press">#AC7430</color>    <!-- accent pressed -->
+    <color name="accent_ico">#D2A15C</color>      <!-- icons / quiet links / eyebrows -->
+    <color name="accent_well">#2E2618</color>     <!-- tinted well behind card icons -->
+    <color name="on_accent">#1A1917</color>       <!-- dark ink on the ochre pill -->
+
+    <!-- soft warm banner (used sparingly, e.g. locked notice) -->
+    <color name="notice_bg">#2E2618</color>
+    <color name="notice_border">#3A2F1C</color>
+    <color name="notice_text">#D9B583</color>
+</resources>

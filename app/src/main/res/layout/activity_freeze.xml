@@ -12,109 +12,133 @@
 
         <TextView
             android:id="@+id/freezeTitle"
+            style="@style/Text.Title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/freeze_title"
-            android:textSize="22sp"
-            android:textStyle="bold" />
+            android:text="@string/freeze_title" />
 
         <TextView
+            style="@style/Text.Body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:lineSpacingMultiplier="1.2"
-            android:text="@string/freeze_body"
-            android:textSize="15sp" />
+            android:text="@string/freeze_body" />
 
         <TextView
             android:id="@+id/cycleStatusText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:layout_marginTop="22dp"
+            android:textColor="@color/ink"
+            android:fontFamily="sans-serif"
+            android:textStyle="bold"
+            android:textSize="22sp"
+            android:letterSpacing="-0.01" />
 
         <TextView
             android:id="@+id/cycleDetailText"
+            style="@style/Text.Body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:lineSpacingMultiplier="1.2"
-            android:textSize="15sp" />
+            android:layout_marginTop="8dp" />
 
         <Button
             android:id="@+id/startCycleButton"
+            style="@style/Widget.Fliptle.Button.Primary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="18dp"
             android:text="@string/freeze_start" />
 
         <TextView
             android:id="@+id/reviewNoticeText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:background="#33FF9800"
-            android:lineSpacingMultiplier="1.2"
-            android:padding="16dp"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/notice_bg"
+            android:padding="14dp"
+            android:lineSpacingMultiplier="1.45"
+            android:textColor="@color/notice_text"
+            android:textSize="13sp"
             android:text="@string/freeze_review_body"
-            android:textSize="14sp"
             android:visibility="gone" />
 
-        <!-- What the freeze governs — always reachable from here (and ONLY from
-             here). Editing any of these is blocked while a cycle is locked. -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginTop="24dp"
-            android:background="#33000000" />
+            android:background="@color/border" />
 
         <TextView
+            style="@style/Text.CardTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="@string/freeze_covers_title"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:text="@string/freeze_covers_title" />
 
         <TextView
             android:id="@+id/coversLockText"
+            style="@style/Text.Caption"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:lineSpacingMultiplier="1.2"
-            android:textSize="13sp"
-            android:textStyle="italic" />
+            android:layout_marginTop="3dp"
+            android:lineSpacingMultiplier="1.4" />
 
-        <Button
-            android:id="@+id/blockedAppsButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="@string/setup_apps" />
+        <LinearLayout android:id="@+id/blockedAppsButton"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:background="@drawable/card_bg"
+            android:foreground="?attr/selectableItemBackground" android:clickable="true"
+            android:focusable="true" android:gravity="center_vertical"
+            android:orientation="horizontal" android:padding="16dp">
+            <FrameLayout android:layout_width="42dp" android:layout_height="42dp" android:background="@drawable/icon_well">
+                <ImageView android:layout_width="22dp" android:layout_height="22dp" android:layout_gravity="center"
+                    android:src="@drawable/ic_apps" android:contentDescription="@null" /></FrameLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:layout_marginStart="14dp" android:orientation="vertical">
+                <TextView style="@style/Text.CardTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/setup_apps" />
+                <TextView style="@style/Text.Caption" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="@string/freeze_apps_sub" />
+            </LinearLayout>
+        </LinearLayout>
 
-        <Button
-            android:id="@+id/blockedDomainsButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="@string/setup_domains" />
+        <LinearLayout android:id="@+id/blockedDomainsButton"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="10dp" android:background="@drawable/card_bg"
+            android:foreground="?attr/selectableItemBackground" android:clickable="true"
+            android:focusable="true" android:gravity="center_vertical"
+            android:orientation="horizontal" android:padding="16dp">
+            <FrameLayout android:layout_width="42dp" android:layout_height="42dp" android:background="@drawable/icon_well">
+                <ImageView android:layout_width="22dp" android:layout_height="22dp" android:layout_gravity="center"
+                    android:src="@drawable/ic_domains" android:contentDescription="@null" /></FrameLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:layout_marginStart="14dp" android:orientation="vertical">
+                <TextView style="@style/Text.CardTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/setup_domains" />
+                <TextView style="@style/Text.Caption" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="@string/freeze_domains_sub" />
+            </LinearLayout>
+        </LinearLayout>
 
-        <Button
-            android:id="@+id/surfacesButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="@string/setup_surfaces" />
+        <LinearLayout android:id="@+id/surfacesButton"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="10dp" android:background="@drawable/card_bg"
+            android:foreground="?attr/selectableItemBackground" android:clickable="true"
+            android:focusable="true" android:gravity="center_vertical"
+            android:orientation="horizontal" android:padding="16dp">
+            <FrameLayout android:layout_width="42dp" android:layout_height="42dp" android:background="@drawable/icon_well">
+                <ImageView android:layout_width="22dp" android:layout_height="22dp" android:layout_gravity="center"
+                    android:src="@drawable/ic_shorts" android:contentDescription="@null" /></FrameLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:layout_marginStart="14dp" android:orientation="vertical">
+                <TextView style="@style/Text.CardTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/setup_surfaces" />
+                <TextView style="@style/Text.Caption" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="@string/freeze_shorts_sub" />
+            </LinearLayout>
+        </LinearLayout>
 
         <TextView
             android:id="@+id/devStatusText"
+            style="@style/Text.Caption"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:textColor="#B71C1C"
-            android:textSize="13sp"
-            android:textStyle="italic"
+            android:textColor="@color/accent_ico"
             android:visibility="gone" />
 
     </LinearLayout>

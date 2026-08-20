@@ -12,7 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/url_blocked_title"
-        android:textColor="#FFFFFF"
+        android:textColor="#C98A3F"
         android:textSize="26sp"
         android:textStyle="bold" />
 

@@ -2,7 +2,8 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -10,15 +11,19 @@
         android:orientation="vertical"
         android:padding="24dp">
 
+        <!-- Wordmark slot — left blank until a name is chosen (still tap target for dev unlock). -->
         <TextView
             android:id="@+id/homeTitle"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/app_name"
-            android:textSize="18sp"
+            android:minWidth="64dp"
+            android:minHeight="20dp"
+            android:text=""
+            android:textColor="@color/accent_ico"
+            android:textSize="15sp"
             android:textStyle="bold" />
 
-        <!-- ── First launch: the single action that starts everything ────── -->
+        <!-- First launch: single action -->
         <LinearLayout
             android:id="@+id/startSection"
             android:layout_width="match_parent"
@@ -27,31 +32,29 @@
             android:visibility="gone">
 
             <TextView
+                style="@style/Text.Display"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="48dp"
-                android:lineSpacingMultiplier="1.15"
-                android:text="@string/home_journey_title"
-                android:textSize="30sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="56dp"
+                android:text="@string/home_journey_title" />
 
             <TextView
+                style="@style/Text.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:lineSpacingMultiplier="1.25"
-                android:text="@string/home_journey_body"
-                android:textSize="16sp" />
+                android:layout_marginTop="14dp"
+                android:text="@string/home_journey_body" />
 
             <Button
                 android:id="@+id/startJourneyButton"
+                style="@style/Widget.Fliptle.Button.Primary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="32dp"
                 android:text="@string/home_journey_start" />
         </LinearLayout>
 
-        <!-- ── Returning user: current status at a glance ────────────────── -->
+        <!-- Returning: status + two actions -->
         <LinearLayout
             android:id="@+id/statusSection"
             android:layout_width="match_parent"
@@ -64,19 +67,23 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="48dp"
-                android:lineSpacingMultiplier="1.15"
-                android:textSize="28sp"
-                android:textStyle="bold" />
+                android:textColor="@color/ink"
+                android:fontFamily="sans-serif"
+                android:textStyle="bold"
+                android:textSize="40sp"
+                android:letterSpacing="-0.02"
+                android:lineSpacingMultiplier="1.0" />
 
             <TextView
                 android:id="@+id/freezeStatusText"
+                style="@style/Text.Caption"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:textSize="15sp" />
+                android:layout_marginTop="16dp" />
 
             <Button
                 android:id="@+id/setupButton"
+                style="@style/Widget.Fliptle.Button.Secondary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="40dp"
@@ -84,9 +91,11 @@
 
             <Button
                 android:id="@+id/signOutButton"
-                android:layout_width="match_parent"
+                style="@style/Widget.Fliptle.Button.Text"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="6dp"
                 android:text="@string/auth_sign_out" />
         </LinearLayout>
 

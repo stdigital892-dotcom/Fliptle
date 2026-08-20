@@ -12,13 +12,12 @@
 
         <TextView
             android:id="@+id/authTitle"
+            style="@style/Text.Title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/auth_title"
-            android:textSize="22sp"
-            android:textStyle="bold" />
+            android:text="@string/auth_title" />
 
-        <!-- Shown only when already signed in (opened from Home → Account). -->
+        <!-- Account view (already signed in) -->
         <LinearLayout
             android:id="@+id/accountSection"
             android:layout_width="match_parent"
@@ -26,39 +25,46 @@
             android:orientation="vertical"
             android:visibility="gone">
 
-            <TextView
-                android:id="@+id/accountEmailText"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:textSize="17sp"
-                android:textStyle="bold" />
+                android:background="@drawable/card_bg"
+                android:orientation="vertical"
+                android:padding="20dp">
 
-            <TextView
-                android:id="@+id/accountDetailText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:lineSpacingMultiplier="1.2"
-                android:textSize="14sp" />
+                <TextView
+                    android:id="@+id/accountEmailText"
+                    style="@style/Text.CardTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:id="@+id/accountDetailText"
+                    style="@style/Text.Body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp" />
+            </LinearLayout>
 
             <Button
                 android:id="@+id/signOutButton"
+                style="@style/Widget.Fliptle.Button.Secondary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="20dp"
                 android:text="@string/auth_sign_out" />
 
             <TextView
+                style="@style/Text.Caption"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:lineSpacingMultiplier="1.2"
-                android:text="@string/auth_sign_out_note"
-                android:textSize="13sp"
-                android:textStyle="italic" />
+                android:lineSpacingMultiplier="1.4"
+                android:text="@string/auth_sign_out_note" />
         </LinearLayout>
 
+        <!-- Sign-in controls (mandatory gate) -->
         <LinearLayout
             android:id="@+id/signInControls"
             android:layout_width="match_parent"
@@ -67,24 +73,27 @@
 
             <Button
                 android:id="@+id/googleSignInButton"
+                style="@style/Widget.Fliptle.Button.Primary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="22dp"
                 android:text="@string/auth_google" />
 
             <TextView
+                style="@style/Text.SectionLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="@string/auth_or_email"
-                android:textStyle="bold" />
+                android:layout_marginTop="24dp"
+                android:text="@string/auth_or_email" />
 
             <EditText
                 android:id="@+id/emailInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
                 android:autofillHints="emailAddress"
                 android:hint="@string/auth_email_hint_field"
+                android:textColor="@color/ink"
                 android:inputType="textEmailAddress" />
 
             <EditText
@@ -93,16 +102,18 @@
                 android:layout_height="wrap_content"
                 android:autofillHints="password"
                 android:hint="@string/auth_password_hint"
+                android:textColor="@color/ink"
                 android:inputType="textPassword" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="12dp"
                 android:orientation="horizontal">
 
                 <Button
                     android:id="@+id/emailSignInButton"
+                    style="@style/Widget.Fliptle.Button.Secondary"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -110,13 +121,16 @@
 
                 <Button
                     android:id="@+id/emailSignUpButton"
+                    style="@style/Widget.Fliptle.Button.Outline"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
                     android:layout_weight="1"
                     android:text="@string/auth_email_signup" />
             </LinearLayout>
         </LinearLayout>
 
+        <!-- Parent phone step (optional / skippable) -->
         <LinearLayout
             android:id="@+id/phoneSection"
             android:layout_width="match_parent"
@@ -126,46 +140,54 @@
             android:visibility="gone">
 
             <TextView
+                style="@style/Text.CardTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/auth_parent_phone_label"
-                android:textStyle="bold" />
+                android:text="@string/auth_parent_phone_label" />
 
             <TextView
+                style="@style/Text.Caption"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/auth_parent_phone_hint"
-                android:textSize="13sp" />
+                android:layout_marginTop="4dp"
+                android:lineSpacingMultiplier="1.4"
+                android:text="@string/auth_parent_phone_hint" />
 
             <EditText
                 android:id="@+id/parentPhoneInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:importantForAutofill="no"
                 android:hint="@string/auth_parent_phone_field"
+                android:textColor="@color/ink"
                 android:inputType="phone" />
 
             <Button
                 android:id="@+id/savePhoneButton"
+                style="@style/Widget.Fliptle.Button.Primary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
                 android:text="@string/auth_save_phone" />
 
             <Button
                 android:id="@+id/skipPhoneButton"
-                android:layout_width="match_parent"
+                style="@style/Widget.Fliptle.Button.Text"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
                 android:layout_marginTop="4dp"
-                android:background="@android:color/transparent"
                 android:text="@string/auth_skip_phone" />
         </LinearLayout>
 
         <TextView
             android:id="@+id/authStatusText"
+            style="@style/Text.Caption"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:textSize="15sp" />
+            android:layout_marginTop="22dp"
+            android:lineSpacingMultiplier="1.4" />
 
     </LinearLayout>
 </ScrollView>

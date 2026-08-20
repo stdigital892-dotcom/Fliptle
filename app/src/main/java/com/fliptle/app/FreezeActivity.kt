@@ -67,8 +67,8 @@ class FreezeActivity : AppCompatActivity() {
         open(R.id.surfacesButton, SurfaceBlockActivity::class.java)
     }
 
-    private fun open(buttonId: Int, target: Class<*>) {
-        findViewById<Button>(buttonId).setOnClickListener {
+    private fun open(viewId: Int, target: Class<*>) {
+        findViewById<android.view.View>(viewId).setOnClickListener {
             startActivity(Intent(this, target))
         }
     }
