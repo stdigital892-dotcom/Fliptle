@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Fliptle</string>
+    <string name="app_name">[APP NAME]</string>
 
     <!-- Freeze: fixed 3-day commitment cycle -->
     <string name="freeze_title">Your commitment</string>
@@ -179,14 +179,14 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="ob_back">Back</string>
     <string name="ob_finish">Finish setup</string>
     <string name="ob_usage_title">1. Usage access</string>
-    <string name="ob_usage_body">This app needs Usage Access to see which app is currently in the foreground, so it can cover apps you\'ve chosen to block during a freeze. It only reads the name of the current app — nothing else.</string>
+    <string name="ob_usage_body">Sees which app is open so it can block it during a freeze.</string>
     <string name="ob_usage_action">Grant usage access</string>
-    <string name="ob_overlay_title">2. Display over other apps</string>
-    <string name="ob_overlay_body">This lets this app show a full-screen \"blocked\" cover on top of a blocked app or website. Without it, blocking can\'t cover the screen.</string>
-    <string name="ob_overlay_action">Allow display over other apps</string>
-    <string name="ob_a11y_title">3. URL blocking (Accessibility)</string>
-    <string name="ob_a11y_body">This app uses Android\'s Accessibility service to read the web address shown in your browser\'s address bar, so it can block adult sites on the list and enforce safe-search.\n\nWhat it does with that text:\n• Compares the current URL to the on-device blocklist.\n• If it matches, it leaves the page and shows a brief notice.\n\nIt also detects specific in-app surfaces you choose to block — Instagram Reels/Stories and YouTube Shorts — and navigates away from them, leaving the rest of those apps usable.\n\nWhat it never does:\n• It does NOT record, store, or transmit your browsing history or any page content. Every check happens on your device.\n\nThis step is optional, and you can turn it off any time in Accessibility settings.</string>
-    <string name="ob_a11y_action">Open Accessibility settings</string>
+    <string name="ob_overlay_title">2. Draw over other apps</string>
+    <string name="ob_overlay_body">Shows a block screen over apps you\'ve chosen to restrict.</string>
+    <string name="ob_overlay_action">Grant permission</string>
+    <string name="ob_a11y_title">3. Enable Accessibility</string>
+    <string name="ob_a11y_body">Reads your browser\'s address bar to block adult sites. Never records what you view.</string>
+    <string name="ob_a11y_action">Go to settings</string>
     <string name="status_granted">✓ Granted</string>
     <string name="status_not_granted">Not granted yet</string>
     <string name="status_enabled">✓ Enabled</string>
@@ -257,4 +257,7 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="freeze_apps_sub">Apps you choose to cover</string>
     <string name="freeze_domains_sub">Adult list + your sites</string>
     <string name="freeze_shorts_sub">Timed sessions only</string>
+    <string name="ob_a11y_step1">Tap Installed services and find %1$s</string>
+    <string name="ob_a11y_step2">Tap the switch to turn ON</string>
+    <string name="ob_a11y_step3">Tap Allow to confirm</string>
 </resources>

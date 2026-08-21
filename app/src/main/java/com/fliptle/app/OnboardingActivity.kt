@@ -27,6 +27,10 @@ class OnboardingActivity : AppCompatActivity() {
     private lateinit var nextButton: Button
     private lateinit var tutorialButton: Button
     private lateinit var root: View
+    private lateinit var stepsSection: View
+    private lateinit var stepText1: TextView
+    private lateinit var stepText2: TextView
+    private lateinit var stepText3: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +43,10 @@ class OnboardingActivity : AppCompatActivity() {
         backButton = findViewById(R.id.backButton)
         nextButton = findViewById(R.id.nextButton)
         tutorialButton = findViewById(R.id.tutorialButton)
+        stepsSection = findViewById(R.id.stepsSection)
+        stepText1 = findViewById(R.id.stepText1)
+        stepText2 = findViewById(R.id.stepText2)
+        stepText3 = findViewById(R.id.stepText3)
 
         tutorialButton.setOnClickListener { openTutorial() }
         actionButton.setOnClickListener { onAction() }
@@ -133,6 +141,8 @@ class OnboardingActivity : AppCompatActivity() {
         // the intro step only. Other steps fall back to the shared window glow.
         tutorialButton.visibility = if (step == STEP_INTRO) View.VISIBLE else View.GONE
         root.setBackgroundResource(if (step == STEP_INTRO) R.drawable.bg_welcome else 0)
+        // Numbered step cards only exist on the Accessibility screen.
+        stepsSection.visibility = if (step == STEP_ACCESSIBILITY) View.VISIBLE else View.GONE
         nextButton.text = getString(if (step == STEP_LAST) R.string.ob_finish else R.string.ob_next)
         // Compulsory: Next/Finish stays disabled until the step is actually satisfied.
         nextButton.isEnabled = stepSatisfied()
@@ -173,6 +183,10 @@ class OnboardingActivity : AppCompatActivity() {
                 titleText.setText(R.string.ob_a11y_title)
                 bodyText.setText(R.string.ob_a11y_body)
                 actionButton.setText(R.string.ob_a11y_action)
+                val name = getString(R.string.app_name)
+                stepText1.text = getString(R.string.ob_a11y_step1, name)
+                stepText2.setText(R.string.ob_a11y_step2)
+                stepText3.setText(R.string.ob_a11y_step3)
                 showEnabled(Permissions.isAccessibilityEnabled(this))
             }
         }
