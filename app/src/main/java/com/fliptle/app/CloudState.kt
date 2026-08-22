@@ -1,6 +1,7 @@
 package com.fliptle.app
 
 import android.content.Context
+import com.fliptle.app.auth.AuthStore
 import com.fliptle.app.auth.FirebaseGate
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -36,6 +37,8 @@ object CloudState {
         data.putAll(ReelsAllowance(ctx).backupState())
         data["blockedApps"] = ArrayList(BlockedAppsStore(ctx).get())
         data["blockedDomains"] = ArrayList(DomainBlocklist(ctx).userDomains())
+        // Once-per-account uninstall-info screen: only ever set to true (never reset).
+        if (AuthStore(ctx).uninstallInfoSeen) data["uninstallInfoSeen"] = true
 
         FirebaseFirestore.getInstance().collection(COLLECTION).document(user.uid)
             .set(mapOf(FIELD to data), SetOptions.merge())
@@ -86,6 +89,8 @@ object CloudState {
         if (session != null && perDay != null && cd != null) {
             ReelsAllowance(ctx).restoreSettings(asInt(session, 10), asInt(perDay, 3), asInt(cd, 15))
         }
+        // Uninstall-info screen: latch to true (never reset, one-way like porn).
+        if (s["uninstallInfoSeen"] == true) AuthStore(ctx).uninstallInfoSeen = true
     }
 
     private fun asLong(v: Any?): Long = when (v) {

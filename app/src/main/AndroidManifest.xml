@@ -93,6 +93,10 @@
             android:name=".PornBlockActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".UninstallInfoActivity"
+            android:exported="false" />
+
         <service
             android:name=".BlockingService"
             android:exported="false"
