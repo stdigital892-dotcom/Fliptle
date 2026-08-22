@@ -38,9 +38,20 @@ class AuthStore(context: Context) {
         get() = prefs.getBoolean(KEY_PHONE_PROVIDED, false)
         set(value) = prefs.edit().putBoolean(KEY_PHONE_PROVIDED, value).apply()
 
+    /**
+     * Whether the once-per-account "how to uninstall" information screen has
+     * already been shown. Local mirror of a Firestore flag under this account, so
+     * signing in again on any device skips it. Set on "Got it" (device + cloud);
+     * restored from Firestore on sign-in by [com.fliptle.app.CloudState].
+     */
+    var uninstallInfoSeen: Boolean
+        get() = prefs.getBoolean(KEY_UNINSTALL_INFO_SEEN, false)
+        set(value) = prefs.edit().putBoolean(KEY_UNINSTALL_INFO_SEEN, value).apply()
+
     companion object {
         private const val KEY_INSTALL_ID = "install_id"
         private const val KEY_PHONE = "phone"
         private const val KEY_PHONE_PROVIDED = "phone_provided"
+        private const val KEY_UNINSTALL_INFO_SEEN = "uninstall_info_seen"
     }
 }

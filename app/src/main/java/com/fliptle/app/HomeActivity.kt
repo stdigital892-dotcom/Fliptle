@@ -48,6 +48,12 @@ class HomeActivity : AppCompatActivity() {
         if (!Permissions.gate(this)) return
         // Sign-in is mandatory; an unauthenticated user is sent to sign in.
         if (!AuthGate.gate(this)) return
+        // Unskippable once-per-account uninstall-process explainer.
+        if (!com.fliptle.app.auth.AuthStore(this).uninstallInfoSeen) {
+            startActivity(android.content.Intent(this, UninstallInfoActivity::class.java))
+            finish()
+            return
+        }
         setContentView(R.layout.activity_home)
         freezeStore = FreezeStore(this)
         pornBlock = PornBlockStore(this)

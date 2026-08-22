@@ -23,6 +23,9 @@ class MainActivity : AppCompatActivity() {
             !Permissions.allEnforcementGranted(this) -> ProtectionGuardActivity::class.java
             // Sign-in is mandatory (Google or email/password); no skip.
             AuthGate.required(this) -> com.fliptle.app.auth.SignInActivity::class.java
+            // Unskippable once-per-account uninstall-process explainer.
+            !com.fliptle.app.auth.AuthStore(this).uninstallInfoSeen ->
+                UninstallInfoActivity::class.java
             else -> HomeActivity::class.java
         }
         startActivity(Intent(this, destination))

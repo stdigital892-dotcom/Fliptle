@@ -260,4 +260,19 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="ob_a11y_step1">Tap Installed services and find %1$s</string>
     <string name="ob_a11y_step2">Tap the switch to turn ON</string>
     <string name="ob_a11y_step3">Tap Allow to confirm</string>
+    <!-- Once-per-account uninstall-process explainer (post sign-in, pre-Home). -->
+    <string name="uninstall_info_title">⚠️  How to uninstall this app</string>
+    <string name="uninstall_info_lede">If you ever want to leave, there\'s a proper way.\nFollow it — don\'t skip it.</string>
+    <string name="uninstall_info_step1">Go to Setup → Request to uninstall the app</string>
+    <string name="uninstall_info_step2">Solve 10 maths questions — every day</string>
+    <string name="uninstall_info_step3">Type the number sequence 1 to 50 — every day</string>
+    <string name="uninstall_info_step4">Do this for 5 days straight.\nMiss a day → back to day 1.</string>
+    <string name="uninstall_info_step5">After 5 days, uninstall is approved.</string>
+    <string name="uninstall_info_caution_title">⚠️  If you delete this app directly from your phone without following the process:</string>
+    <string name="uninstall_info_caution_lede">Your partner will be notified on WhatsApp immediately with the following details:</string>
+    <string name="uninstall_info_caution_bullets">•  The exact date and time you uninstalled\n•  How many days you had been protected\n•  That you left without completing the process</string>
+    <string name="uninstall_info_caution_final">This cannot be undone or hidden.</string>
+    <string name="uninstall_info_close">This process exists so you don\'t leave\non a bad day. Respect it.</string>
+    <string name="uninstall_info_scroll_hint">Scroll to the end to continue</string>
+    <string name="uninstall_info_got_it">Got it — let\'s start</string>
 </resources>
