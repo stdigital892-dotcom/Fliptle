@@ -22,6 +22,13 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # The action's default package list includes the obsolete "tools"
+          # package, which Google removed from the SDK repository. Requesting it
+          # makes sdkmanager fail ("Failed to find package 'tools'"). Install only
+          # platform-tools here; Gradle auto-downloads the platform/build-tools it
+          # needs (licenses are accepted by this action).
+          packages: 'platform-tools'
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
