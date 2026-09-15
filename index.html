@@ -75,26 +75,21 @@ header.scrolled{background:rgba(6,6,8,.82);backdrop-filter:blur(14px);border-col
 
 /* ===================== HERO ===================== */
 .hero{position:relative;min-height:100svh;display:flex;align-items:center;overflow:hidden;padding:120px 0 80px}
-#embers{position:absolute;inset:0;z-index:1;pointer-events:none}
+#embers{position:absolute;inset:0;z-index:2;pointer-events:none}
 .hero-bg{position:absolute;inset:0;z-index:0;overflow:hidden}
-.hero-bg::before{ /* deep red pressure from the top */
-  content:'';position:absolute;inset:0;
+.hero-photo{ /* full-bleed hero background image */
+  position:absolute;inset:0;width:100%;height:100%;z-index:0;
+  object-fit:cover;object-position:center 40%;
+}
+.hero-overlay{ /* dark scrim between image and text: heavier on the left/bottom where the copy sits */
+  position:absolute;inset:0;z-index:1;
   background:
-    radial-gradient(120% 80% at 50% -10%, rgba(255,34,51,.22), transparent 55%),
-    radial-gradient(90% 60% at 15% 20%, rgba(123,20,40,.35), transparent 60%);
+    linear-gradient(180deg, rgba(6,6,8,.72) 0%, rgba(6,6,8,.42) 34%, rgba(6,6,8,.56) 66%, rgba(6,6,8,.97) 100%),
+    linear-gradient(90deg, rgba(6,6,8,.90) 0%, rgba(6,6,8,.46) 48%, rgba(6,6,8,.12) 100%),
+    radial-gradient(120% 90% at 50% -8%, rgba(255,34,51,.16), transparent 55%);
 }
-.hero-bg::after{ /* light emerging from below */
-  content:'';position:absolute;left:50%;bottom:-30%;width:120%;height:90%;transform:translateX(-50%);
-  background:radial-gradient(closest-side, rgba(255,217,160,.20), rgba(255,90,60,.10) 40%, transparent 72%);
-  filter:blur(10px);animation:breathe 9s ease-in-out infinite;
-}
-.hero-img{ /* optional user hero image sits here, under overlay */
-  position:absolute;inset:0;background-size:cover;background-position:center;opacity:.28;
-  mix-blend-mode:screen;
-}
-.hero-vignette{position:absolute;inset:0;z-index:2;pointer-events:none;
-  background:radial-gradient(120% 120% at 50% 40%, transparent 55%, rgba(0,0,0,.75) 100%),
-             linear-gradient(180deg, rgba(6,6,8,.4), rgba(6,6,8,0) 30%, rgba(6,6,8,.85));
+.hero-vignette{position:absolute;inset:0;z-index:3;pointer-events:none;
+  background:radial-gradient(120% 120% at 50% 42%, transparent 52%, rgba(0,0,0,.8) 100%);
 }
 @keyframes breathe{0%,100%{opacity:.55;transform:translateX(-50%) scale(1)}50%{opacity:1;transform:translateX(-50%) scale(1.08)}}
 
@@ -106,7 +101,8 @@ header.scrolled{background:rgba(6,6,8,.82);backdrop-filter:blur(14px);border-col
 .hero .lead b{color:#fff;font-weight:600}
 
 /* ===================== WAITLIST FORM ===================== */
-.waitlist-form{display:flex;gap:12px;flex-wrap:wrap;max-width:520px}
+.waitlist-form{display:flex;flex-direction:column;gap:12px;max-width:520px}
+@media(min-width:560px){.waitlist-form{flex-direction:row;flex-wrap:wrap;align-items:stretch}}
 .waitlist-form .field{
   flex:1 1 240px;display:flex;align-items:center;gap:10px;
   background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:14px;padding:4px 4px 4px 16px;
@@ -118,20 +114,27 @@ header.scrolled{background:rgba(6,6,8,.82);backdrop-filter:blur(14px);border-col
 }
 .waitlist-form input::placeholder{color:#8a8a97}
 .waitlist-form button{
-  border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:1rem;color:#fff;
-  background:var(--accent);border-radius:11px;padding:14px 24px;white-space:nowrap;
-  box-shadow:var(--glow);transition:transform .25s, box-shadow .25s, opacity .25s;
+  border:none;cursor:pointer;font-family:inherit;font-weight:800;font-size:1.18rem;color:#fff;
+  background:var(--accent);border-radius:14px;padding:20px 42px;white-space:nowrap;letter-spacing:.01em;
+  box-shadow:0 10px 34px rgba(255,34,51,.5);transition:transform .25s, box-shadow .25s, opacity .25s;
 }
-.waitlist-form button:hover{transform:translateY(-2px);box-shadow:0 10px 34px rgba(255,34,51,.6)}
+.waitlist-form button:hover{transform:translateY(-3px);box-shadow:0 16px 48px rgba(255,34,51,.72)}
 .waitlist-form button:disabled{opacity:.6;cursor:default;transform:none}
-.form-note{font-size:.86rem;color:var(--muted);margin-top:14px}
+.form-note{font-size:.86rem;color:var(--muted);margin-top:16px}
 .form-msg{margin-top:14px;font-size:.95rem;font-weight:500;min-height:1.2em}
 .form-msg.ok{color:var(--light)}
 .form-msg.err{color:#ff7a7a}
-.count-signal{margin-top:20px;font-size:.95rem;color:var(--muted);display:none;align-items:center;gap:9px}
+/* big live social-proof counter */
+.count-signal{margin-top:26px;display:none;flex-direction:column;gap:2px}
 .count-signal.show{display:flex}
-.count-signal .pulse{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 rgba(255,34,51,.6);animation:livepulse 2s infinite}
-.count-signal b{color:#fff;font-weight:800;font-variant-numeric:tabular-nums}
+.count-num{
+  font-family:'Anton',sans-serif;font-size:clamp(3.2rem,11vw,5.6rem);line-height:.9;color:var(--accent);
+  letter-spacing:.01em;font-variant-numeric:tabular-nums;text-shadow:0 0 36px rgba(255,34,51,.45);
+}
+.count-label{display:flex;align-items:center;gap:9px;color:#e7e7ee;font-weight:500;
+  font-size:clamp(.92rem,2.1vw,1.08rem)}
+.count-label .live-dot{width:8px;height:8px;flex:0 0 auto;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 0 rgba(255,34,51,.6);animation:livepulse 2s infinite}
 @keyframes livepulse{0%{box-shadow:0 0 0 0 rgba(255,34,51,.55)}70%{box-shadow:0 0 0 10px rgba(255,34,51,0)}100%{box-shadow:0 0 0 0 rgba(255,34,51,0)}}
 
 .scroll-cue{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);z-index:5;color:#666;font-size:.72rem;
@@ -202,7 +205,8 @@ section{position:relative;z-index:2}
 .final h2{font-size:clamp(2rem,6.5vw,3.8rem);font-weight:900;letter-spacing:-.02em;line-height:1.08}
 .final p{color:#c3c3cd;margin:18px auto 34px;font-size:1.1rem;font-weight:300}
 .final .waitlist-form{margin:0 auto;justify-content:center}
-.final .count-signal{justify-content:center}
+.final .count-signal{align-items:center;text-align:center}
+.final .count-label{justify-content:center}
 
 /* FOOTER */
 footer{border-top:1px solid var(--line);padding:56px 0 44px;text-align:center;background:#040405}
@@ -279,7 +283,8 @@ footer{border-top:1px solid var(--line);padding:56px 0 44px;text-align:center;ba
 <!-- ===================== HERO ===================== -->
 <section class="hero" id="top">
   <div class="hero-bg">
-    <div class="hero-img" id="heroImg"></div>
+    <img class="hero-photo" src="hero.jpeg" alt="" aria-hidden="true" decoding="async" fetchpriority="high" />
+    <div class="hero-overlay"></div>
   </div>
   <canvas id="embers"></canvas>
   <div class="hero-vignette"></div>
@@ -296,11 +301,12 @@ footer{border-top:1px solid var(--line);padding:56px 0 44px;text-align:center;ba
         </label>
         <button type="submit">Join the Rescue</button>
       </form>
-      <p class="form-note">Join the Rescue. Get early access to the app before anyone else.</p>
       <p class="form-msg" data-msg="hero" role="status" aria-live="polite"></p>
       <div class="count-signal" data-count>
-        <span class="pulse"></span><span><b class="count-num">0</b> people have already joined the rescue</span>
+        <span class="count-num">0</span>
+        <span class="count-label"><span class="live-dot"></span>have already decided to take their life back</span>
       </div>
+      <p class="form-note">Join the Rescue. Get early access to the app before anyone else.</p>
     </div>
   </div>
   <div class="scroll-cue">Scroll</div>
@@ -383,11 +389,12 @@ footer{border-top:1px solid var(--line);padding:56px 0 44px;text-align:center;ba
           <span aria-hidden="true">✉️</span>
           <input type="email" name="email" inputmode="email" autocomplete="email" placeholder="Enter your email" required aria-label="Email address" />
         </label>
-        <button type="submit">Get early access</button>
+        <button type="submit">Join the Rescue</button>
       </form>
       <p class="form-msg" data-msg="final" role="status" aria-live="polite"></p>
       <div class="count-signal" data-count>
-        <span class="pulse"></span><span><b class="count-num">0</b> people have already joined the rescue</span>
+        <span class="count-num">0</span>
+        <span class="count-label"><span class="live-dot"></span>have already decided to take their life back</span>
       </div>
     </div>
   </div>
@@ -489,7 +496,8 @@ footer{border-top:1px solid var(--line);padding:56px 0 44px;text-align:center;ba
 const RESCUE = {
   /* Phase 1 (LIVE) */
   CAMPAIGN_VIDEO_URL: "",      // paste a YouTube EMBED url e.g. "https://www.youtube.com/embed/VIDEO_ID"
-  HERO_IMAGE_URL: "",          // optional atmospheric hero image URL (sits under a dark overlay)
+  // Hero background image is hard-wired to hero.jpeg in the markup (<img class="hero-photo">).
+  // To swap it, replace hero.jpeg in the repo or change that src.
   WAITLIST_BASELINE: 0,        // optional number added to the live count for display only
 
   /* Phase 2 (HIDDEN until launch) */
@@ -513,10 +521,7 @@ const io = new IntersectionObserver((es)=>{
 },{threshold:.14, rootMargin:'0px 0px -50px 0px'});
 document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
-/* ============ Optional hero image + video ============ */
-if (RESCUE.HERO_IMAGE_URL){
-  document.getElementById('heroImg').style.backgroundImage = `url("${RESCUE.HERO_IMAGE_URL}")`;
-}
+/* ============ Campaign video ============ */
 if (RESCUE.CAMPAIGN_VIDEO_URL){
   const f = document.getElementById('videoFrame');
   const ph = document.getElementById('videoPlaceholder');
@@ -574,12 +579,10 @@ function setMsg(key, text, kind){
   });
 }
 function renderCount(n){
-  if(n == null) return;
-  const display = n + (RESCUE.WAITLIST_BASELINE||0);
+  const display = (n == null ? 0 : n) + (RESCUE.WAITLIST_BASELINE || 0);
   document.querySelectorAll('[data-count]').forEach(box=>{
     box.classList.add('show');
-    const el = box.querySelector('.count-num');
-    animateTo(el, display);
+    animateTo(box.querySelector('.count-num'), display);
   });
 }
 function animateTo(el, target){
@@ -594,9 +597,13 @@ function animateTo(el, target){
 }
 
 async function initCount(){
+  // Show the counter immediately (at 0/baseline) so it's always visible...
+  renderCount(liveCount == null ? 0 : liveCount);
   if(!window.RescueDB || !window.RescueDB.ready) return;
   const n = await window.RescueDB.waitlistCount();
-  if(n != null){ liveCount = n; if(n>0 || RESCUE.WAITLIST_BASELINE>0) renderCount(n); }
+  if(n != null){ liveCount = n; }
+  // ...then count up from 0 to the real value from stats/waitlist.
+  renderCount(liveCount == null ? 0 : liveCount);
 }
 
 function bindForms(){
@@ -738,12 +745,11 @@ function routeCheck(){ if(location.hash === '#access') openCheckout(); }
 addEventListener('hashchange', routeCheck);
 
 /* ============ BOOT ============ */
-function boot(){ bindForms(); initCount(); routeCheck(); }
+function boot(){ if(window.__rescueBooted) return; window.__rescueBooted = true; bindForms(); initCount(); routeCheck(); }
 if(window.RescueDB) boot();
 else addEventListener('rescuedb-ready', boot, { once:true });
-// Safety: if the module is slow, still bind the forms.
-setTimeout(()=>{ if(!window.__rescueBooted){ bindForms(); routeCheck(); } }, 2500);
-window.__rescueBooted = true;
+// Safety: if the Firebase module never signals ready, still boot (counter shows 0, forms work).
+setTimeout(boot, 2500);
 </script>
 </body>
 </html>
