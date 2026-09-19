@@ -48,10 +48,19 @@ class AuthStore(context: Context) {
         get() = prefs.getBoolean(KEY_UNINSTALL_INFO_SEEN, false)
         set(value) = prefs.edit().putBoolean(KEY_UNINSTALL_INFO_SEEN, value).apply()
 
+    /**
+     * Whether the once-per-account inbox-confirmation screen has been shown after
+     * first sign-in. Backed up to Firestore so a reinstall doesn't re-show it.
+     */
+    var inboxConfirmShown: Boolean
+        get() = prefs.getBoolean(KEY_INBOX_CONFIRM_SHOWN, false)
+        set(value) = prefs.edit().putBoolean(KEY_INBOX_CONFIRM_SHOWN, value).apply()
+
     companion object {
         private const val KEY_INSTALL_ID = "install_id"
         private const val KEY_PHONE = "phone"
         private const val KEY_PHONE_PROVIDED = "phone_provided"
         private const val KEY_UNINSTALL_INFO_SEEN = "uninstall_info_seen"
+        private const val KEY_INBOX_CONFIRM_SHOWN = "inbox_confirm_shown"
     }
 }

@@ -268,12 +268,20 @@ class SignInActivity : AppCompatActivity() {
     }
 
     /**
-     * Continue into the app after the phone step. If this screen is the task root
-     * (reached via the mandatory sign-in gate, e.g. right after a sign-out), route
-     * through the launcher so the user lands on Home. Otherwise it was opened on top
-     * of onboarding/Home, so just return there.
+     * Continue into the app after the phone step. On first sign-in, routes through
+     * the inbox-confirm screen (shown once per account). On subsequent sign-ins,
+     * goes directly to MainActivity.
      */
     private fun proceed() {
+        if (!AuthStore(this).inboxConfirmShown) {
+            startActivity(
+                Intent(this, InboxConfirmActivity::class.java)
+                    .putExtra(InboxConfirmActivity.EXTRA_EMAIL, auth?.currentUser?.email ?: "")
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            )
+            finish()
+            return
+        }
         if (isTaskRoot) {
             startActivity(
                 Intent(this, MainActivity::class.java)

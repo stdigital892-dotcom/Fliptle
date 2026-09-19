@@ -37,8 +37,9 @@ object CloudState {
         data.putAll(ReelsAllowance(ctx).backupState())
         data["blockedApps"] = ArrayList(BlockedAppsStore(ctx).get())
         data["blockedDomains"] = ArrayList(DomainBlocklist(ctx).userDomains())
-        // Once-per-account uninstall-info screen: only ever set to true (never reset).
+        // Once-per-account screens: only ever set to true (never reset).
         if (AuthStore(ctx).uninstallInfoSeen) data["uninstallInfoSeen"] = true
+        if (AuthStore(ctx).inboxConfirmShown) data["inboxConfirmShown"] = true
 
         FirebaseFirestore.getInstance().collection(COLLECTION).document(user.uid)
             .set(mapOf(FIELD to data), SetOptions.merge())
@@ -89,8 +90,9 @@ object CloudState {
         if (session != null && perDay != null && cd != null) {
             ReelsAllowance(ctx).restoreSettings(asInt(session, 10), asInt(perDay, 3), asInt(cd, 15))
         }
-        // Uninstall-info screen: latch to true (never reset, one-way like porn).
+        // Once-per-account screens: latch to true (never reset).
         if (s["uninstallInfoSeen"] == true) AuthStore(ctx).uninstallInfoSeen = true
+        if (s["inboxConfirmShown"] == true) AuthStore(ctx).inboxConfirmShown = true
     }
 
     private fun asLong(v: Any?): Long = when (v) {
