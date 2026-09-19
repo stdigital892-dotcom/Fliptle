@@ -275,4 +275,12 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="uninstall_info_close">This process exists so you don\'t leave\non a bad day. Respect it.</string>
     <string name="uninstall_info_scroll_hint">Scroll to the end to continue</string>
     <string name="uninstall_info_got_it">Got it — let\'s start</string>
+
+    <!-- Inbox confirmation screen (shown once after first sign-in) -->
+    <string name="inbox_confirm_headline">Your Rescue starts in your inbox.</string>
+    <string name="inbox_confirm_subtext">We\'ve sent a link to %1$s. Open your email and tap the link inside — your protection activates the moment you do.</string>
+    <string name="inbox_confirm_cta">Take me to my email</string>
+    <string name="inbox_confirm_resend">Didn\'t get it? Check spam, or resend</string>
+    <string name="inbox_confirm_quote">The best time to start was yesterday.\nThe next best time is right now.</string>
+    <string name="inbox_resend_ok">Email resent — check your inbox.</string>
 </resources>
