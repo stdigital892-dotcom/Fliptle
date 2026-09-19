@@ -76,7 +76,12 @@ exports.sendWaitlistWelcome = onDocumentCreated(
   {
     document: "waitlist/{docId}",
     secrets: [RESEND_API_KEY],
-    region: "us-central1",
+    // Must exactly match the Firestore database's region (Firebase Console ->
+    // Project settings -> General -> "Default GCP resource location", or
+    // `gcloud firestore databases list`). This project's Firestore is in
+    // asia-south2 (Delhi) — a Firestore trigger deployed to any other region
+    // silently never fires, even though `firebase deploy` reports success.
+    region: "asia-south2",
   },
   async (event) => {
     const snap = event.data;
