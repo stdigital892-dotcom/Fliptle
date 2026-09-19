@@ -171,6 +171,8 @@ class SignInActivity : AppCompatActivity() {
         // Re-sync this account's progress from the cloud (restores after a reinstall
         // or a previous sign-out; a no-op for a brand-new account).
         CloudState.restore(this) {}
+        // Add email to the waitlist (triggers the welcome/offer email via Cloud Function).
+        user.email?.let { WaitlistHelper.maybeAddToWaitlist(this, it) }
         InstallTracker.recordSignIn(this, user.uid, user.email, method, AuthStore(this).installId()) { msg ->
             runOnUiThread {
                 val verified = if (user.isEmailVerified) getString(R.string.auth_verified)

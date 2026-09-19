@@ -15,11 +15,11 @@ const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 // ----- Config -----
 const FROM = "RESCUE <sales@fliptle.com>";
 const REPLY_TO = "sales@fliptle.com";
-// Early-access / offer page lives at the site's #access route.
-const OFFER_BASE = "https://fliptle.com/";
+// Early-access / offer page.
+const OFFER_BASE = "https://fliptle.com/offer";
 
 function offerLink(email) {
-  return `${OFFER_BASE}?email=${encodeURIComponent(email)}#access`;
+  return `${OFFER_BASE}?email=${encodeURIComponent(email)}`;
 }
 
 function buildHtml(link) {
