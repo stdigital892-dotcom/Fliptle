@@ -180,15 +180,15 @@ footer a{color:var(--accent)}
       Your rescue<br>
       <span class="line2">starts here.</span>
     </h1>
-    <p class="hero-sub">You've taken the first step. Here's everything you get as an early member — at no cost, right now.</p>
+    <p class="hero-sub" id="heroSub">You've taken the first step. Here's everything you get as an early member — at no cost, right now.</p>
     <p class="hero-email" id="heroEmail"></p>
 
     <button class="cta-btn" id="accessBtn" onclick="claimAccess()">Get Early Access — It's Free</button>
-    <p class="cta-note">No credit card. No commitment. Just the app.</p>
+    <p class="cta-note" id="ctaNote">No credit card. No commitment. Just the app.</p>
 
     <div class="confirmed-box" id="confirmedBox">
-      <h3>You're in. ✓</h3>
-      <p>You have early access to RESCUE. Install the app from the link we sent you, sign in with this email address, and your protection activates immediately.</p>
+      <h3 id="confirmedTitle">You're in. ✓</h3>
+      <p id="confirmedBody">You have early access to RESCUE. Install the app from the link we sent you, sign in with this email address, and your protection activates immediately.</p>
       <p style="margin-top:12px;font-size:.86rem;color:var(--muted)">Didn't receive the email? Check your spam folder, or <a href="/" style="color:var(--accent)">return to the site</a> to re-enter your email.</p>
     </div>
 
@@ -249,17 +249,17 @@ footer a{color:var(--accent)}
 <!-- ======= PLAN ======= -->
 <section class="section">
   <div class="wrap">
-    <p class="section-label">Your plan</p>
-    <h2>Early access.<br>Zero cost — for now.</h2>
-    <p class="section-sub" style="margin-bottom:32px">We're giving the first wave of members free access while we build. Pricing comes at launch — early members get the best rate.</p>
+    <p class="section-label" id="planLabel">Your plan</p>
+    <h2 id="planHeadline">Early access.<br>Zero cost — for now.</h2>
+    <p class="section-sub" id="planSub" style="margin-bottom:32px">We're giving the first wave of members free access while we build. Pricing comes at launch — early members get the best rate.</p>
 
     <div class="plan-card">
-      <div class="plan-badge">Early Access</div>
-      <div class="plan-name">Full Access</div>
+      <div class="plan-badge" id="planBadge">Early Access</div>
+      <div class="plan-name" id="planName">Full Access</div>
       <div class="plan-price">Free <span class="period">/ right now</span></div>
-      <p class="plan-note">Pricing activates at public launch — early members lock in the lowest rate.</p>
+      <p class="plan-note" id="planNote">Pricing activates at public launch — early members lock in the lowest rate.</p>
 
-      <ul class="plan-perks">
+      <ul class="plan-perks" id="planPerks">
         <li>Adult content blocker (282k+ domains)</li>
         <li>App blocking + browser blocking</li>
         <li>3-day freeze cycles</li>
@@ -269,7 +269,7 @@ footer a{color:var(--accent)}
         <li>Early access pricing locked in for life</li>
       </ul>
 
-      <button class="cta-btn" style="width:100%" onclick="claimAccess()">Claim Early Access — Free</button>
+      <button class="cta-btn" id="planCta" style="width:100%" onclick="claimAccess()">Claim Early Access — Free</button>
     </div>
   </div>
 </section>
@@ -282,24 +282,65 @@ footer a{color:var(--accent)}
 
 <script>
 (function () {
-  // ---- Read email from URL ----
+  // ---- Read email + source from URL ----
   const params = new URLSearchParams(location.search);
   const email = (params.get('email') || '').trim();
+  const source = (params.get('source') || '').trim().toLowerCase();
+  const isApp = source === 'app';
 
   if (email) {
     const heroEmail = document.getElementById('heroEmail');
     if (heroEmail) {
       heroEmail.innerHTML = 'Welcome, <span>' + escHtml(email) + '</span>';
     }
-    const chip = document.getElementById('welcomeChip');
-    if (chip) chip.textContent = 'You\'re on the list';
+  }
+
+  // ---- Swap wording for app/tester users (no "Early Access" language) ----
+  function setText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+  function setHtml(id, html) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  }
+
+  if (isApp) {
+    document.title = 'Your access is ready — RESCUE';
+    // Hero
+    setText('welcomeChip', 'Your access is ready');
+    setText('heroSub', "You're signed in. Here's what your protection covers — tap continue to head back to the app and start using it.");
+    setText('accessBtn', 'Continue to app');
+    setText('ctaNote', 'Your account is confirmed. Return to the RESCUE app to begin.');
+    // Plan section
+    setText('planLabel', 'What you get');
+    setHtml('planHeadline', 'Full protection.<br>Included with your account.');
+    setText('planSub', "Everything below is unlocked on your device right now. No payment, no trial timer, no catch — just the app.");
+    setText('planBadge', 'Included');
+    setText('planName', 'Full Access');
+    setText('planNote', 'Included with your account while we build. Pricing plans come later.');
+    // Replace last perk line
+    const perks = document.getElementById('planPerks');
+    if (perks) {
+      const items = perks.querySelectorAll('li');
+      if (items.length) items[items.length - 1].textContent = 'Progress synced to your account';
+    }
+    setText('planCta', 'Start your protection');
+    // Confirmed box
+    setText('confirmedTitle', "You're confirmed. ✓");
+    setHtml('confirmedBody', 'Return to the RESCUE app on your phone — it will open straight to the home screen and your protection is active.');
+  } else {
+    setText('welcomeChip', "You're on the list");
   }
 
   // ---- CTA ----
   window.claimAccess = function () {
     const btn = document.getElementById('accessBtn');
     const box = document.getElementById('confirmedBox');
-    if (btn) { btn.disabled = true; btn.textContent = 'You\'re in ✓'; }
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = isApp ? "You're confirmed ✓" : "You're in ✓";
+    }
     if (box) box.classList.add('show');
     box && box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   };

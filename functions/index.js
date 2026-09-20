@@ -18,8 +18,9 @@ const REPLY_TO = "sales@fliptle.com";
 // Early-access / offer page.
 const OFFER_BASE = "https://fliptle.com/offer";
 
-function offerLink(email) {
-  return `${OFFER_BASE}?email=${encodeURIComponent(email)}`;
+function offerLink(email, source) {
+  const src = source === "app" ? "app" : "web";
+  return `${OFFER_BASE}?email=${encodeURIComponent(email)}&source=${src}`;
 }
 
 function buildHtml(link) {
@@ -100,7 +101,8 @@ exports.sendWaitlistWelcome = onDocumentCreated(
       return;
     }
 
-    const link = offerLink(email);
+    const source = typeof data.source === "string" ? data.source : "";
+    const link = offerLink(email, source);
     const resend = new Resend(RESEND_API_KEY.value());
 
     try {
