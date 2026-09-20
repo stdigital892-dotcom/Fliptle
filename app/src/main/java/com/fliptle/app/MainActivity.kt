@@ -3,6 +3,7 @@ package com.fliptle.app
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
 
 /** Launcher/router: sends first-time users to onboarding, everyone else home. */
 class MainActivity : AppCompatActivity() {
@@ -16,19 +17,37 @@ class MainActivity : AppCompatActivity() {
             BlockingService.start(this)
         }
 
-        // Not onboarded yet -> onboarding. Onboarded but protection off -> the
-        // full-screen guard. Otherwise -> Home.
+        val store = com.fliptle.app.auth.AuthStore(this)
+
+        // Steps that use a simple class reference (no extra data).
         val destination = when {
             !OnboardingState(this).complete -> OnboardingActivity::class.java
             !Permissions.allEnforcementGranted(this) -> ProtectionGuardActivity::class.java
-            // Sign-in is mandatory (Google or email/password); no skip.
             AuthGate.required(this) -> com.fliptle.app.auth.SignInActivity::class.java
-            // Unskippable once-per-account uninstall-process explainer.
-            !com.fliptle.app.auth.AuthStore(this).uninstallInfoSeen ->
-                UninstallInfoActivity::class.java
-            else -> HomeActivity::class.java
+            !store.uninstallInfoSeen -> UninstallInfoActivity::class.java
+            else -> null
         }
-        startActivity(Intent(this, destination))
+        if (destination != null) {
+            startActivity(Intent(this, destination))
+            finish()
+            return
+        }
+
+        // Inbox-confirm screen: shown once per account and needs the email extra.
+        // Catches already-signed-in users who haven't seen it yet (e.g. testers
+        // who installed before this feature shipped, or reinstalls where the local
+        // flag was cleared but the Firestore flag hasn't been restored yet).
+        if (!store.inboxConfirmShown) {
+            val email = FirebaseAuth.getInstance().currentUser?.email ?: ""
+            startActivity(
+                Intent(this, com.fliptle.app.auth.InboxConfirmActivity::class.java)
+                    .putExtra(com.fliptle.app.auth.InboxConfirmActivity.EXTRA_EMAIL, email)
+            )
+            finish()
+            return
+        }
+
+        startActivity(Intent(this, HomeActivity::class.java))
         finish()
     }
 }

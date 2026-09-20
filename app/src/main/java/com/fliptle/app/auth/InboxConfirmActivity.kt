@@ -2,6 +2,7 @@ package com.fliptle.app.auth
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
@@ -53,14 +54,23 @@ class InboxConfirmActivity : AppCompatActivity() {
     }
 
     private fun openEmailApp() {
-        val intent = Intent(Intent.ACTION_MAIN).apply {
-            addCategory(Intent.CATEGORY_APP_EMAIL)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        try {
-            startActivity(intent)
-        } catch (_: ActivityNotFoundException) {
-            // No email app installed — proceed anyway.
+        // Try in order: direct shortcut → mailto: scheme → give up gracefully.
+        val candidates = listOf(
+            Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_APP_EMAIL)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            },
+            Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:")).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+        )
+        for (intent in candidates) {
+            try {
+                startActivity(intent)
+                return
+            } catch (_: ActivityNotFoundException) {
+                // Try the next candidate.
+            }
         }
     }
 
