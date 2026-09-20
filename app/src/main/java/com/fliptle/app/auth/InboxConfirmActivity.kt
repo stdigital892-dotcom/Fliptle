@@ -54,22 +54,24 @@ class InboxConfirmActivity : AppCompatActivity() {
     }
 
     private fun openEmailApp() {
-        // Try in order: direct shortcut → mailto: scheme → give up gracefully.
-        val candidates = listOf(
-            Intent(Intent.ACTION_MAIN).apply {
-                addCategory(Intent.CATEGORY_APP_EMAIL)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            },
-            Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:")).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val primary = Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_APP_EMAIL)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        try {
+            startActivity(primary)
+        } catch (_: Exception) {
+            val fallback = Intent(Intent.ACTION_VIEW, Uri.parse("mailto:")).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
-        )
-        for (intent in candidates) {
             try {
-                startActivity(intent)
-                return
-            } catch (_: ActivityNotFoundException) {
-                // Try the next candidate.
+                startActivity(fallback)
+            } catch (_: Exception) {
+                Toast.makeText(
+                    this,
+                    "No email app found on this device. Please install Gmail or another email app.",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
     }
