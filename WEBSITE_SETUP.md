@@ -4,11 +4,15 @@ The marketing site is a single static file (`index.html`) served by GitHub Pages
 at **fliptle.com**. It shares the **same Firebase project as the Android app**
 (`apps-99e1e`) — no new project needed.
 
-There are two phases:
+There are three pieces:
 
-- **Phase 1 — Waitlist (LIVE):** email capture → Firestore `waitlist`.
-- **Phase 2 — Subscriptions (HIDDEN):** plan + Razorpay/UPI checkout → Firestore
-  `subscriptions`. Built but disabled behind a flag until you launch.
+- **Phase 1 — Waitlist (LIVE):** email capture on `index.html` → Firestore `waitlist`.
+- **Welcome email → Offer page (LIVE):** a Cloud Function (`functions/index.js`)
+  emails each new waitlist signup a link to `offer.html`, which shows the app's
+  features and three test-mode plans → Firestore `planSelections`.
+- **Phase 2 — Subscriptions (HIDDEN):** plan + Razorpay/UPI checkout on
+  `index.html` → Firestore `subscriptions`. Built but disabled behind a flag
+  until you launch.
 
 All tunables live in one `const RESCUE = { … }` block near the bottom of
 `index.html`, plus the `firebaseConfig` in the Firebase `<script type="module">`.
@@ -58,6 +62,23 @@ service cloud.firestore {
     match /subscriptions/{email} {
       allow read, write: if false;
     }
+
+    // Test-mode plan selections from offer.html — no payment yet, so the
+    // client writes directly. Doc ID must equal the email in the payload;
+    // only a fixed set of fields and a known plan id are accepted. Public
+    // read so the Android app can look up a user's choice by email before
+    // it has its own signed-in session tied to this address (tighten to
+    // `request.auth.token.email == email` once the app authenticates by
+    // email — see the note below the table).
+    match /planSelections/{email} {
+      allow read: if true;
+      allow create, update: if request.resource.data.email == email
+                    && request.resource.data.email.matches('^[^@]+@[^@]+[.][^@]+$')
+                    && request.resource.data.selectedPlan in ['trial', 'monthly', 'annual']
+                    && request.resource.data.keys().hasOnly(
+                         ['email', 'selectedPlan', 'timestamp', 'source']);
+      allow delete: if false;
+    }
   }
 }
 ```
@@ -82,7 +103,7 @@ number to the displayed count.
 One auto-ID document per signup:
 
 | field       | type      | example                          |
-|-------------|-----------|----------------------------------|
+|-------------|-----------|-----------------------------------|
 | `email`     | string    | `"user@example.com"` (lowercased)|
 | `timestamp` | timestamp | server time (`serverTimestamp()`)|
 | `createdAt` | string    | ISO string (client clock)        |
@@ -117,6 +138,39 @@ user and easy to look up:
 > The Android app keys its own records under `installs/{uid}`. To link a paid
 > subscription to an app user, look it up by `email` (or add the user's Auth
 > `uid` to the subscription doc from your verify endpoint).
+
+### `planSelections` (collection) — Offer page, test mode
+Document ID = the user's **email** (lowercased) — one doc per user, so the
+Android app can read it straight back with `doc(db, "planSelections", email)`:
+
+| field          | type      | example                              |
+|----------------|-----------|---------------------------------------|
+| `email`        | string    | `"user@example.com"` (lowercased)     |
+| `selectedPlan` | string    | `"trial"` \| `"monthly"` \| `"annual"`|
+| `timestamp`    | timestamp | server time (`serverTimestamp()`)     |
+| `source`       | string    | `"web"` (or `"app"` if opened from a deep link) |
+
+No payment is taken yet — this only records intent. `timestamp` updates (via
+`merge: true`) each time the user picks a different plan, so it always
+reflects their latest choice.
+
+**Read it from the app** (pseudocode):
+```
+val doc = firestore.collection("planSelections").document(userEmail).get().await()
+val plan = doc.getString("selectedPlan") // "trial" | "monthly" | "annual" | null
+```
+
+**Privacy note:** `read: if true` is deliberately open for now because the
+website doesn't sign users in (it only knows their raw email string), so the
+app has no Firebase Auth session to scope the read to yet. This collection
+only ever holds an email + a plan choice, never payment data. Once the app
+signs users in with that same email (Phase 2's email/password or link auth),
+tighten the rule to:
+```
+allow read: if request.auth != null
+            && request.auth.token.email != null
+            && request.auth.token.email.lower() == email;
+```
 
 ---
 
@@ -165,4 +219,25 @@ at those, then reconcile subscriptions from the Razorpay dashboard / webhook.
 | `CREATE_ORDER_ENDPOINT` / `VERIFY_ENDPOINT` | `RESCUE` | secure server order + verification |
 
 Nothing about Phase 2 is visible or reachable by normal visitors until you flip
-`LAUNCH_ENABLED` — the waitlist is the only active flow.
+`LAUNCH_ENABLED` — the waitlist is the only active flow on `index.html`.
+
+---
+
+## 5. Welcome email → offer page (live)
+
+`functions/index.js` (`sendWaitlistWelcome`) fires on every new `waitlist` doc
+and emails the signup a link to `offer.html?email=<their email>&source=web`
+via Resend. See `FIREBASE_SETUP.md`-style docs in that file's comments for the
+Resend key / region setup already done.
+
+`offer.html`:
+- Reads `?email=` and shows "Welcome, `<email>`" (falls back to a small inline
+  email field if the param is missing, e.g. a client that strips query strings).
+- Lists the app's core features (porn blocking, 3-day freeze, Shorts/Reels
+  control, new-browser auto-block, accountability alerts — marked "Coming soon").
+- Shows three plan cards — Free Trial (₹0/14 days), Monthly (₹99/mo), Annual
+  (₹799/yr, "Save ₹389 · 33% off") — each with a **Choose this plan** button.
+- Clicking a plan writes to `planSelections/{email}` (test mode — **no payment
+  is taken**) and shows "You're all set! Open the Fliptle app to continue."
+
+Uses the same shared Firebase project/config as `index.html` — no separate setup.
