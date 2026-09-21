@@ -217,8 +217,7 @@ Nothing about Phase 2 is visible or reachable by normal visitors until you flip
 
 `functions/index.js` (`sendWaitlistWelcome`) fires on every new `waitlist` doc
 and emails the signup a link to `offer.html?email=<their email>&source=web`
-via Resend. See `FIREBASE_SETUP.md`-style docs in that file's comments for the
-Resend key / region setup already done.
+via Resend.
 
 `offer.html`:
 - Reads `?email=` and shows "Welcome, `<email>`" (falls back to a small inline
@@ -227,7 +226,89 @@ Resend key / region setup already done.
   control, new-browser auto-block, accountability alerts — marked "Coming soon").
 - Shows three plan cards — Free Trial (₹0/14 days), Monthly (₹99/mo), Annual
   (₹799/yr, "Save ₹389 · 33% off") — each with a **Choose this plan** button.
-- Clicking a plan writes to `planSelections/{email}` (test mode — **no payment
-  is taken**) and shows "You're all set! Open the Fliptle app to continue."
+- **Free Trial** writes to `planSelections/{email}` and shows a confirmation.
+- **Monthly / Annual** go through Razorpay Standard Checkout: see section 6.
 
-Uses the same shared Firebase project/config as `index.html` — no separate setup.
+Uses the same shared Firebase project/config as `index.html`.
+
+---
+
+## 6. Razorpay Standard Checkout on the offer page (live)
+
+Live payments use two Cloud Functions in `functions/index.js`, both callable
+(`onCall` v2, region `asia-south2` — must match Firestore), so the offer page
+never has to touch the Razorpay Key Secret:
+
+- **`createOrder`** — takes `{ email, plan }` (`plan` = `"monthly"` \| `"annual"`),
+  looks up the amount from the server-side `PAID_PLANS` catalog (₹99 = 9900
+  paise, ₹799 = 79900 paise), calls Razorpay's Orders API with Basic Auth
+  (`KEY_ID:KEY_SECRET`), returns `{ orderId, amount, currency, keyId, planName }`.
+  The `keyId` is public and is the only Razorpay identifier that ever reaches
+  the browser. **Amounts come from the server, never the client.**
+- **`verifyPayment`** — takes Razorpay's `{ razorpay_order_id,
+  razorpay_payment_id, razorpay_signature }` plus `{ email, plan }`,
+  recomputes `HMAC-SHA256(orderId + "|" + paymentId, KEY_SECRET)` in hex, and
+  compares it against the signature in constant time (`crypto.timingSafeEqual`).
+  If the signature matches, the Admin SDK writes `subscriptions/{email}` with
+  `{ email, plan, planName, amount, currency, status: "active",
+  razorpayPaymentId, razorpayOrderId, razorpaySignature, startedAt, updatedAt,
+  source: "website" }`. If it doesn't match, the whole request is refused with
+  `permission-denied` and **no write happens**.
+
+### Set the Razorpay secrets
+Both live in Google Secret Manager, never in code, never in the repo. From the
+repo root in Git Bash / a terminal:
+
+```
+firebase functions:secrets:set RAZORPAY_KEY_ID
+firebase functions:secrets:set RAZORPAY_KEY_SECRET
+```
+
+Each command prompts for a value with hidden input — paste the value from your
+Razorpay dashboard (**Test mode → Settings → API Keys** while testing;
+**Live mode → Settings → API Keys** at launch). The Key ID starts `rzp_test_`
+in test mode and `rzp_live_` in production. To rotate a key later, run the
+same command again — it just adds a new version.
+
+Then redeploy so the functions pick up the new secrets:
+```
+firebase deploy --only functions
+```
+
+### Firestore rules
+`subscriptions/{email}` stays fully locked to clients:
+```
+match /subscriptions/{email} {
+  allow read, write: if false;
+}
+```
+`verifyPayment` uses the Admin SDK, which bypasses these rules — clients
+never need read or write access to `subscriptions`. If the app needs to check
+a user's subscription status, add a callable like `getSubscription({email})`
+in `functions/index.js` (server-side Admin SDK read) rather than opening
+`subscriptions` reads to the client.
+
+### What to test after deploying (test mode)
+
+1. `firebase functions:list` — confirm `createOrder(asia-south2)` and
+   `verifyPayment(asia-south2)` appear.
+2. Load `https://fliptle.com/offer?email=test@example.com` in a browser.
+3. Click **Monthly** → the Razorpay Checkout modal should open showing ₹99.
+4. Pay with a Razorpay **test** instrument — e.g. card
+   `4111 1111 1111 1111`, any future expiry, any CVV; or UPI id
+   `success@razorpay`.
+5. The page should show "You're subscribed to Monthly. Open the Fliptle app
+   to continue."
+6. Firebase Console → Firestore → `subscriptions/test@example.com` — one doc
+   with `status: "active"`, correct `plan`, `amount`, and the Razorpay ids.
+7. `firebase functions:log --only createOrder,verifyPayment` — you should see
+   `Razorpay order created` then `Subscription activated`. No warnings.
+8. **Failure paths worth testing:**
+   - Dismiss the Razorpay modal → button re-enables, no message, no write.
+   - Use UPI id `failure@razorpay` → `payment.failed` fires, no subscription
+     is written.
+   - Try tampering: in DevTools, override the `amount` returned by
+     `createOrder` before opening the modal. The signature Razorpay produces
+     won't match on the server, `verifyPayment` returns
+     `permission-denied`, and no doc is written. (The Cloud Function logs
+     `Razorpay signature mismatch` — that's the alarm to watch.)

@@ -288,6 +288,7 @@ footer a{color:var(--accent)}
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
   // Same shared Firebase project as index.html and the Android app.
   const firebaseConfig = {
@@ -299,16 +300,19 @@ footer a{color:var(--accent)}
     appId: ""
   };
 
-  let db = null, ready = false;
+  let db = null, fns = null, ready = false;
   try {
     const app = initializeApp(firebaseConfig);
     db = getFirestore(app);
+    // Callables live in the same region as Firestore (asia-south2 / Delhi).
+    fns = getFunctions(app, "asia-south2");
     ready = true;
   } catch (e) { console.error("[RESCUE offer] Firebase init failed:", e); }
 
   window.OfferDB = {
     ready,
-    // Test-mode plan selection — no payment yet. Doc ID = the user's email.
+    // Free trial — client writes directly to planSelections/{email} (rules
+    // allow anonymous `create` with a validated shape; see WEBSITE_SETUP.md).
     async choosePlan(email, planId, source) {
       await setDoc(doc(db, "planSelections", email), {
         email,
@@ -316,6 +320,18 @@ footer a{color:var(--accent)}
         timestamp: serverTimestamp(),
         source: source || "web",
       }, { merge: true });
+    },
+    // Paid plans go through the Cloud Functions. The Key Secret never touches
+    // the browser — only the server holds it and verifies the signature.
+    async createOrder(email, planId) {
+      const call = httpsCallable(fns, "createOrder");
+      const result = await call({ email, plan: planId });
+      return result.data;
+    },
+    async verifyPayment(payload) {
+      const call = httpsCallable(fns, "verifyPayment");
+      const result = await call(payload);
+      return result.data;
     },
   };
 </script>
@@ -383,6 +399,69 @@ footer a{color:var(--accent)}
   }
 
   const PLAN_LABELS = { trial: 'Free Trial (14 days)', monthly: 'Monthly (₹99/mo)', annual: 'Annual (₹799/yr)' };
+  const PAID = { monthly: true, annual: true };
+
+  // Load Razorpay Checkout on demand — no request for people who bounce or
+  // pick the free trial. Idempotent: safe to call any number of times.
+  function ensureRazorpayLoaded() {
+    return new Promise(function (resolve, reject) {
+      if (window.Razorpay) return resolve();
+      var existing = document.querySelector('script[data-rzp="1"]');
+      if (existing) {
+        existing.addEventListener('load', function () { resolve(); });
+        existing.addEventListener('error', function () { reject(new Error('razorpay_load_failed')); });
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      s.setAttribute('data-rzp', '1');
+      s.onload = function () { resolve(); };
+      s.onerror = function () { reject(new Error('razorpay_load_failed')); };
+      document.head.appendChild(s);
+    });
+  }
+
+  // Runs the full Razorpay flow. Resolves with verifyPayment's result, or
+  // rejects — the caller distinguishes between "user closed the modal" and
+  // real failures by err.message.
+  async function payWithRazorpay(userEmail, planId) {
+    await ensureRazorpayLoaded();
+    const order = await window.OfferDB.createOrder(userEmail, planId);
+    return new Promise(function (resolve, reject) {
+      const rzp = new window.Razorpay({
+        key: order.keyId,                 // public Razorpay Key ID (safe on client)
+        order_id: order.orderId,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'RESCUE',
+        description: order.planName + ' subscription',
+        prefill: { email: userEmail },
+        theme: { color: '#FF2233' },
+        handler: async function (resp) {
+          try {
+            const result = await window.OfferDB.verifyPayment({
+              razorpay_order_id: resp.razorpay_order_id,
+              razorpay_payment_id: resp.razorpay_payment_id,
+              razorpay_signature: resp.razorpay_signature,
+              email: userEmail,
+              plan: planId,
+            });
+            resolve(result);
+          } catch (e) {
+            reject(e);
+          }
+        },
+        modal: {
+          ondismiss: function () { reject(new Error('payment_dismissed')); },
+        },
+      });
+      rzp.on('payment.failed', function (resp) {
+        const desc = (resp && resp.error && resp.error.description) || 'payment_failed';
+        reject(new Error(desc));
+      });
+      rzp.open();
+    });
+  }
 
   document.querySelectorAll('.plan-cta').forEach(function (btn) {
     btn.addEventListener('click', async function () {
@@ -402,21 +481,36 @@ footer a{color:var(--accent)}
 
       const original = btn.textContent;
       btn.disabled = true;
-      btn.textContent = 'Saving…';
+      btn.textContent = PAID[planId] ? 'Loading…' : 'Saving…';
       setPlansMsg('', false);
 
       try {
-        await window.OfferDB.choosePlan(email, planId, source);
-        markSelected(planId);
-        confirmBox.querySelector('#confirmBody').textContent =
-          "You picked " + PLAN_LABELS[planId] + ". Open the Fliptle app to continue.";
+        if (PAID[planId]) {
+          const result = await payWithRazorpay(email, planId);
+          markSelected(planId);
+          confirmBox.querySelector('#confirmBody').textContent =
+            "You're subscribed to " + (result.planName || PLAN_LABELS[planId]) +
+            ". Open the Fliptle app to continue.";
+        } else {
+          await window.OfferDB.choosePlan(email, planId, source);
+          markSelected(planId);
+          confirmBox.querySelector('#confirmBody').textContent =
+            "You picked " + PLAN_LABELS[planId] + ". Open the Fliptle app to continue.";
+        }
         confirmBox.hidden = false;
         confirmBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } catch (err) {
         console.error('[RESCUE offer] plan selection failed:', err);
         btn.disabled = false;
         btn.textContent = original;
-        setPlansMsg('Could not save your selection — please try again.', true);
+        // Silent when the user just closed the Razorpay modal.
+        if (err && err.message === 'payment_dismissed') {
+          setPlansMsg('', false);
+        } else if (PAID[planId]) {
+          setPlansMsg('Could not complete payment — please try again.', true);
+        } else {
+          setPlansMsg('Could not save your selection — please try again.', true);
+        }
       }
     });
   });

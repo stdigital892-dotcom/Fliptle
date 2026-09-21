@@ -1,16 +1,37 @@
 "use strict";
 
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { defineSecret } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
 const { Resend } = require("resend");
+const crypto = require("node:crypto");
 
 admin.initializeApp();
 
-// Resend API key — stored in Google Secret Manager, never in code.
-// Set it with:  firebase functions:secrets:set RESEND_API_KEY
+// ---- Secrets (Google Secret Manager, never in code) -----------------------
+// Resend welcome email:
+//   firebase functions:secrets:set RESEND_API_KEY
+// Razorpay Standard Checkout:
+//   firebase functions:secrets:set RAZORPAY_KEY_ID
+//   firebase functions:secrets:set RAZORPAY_KEY_SECRET
+// Only RAZORPAY_KEY_ID is ever returned to the browser; RAZORPAY_KEY_SECRET
+// is used exclusively by createOrder + verifyPayment on the server.
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
+const RAZORPAY_KEY_ID = defineSecret("RAZORPAY_KEY_ID");
+const RAZORPAY_KEY_SECRET = defineSecret("RAZORPAY_KEY_SECRET");
+
+// Server-side plan catalog. Amounts are authoritative here; the client never
+// gets to say what a plan costs — that's the whole point of server-side order
+// creation + HMAC verification.
+const PAID_PLANS = {
+  monthly: { name: "Monthly", amountPaise: 9900,  currency: "INR" }, // ₹99
+  annual:  { name: "Annual",  amountPaise: 79900, currency: "INR" }, // ₹799
+};
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const RAZORPAY_REGION = "asia-south2"; // must match Firestore region
 
 // ----- Config -----
 const FROM = "RESCUE <sales@fliptle.com>";
@@ -128,5 +149,160 @@ exports.sendWaitlistWelcome = onDocumentCreated(
     } catch (e) {
       logger.error("Failed to send welcome email", { email, message: e && e.message });
     }
+  }
+);
+
+// ============================================================================
+// Razorpay Standard Checkout — createOrder + verifyPayment (both callable)
+//
+// Flow:
+//   1. Client picks Monthly or Annual → calls createOrder({email, plan})
+//   2. Server calls Razorpay Orders API using Basic Auth (Key ID + Key Secret)
+//      and returns {orderId, amount, currency, keyId, planName} to the client.
+//   3. Client opens Razorpay Checkout with those values.
+//   4. On payment success, Razorpay calls the client handler with
+//      {razorpay_payment_id, razorpay_order_id, razorpay_signature}.
+//   5. Client forwards those + {email, plan} to verifyPayment.
+//   6. Server recomputes HMAC-SHA256(orderId + "|" + paymentId, KEY_SECRET)
+//      as hex and compares it with the signature in constant time.
+//   7. If it matches, the Admin SDK writes subscriptions/{email}
+//      (this bypasses the Firestore rule that denies all client access to
+//      subscriptions/*). If not, the whole request is refused — no write.
+// ============================================================================
+
+exports.createOrder = onCall(
+  {
+    secrets: [RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET],
+    region: RAZORPAY_REGION,
+    cors: true,
+  },
+  async (request) => {
+    const data = request.data || {};
+    const email = String(data.email || "").trim().toLowerCase();
+    const planId = String(data.plan || "").toLowerCase();
+
+    if (!EMAIL_RE.test(email)) {
+      throw new HttpsError("invalid-argument", "A valid email is required.");
+    }
+    const plan = PAID_PLANS[planId];
+    if (!plan) {
+      throw new HttpsError("invalid-argument", "Unknown plan.");
+    }
+
+    const keyId = RAZORPAY_KEY_ID.value();
+    const keySecret = RAZORPAY_KEY_SECRET.value();
+    if (!keyId || !keySecret) {
+      logger.error("Razorpay secrets not configured");
+      throw new HttpsError("failed-precondition", "Payments not configured.");
+    }
+
+    // Razorpay receipt is capped at 40 chars.
+    const receipt =
+      `sub_${planId}_${Date.now().toString(36)}_${crypto.randomBytes(3).toString("hex")}`
+        .slice(0, 40);
+
+    let res;
+    try {
+      res = await fetch("https://api.razorpay.com/v1/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization:
+            "Basic " + Buffer.from(keyId + ":" + keySecret).toString("base64"),
+        },
+        body: JSON.stringify({
+          amount: plan.amountPaise,
+          currency: plan.currency,
+          receipt,
+          notes: { email, plan: planId },
+        }),
+      });
+    } catch (e) {
+      logger.error("Razorpay orders network error", { message: e && e.message });
+      throw new HttpsError("unavailable", "Could not reach payment provider.");
+    }
+
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      logger.error("Razorpay orders create failed", { status: res.status, body });
+      throw new HttpsError("internal", "Could not create payment order.");
+    }
+
+    logger.info("Razorpay order created", { orderId: body.id, email, plan: planId });
+    return {
+      orderId: body.id,
+      amount: body.amount,
+      currency: body.currency,
+      keyId,        // safe to expose — this is the public Razorpay Key ID
+      planName: plan.name,
+      planId,
+    };
+  }
+);
+
+exports.verifyPayment = onCall(
+  {
+    secrets: [RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET],
+    region: RAZORPAY_REGION,
+    cors: true,
+  },
+  async (request) => {
+    const data = request.data || {};
+    const orderId = String(data.razorpay_order_id || "");
+    const paymentId = String(data.razorpay_payment_id || "");
+    const signature = String(data.razorpay_signature || "");
+    const email = String(data.email || "").trim().toLowerCase();
+    const planId = String(data.plan || "").toLowerCase();
+
+    if (!orderId || !paymentId || !signature) {
+      throw new HttpsError("invalid-argument", "Missing payment fields.");
+    }
+    if (!EMAIL_RE.test(email)) {
+      throw new HttpsError("invalid-argument", "A valid email is required.");
+    }
+    const plan = PAID_PLANS[planId];
+    if (!plan) {
+      throw new HttpsError("invalid-argument", "Unknown plan.");
+    }
+
+    const keySecret = RAZORPAY_KEY_SECRET.value();
+    if (!keySecret) {
+      logger.error("Razorpay secret not configured");
+      throw new HttpsError("failed-precondition", "Payments not configured.");
+    }
+
+    const expected = crypto
+      .createHmac("sha256", keySecret)
+      .update(orderId + "|" + paymentId)
+      .digest("hex");
+
+    // Constant-time compare so an attacker can't leak the signature via timing.
+    const a = Buffer.from(expected, "utf8");
+    const b = Buffer.from(signature, "utf8");
+    const valid = a.length === b.length && crypto.timingSafeEqual(a, b);
+    if (!valid) {
+      logger.warn("Razorpay signature mismatch", { orderId, paymentId, email });
+      throw new HttpsError("permission-denied", "Payment verification failed.");
+    }
+
+    // Admin SDK bypasses Firestore rules — `subscriptions` stays fully locked
+    // down (`allow read, write: if false`) to the client.
+    await admin.firestore().doc("subscriptions/" + email).set({
+      email,
+      plan: planId,
+      planName: plan.name,
+      amount: plan.amountPaise / 100,  // rupees, matches WEBSITE_SETUP.md schema
+      currency: plan.currency,
+      status: "active",
+      razorpayPaymentId: paymentId,
+      razorpayOrderId: orderId,
+      razorpaySignature: signature,
+      startedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      source: "website",
+    }, { merge: true });
+
+    logger.info("Subscription activated", { email, plan: planId, paymentId });
+    return { status: "active", plan: planId, planName: plan.name };
   }
 );
