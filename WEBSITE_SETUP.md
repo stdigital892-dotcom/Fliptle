@@ -64,20 +64,19 @@ service cloud.firestore {
     }
 
     // Test-mode plan selections from offer.html — no payment yet, so the
-    // client writes directly. Doc ID must equal the email in the payload;
-    // only a fixed set of fields and a known plan id are accepted. Public
-    // read so the Android app can look up a user's choice by email before
-    // it has its own signed-in session tied to this address (tighten to
-    // `request.auth.token.email == email` once the app authenticates by
-    // email — see the note below the table).
+    // client writes directly. Anyone may CREATE one doc, keyed by their own
+    // email, with a validated shape. No client can read, update or delete —
+    // only the server (Admin SDK, which bypasses these rules) can read them.
     match /planSelections/{email} {
-      allow read: if true;
-      allow create, update: if request.resource.data.email == email
-                    && request.resource.data.email.matches('^[^@]+@[^@]+[.][^@]+$')
-                    && request.resource.data.selectedPlan in ['trial', 'monthly', 'annual']
-                    && request.resource.data.keys().hasOnly(
-                         ['email', 'selectedPlan', 'timestamp', 'source']);
-      allow delete: if false;
+      allow read, update, delete: if false;
+      allow create: if
+        request.resource.data.email is string
+        && request.resource.data.email == email
+        && request.resource.data.email.matches('^[^@]+@[^@]+[.][^@]+$')
+        && request.resource.data.selectedPlan is string
+        && request.resource.data.selectedPlan in ['trial', 'monthly', 'annual']
+        && request.resource.data.timestamp == request.time
+        && request.resource.data.keys().hasOnly(['email', 'selectedPlan', 'timestamp', 'source']);
     }
   }
 }
@@ -140,8 +139,7 @@ user and easy to look up:
 > `uid` to the subscription doc from your verify endpoint).
 
 ### `planSelections` (collection) — Offer page, test mode
-Document ID = the user's **email** (lowercased) — one doc per user, so the
-Android app can read it straight back with `doc(db, "planSelections", email)`:
+Document ID = the user's **email** (lowercased) — one doc per user:
 
 | field          | type      | example                              |
 |----------------|-----------|---------------------------------------|
@@ -150,27 +148,19 @@ Android app can read it straight back with `doc(db, "planSelections", email)`:
 | `timestamp`    | timestamp | server time (`serverTimestamp()`)     |
 | `source`       | string    | `"web"` (or `"app"` if opened from a deep link) |
 
-No payment is taken yet — this only records intent. `timestamp` updates (via
-`merge: true`) each time the user picks a different plan, so it always
-reflects their latest choice.
+No payment is taken yet — this only records intent. **The client can create a
+doc but never read, update, or delete one** (see rule above) — so a user's
+first plan selection is final from the browser; picking a different plan on
+a later visit will fail (it's an `update` in Firestore's eyes, which the rule
+blocks). If you want changes allowed later, that's a deliberate rule tweak.
 
-**Read it from the app** (pseudocode):
-```
-val doc = firestore.collection("planSelections").document(userEmail).get().await()
-val plan = doc.getString("selectedPlan") // "trial" | "monthly" | "annual" | null
-```
-
-**Privacy note:** `read: if true` is deliberately open for now because the
-website doesn't sign users in (it only knows their raw email string), so the
-app has no Firebase Auth session to scope the read to yet. This collection
-only ever holds an email + a plan choice, never payment data. Once the app
-signs users in with that same email (Phase 2's email/password or link auth),
-tighten the rule to:
-```
-allow read: if request.auth != null
-            && request.auth.token.email != null
-            && request.auth.token.email.lower() == email;
-```
+**Reading it back requires a server**, since clients have no read access:
+- **Simplest:** read it with the **Admin SDK** (bypasses rules) from a Cloud
+  Function or backend the app calls, e.g. an HTTPS function
+  `getPlanSelection(email)` that returns `{ selectedPlan }`.
+- **Or:** read it directly from the **Firebase console** for manual lookups.
+- The Android app **cannot** call `.get()` on this collection with the client
+  SDK — that request will be denied by the `allow read: if false` rule.
 
 ---
 
