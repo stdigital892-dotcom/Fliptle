@@ -45,6 +45,11 @@ class InboxConfirmActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.goToEmailButton).setOnClickListener {
             openEmailApp()
+            // Deliberately do NOT navigate away — user comes back and taps the
+            // "I've confirmed" button after they've opened the link in their email.
+        }
+
+        findViewById<Button>(R.id.continueButton).setOnClickListener {
             goToMain()
         }
 
@@ -54,25 +59,17 @@ class InboxConfirmActivity : AppCompatActivity() {
     }
 
     private fun openEmailApp() {
-        val primary = Intent(Intent.ACTION_MAIN).apply {
-            addCategory(Intent.CATEGORY_APP_EMAIL)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        }
         try {
-            startActivity(primary)
-        } catch (_: Exception) {
+            val intent = Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_APP_EMAIL)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
             val fallback = Intent(Intent.ACTION_VIEW, Uri.parse("mailto:")).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
-            try {
-                startActivity(fallback)
-            } catch (_: Exception) {
-                Toast.makeText(
-                    this,
-                    "No email app found on this device. Please install Gmail or another email app.",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+            startActivity(fallback)
         }
     }
 

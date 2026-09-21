@@ -38,6 +38,14 @@
             android:layout_marginTop="36dp"
             android:text="@string/inbox_confirm_cta" />
 
+        <Button
+            android:id="@+id/continueButton"
+            style="@style/Widget.Fliptle.Button.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="@string/inbox_confirm_continue" />
+
         <TextView
             android:id="@+id/resendText"
             android:layout_width="wrap_content"
