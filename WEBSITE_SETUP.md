@@ -312,3 +312,37 @@ in `functions/index.js` (server-side Admin SDK read) rather than opening
      won't match on the server, `verifyPayment` returns
      `permission-denied`, and no doc is written. (The Cloud Function logs
      `Razorpay signature mismatch` — that's the alarm to watch.)
+
+### `razorpayWebhook` — server-to-server safety net
+
+A third Cloud Function, `razorpayWebhook` (`onRequest` v2, region
+`asia-south2`), covers the case `verifyPayment` can't: the app crashes or
+loses connection right after a successful payment, before it ever calls
+`verifyPayment`. Razorpay calls this webhook directly from its own servers on
+`payment.captured`, independent of the client, so `subscriptions/{email}`
+still gets written.
+
+- Verifies Razorpay's `X-Razorpay-Signature` header — HMAC-SHA256 over the
+  **raw** request body (`req.rawBody`, before JSON parsing) using a webhook
+  secret, checked with `crypto.timingSafeEqual`. Rejects with `400` on any
+  missing/invalid signature.
+- Reads `email`/`plan` from `payment.notes` — the same `notes: { email, plan }`
+  that `createOrder` already passes to the Razorpay Orders API, echoed back
+  onto the payment entity.
+- **Idempotent:** inside a Firestore transaction, skips the write if
+  `subscriptions/{email}.razorpayPaymentId` already equals this payment's id
+  and `status` is already `"active"` — so a Razorpay retry, or a race against
+  `verifyPayment` writing the same payment, never double-writes.
+
+**Register it:** Razorpay dashboard → **Settings → Webhooks → Add New
+Webhook**. Active events: `payment.captured`. URL: the function's deployed
+URL (`firebase deploy` prints it; format is
+`https://asia-south2-<project-id>.cloudfunctions.net/razorpayWebhook`).
+Razorpay generates a signing secret for the webhook at that point — that's a
+**different secret from `RAZORPAY_KEY_SECRET`** — set it with:
+
+```
+firebase functions:secrets:set RAZORPAY_WEBHOOK_SECRET
+```
+
+then redeploy so the function picks it up.

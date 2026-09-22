@@ -1,7 +1,7 @@
 "use strict";
 
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const { defineSecret } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
@@ -18,9 +18,13 @@ admin.initializeApp();
 //   firebase functions:secrets:set RAZORPAY_KEY_SECRET
 // Only RAZORPAY_KEY_ID is ever returned to the browser; RAZORPAY_KEY_SECRET
 // is used exclusively by createOrder + verifyPayment on the server.
+// Razorpay webhook (separate from RAZORPAY_KEY_SECRET — this is the signing
+// secret Razorpay generates when you register the webhook in its dashboard):
+//   firebase functions:secrets:set RAZORPAY_WEBHOOK_SECRET
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 const RAZORPAY_KEY_ID = defineSecret("RAZORPAY_KEY_ID");
 const RAZORPAY_KEY_SECRET = defineSecret("RAZORPAY_KEY_SECRET");
+const RAZORPAY_WEBHOOK_SECRET = defineSecret("RAZORPAY_WEBHOOK_SECRET");
 
 // Server-side plan catalog. Amounts are authoritative here; the client never
 // gets to say what a plan costs — that's the whole point of server-side order
@@ -304,5 +308,128 @@ exports.verifyPayment = onCall(
 
     logger.info("Subscription activated", { email, plan: planId, paymentId });
     return { status: "active", plan: planId, planName: plan.name };
+  }
+);
+
+// ============================================================================
+// razorpayWebhook — server-to-server safety net for `payment.captured`.
+//
+// Independent of verifyPayment above: if the app crashes or loses connection
+// right after a successful payment, before it can call verifyPayment itself,
+// Razorpay still calls this webhook directly from its own servers, so
+// subscriptions/{email} gets written regardless of what the client does next.
+//
+// Email/plan correlation: createOrder (above) already passes
+// notes: { email, plan: planId } to the Razorpay Orders API, and Razorpay
+// echoes those notes back onto the payment entity — that's what this reads.
+// ============================================================================
+exports.razorpayWebhook = onRequest(
+  { secrets: [RAZORPAY_WEBHOOK_SECRET], region: RAZORPAY_REGION },
+  async (req, res) => {
+    if (req.method !== "POST") {
+      res.status(405).send("Method not allowed");
+      return;
+    }
+
+    const signature = req.get("x-razorpay-signature");
+    if (!signature) {
+      logger.warn("Razorpay webhook: missing X-Razorpay-Signature header");
+      res.status(400).send("Missing signature");
+      return;
+    }
+
+    // req.rawBody is the exact bytes Firebase received, before JSON parsing —
+    // required because Razorpay signs the raw payload, and a parsed-then-
+    // re-serialized body is not guaranteed to match it byte-for-byte.
+    const expected = crypto
+      .createHmac("sha256", RAZORPAY_WEBHOOK_SECRET.value())
+      .update(req.rawBody)
+      .digest("hex");
+
+    const expectedBuf = Buffer.from(expected, "utf8");
+    const gotBuf = Buffer.from(signature, "utf8");
+    const validSignature =
+      expectedBuf.length === gotBuf.length && crypto.timingSafeEqual(expectedBuf, gotBuf);
+
+    if (!validSignature) {
+      logger.error("Razorpay webhook: signature verification failed — rejecting");
+      res.status(400).send("Invalid signature");
+      return;
+    }
+
+    const event = req.body || {};
+
+    // Acknowledge every other event type so Razorpay doesn't keep retrying it.
+    if (event.event !== "payment.captured") {
+      res.status(200).send("ignored");
+      return;
+    }
+
+    const payment = event.payload && event.payload.payment && event.payload.payment.entity;
+    if (!payment || !payment.id) {
+      logger.error("Razorpay webhook: payment.captured with no payment entity", {
+        event: event.event,
+      });
+      res.status(400).send("Malformed payload");
+      return;
+    }
+
+    const notes = payment.notes || {};
+    const email = String(notes.email || payment.email || "").trim().toLowerCase();
+    const planId = String(notes.plan || "").trim().toLowerCase();
+
+    if (!EMAIL_RE.test(email)) {
+      logger.error("Razorpay webhook: payment.captured with no resolvable email", {
+        paymentId: payment.id,
+      });
+      res.status(400).send("No email on payment");
+      return;
+    }
+
+    const plan = PAID_PLANS[planId];
+    const db = admin.firestore();
+    const ref = db.collection("subscriptions").doc(email);
+
+    try {
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        const existing = snap.exists ? snap.data() : null;
+
+        // Idempotency: skip if this exact payment was already recorded, whether
+        // by verifyPayment (the app's own client-triggered call) or by Razorpay
+        // retrying this same webhook (it retries on any non-2xx response).
+        if (existing && existing.razorpayPaymentId === payment.id && existing.status === "active") {
+          logger.info("Razorpay webhook: payment already recorded, skipping", {
+            paymentId: payment.id,
+            email,
+          });
+          return;
+        }
+
+        tx.set(
+          ref,
+          {
+            email,
+            plan: planId || (existing && existing.plan) || null,
+            planName: (plan && plan.name) || (existing && existing.planName) || null,
+            amount: typeof payment.amount === "number" ? payment.amount / 100 : null,
+            currency: payment.currency || "INR",
+            status: "active",
+            razorpayPaymentId: payment.id,
+            razorpayOrderId: payment.order_id || null,
+            startedAt: (existing && existing.startedAt) || admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            source: (existing && existing.source) || "webhook",
+          },
+          { merge: true }
+        );
+      });
+
+      logger.info("Razorpay webhook: subscription confirmed", { email, paymentId: payment.id });
+      res.status(200).send("ok");
+    } catch (e) {
+      logger.error("Razorpay webhook: Firestore write failed", { email, message: e && e.message });
+      res.status(500).send("internal error");
+    }
   }
 );
