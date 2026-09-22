@@ -6,9 +6,13 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 
 /**
- * Fire-and-forget: write the user's email to the shared Firestore `waitlist`
- * collection after sign-in. The Cloud Function `sendWaitlistWelcome` fires on
- * every NEW document in that collection and sends the offer email.
+ * Fire-and-forget: write the user's email to the Firestore `appSignups`
+ * collection after sign-in. This is a SEPARATE group from the website's
+ * `waitlist` collection — that one is only for pre-launch campaign visitors
+ * who don't have the app yet. App users are already using the app and are
+ * choosing a real plan, so they get a different Cloud Function
+ * (`sendAppWelcomeEmail`) and a different email (plan-selection wording,
+ * never "early access").
  *
  * Duplicate prevention: the email is used as the document ID. Firestore's
  * onDocumentCreated only fires when a document transitions from non-existent
@@ -16,11 +20,11 @@ import com.google.firebase.firestore.SetOptions
  * re-triggers the Cloud Function or sends a second email. No read required,
  * which avoids silent failures from Firestore read rules on this collection.
  */
-object WaitlistHelper {
+object AppSignupHelper {
 
-    private const val COLLECTION = "waitlist"
+    private const val COLLECTION = "appSignups"
 
-    fun maybeAddToWaitlist(context: Context, email: String) {
+    fun maybeRecordSignup(context: Context, email: String) {
         if (!FirebaseGate.isAvailable(context)) return
         val normalized = email.trim().lowercase()
         if (normalized.isEmpty()) return

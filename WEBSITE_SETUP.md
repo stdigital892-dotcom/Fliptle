@@ -7,9 +7,17 @@ at **fliptle.com**. It shares the **same Firebase project as the Android app**
 There are three pieces:
 
 - **Phase 1 — Waitlist (LIVE):** email capture on `index.html` → Firestore `waitlist`.
-- **Welcome email → Offer page (LIVE):** a Cloud Function (`functions/index.js`)
-  emails each new waitlist signup a link to `offer.html`, which shows the app's
-  features and three test-mode plans → Firestore `planSelections`.
+  **Website visitors only** — pre-launch, no app yet, "early access" wording.
+- **App sign-in → Firestore `appSignups` (LIVE):** the Android app writes here
+  after every sign-in — a completely separate collection from `waitlist`. App
+  users already have the app and are choosing a plan, so they get their own
+  Cloud Function and email copy that never says "early access".
+- **Welcome email → Offer page (LIVE):** two separate Cloud Functions in
+  `functions/index.js`, one per collection above — `sendWaitlistWelcome`
+  (waitlist → early-access copy) and `sendAppWelcomeEmail` (appSignups →
+  "complete your setup" copy) — each emails a link to `offer.html`, which
+  shows the app's features and three test-mode plans → Firestore
+  `planSelections`.
 - **Phase 2 — Subscriptions (HIDDEN):** plan + Razorpay/UPI checkout on
   `index.html` → Firestore `subscriptions`. Built but disabled behind a flag
   until you launch.
@@ -43,11 +51,23 @@ service cloud.firestore {
     // ---- keep your existing app rules (installs, typing_gate) above/below ----
 
     // Public waitlist: anyone may CREATE one entry; nobody can read/edit/delete.
+    // WEBSITE visitors only — the app never writes here.
     match /waitlist/{docId} {
       allow create: if request.resource.data.email is string
                     && request.resource.data.email.matches('^[^@]+@[^@]+[.][^@]+$')
                     && request.resource.data.email.size() < 320;
       allow read, update, delete: if false;
+    }
+
+    // App sign-ins: an authenticated user may create/update/delete ONLY the
+    // doc matching their own signed-in email (delete+recreate is how the
+    // in-app "resend" link re-triggers sendAppWelcomeEmail). Separate from
+    // `waitlist` above — this is the app's own group, not website visitors.
+    match /appSignups/{docId} {
+      allow read: if false;
+      allow create, update, delete: if request.auth != null
+                    && request.auth.token.email != null
+                    && docId == request.auth.token.email.lower();
     }
 
     // Cosmetic public counter. Read by anyone; each write may only +1.
@@ -98,7 +118,7 @@ number to the displayed count.
 
 ## 2. Firestore data structure
 
-### `waitlist` (collection) — Phase 1
+### `waitlist` (collection) — Phase 1, WEBSITE visitors only
 One auto-ID document per signup:
 
 | field       | type      | example                          |
@@ -115,6 +135,20 @@ incremented on each signup, used for the "N have already joined" signal.
 **Export emails:** Firebase console → Firestore → `waitlist`, or
 `gcloud firestore export`, or a scheduled function. (Reads are blocked from the
 browser by design so the list can't be scraped.)
+
+### `appSignups` (collection) — APP users only, separate from `waitlist`
+Document ID = the signed-in user's **email** (lowercased). Written by the
+Android app after every sign-in (`AppSignupHelper.kt`) — never by the website:
+
+| field       | type      | example                              |
+|-------------|-----------|----------------------------------------|
+| `email`     | string    | `"user@example.com"` (lowercased)      |
+| `signedAt`  | timestamp | server time (`serverTimestamp()`)      |
+| `source`    | string    | `"app"`                                |
+
+Triggers `sendAppWelcomeEmail`, which emails a "complete your setup / choose
+your plan" link — this copy never says "early access", since the recipient
+already has the app.
 
 ### `subscriptions` (collection) — Phase 2
 Document ID = the subscriber's **email** (lowercased), so it's one record per
@@ -215,9 +249,20 @@ Nothing about Phase 2 is visible or reachable by normal visitors until you flip
 
 ## 5. Welcome email → offer page (live)
 
-`functions/index.js` (`sendWaitlistWelcome`) fires on every new `waitlist` doc
-and emails the signup a link to `offer.html?email=<their email>&source=web`
-via Resend.
+Two separate Cloud Functions in `functions/index.js`, each watching its own
+collection, each with its own email copy — never shared:
+
+- **`sendWaitlistWelcome`** fires on every new `waitlist` doc (website
+  visitors only) and emails `offer.html?email=<their email>&source=web` via
+  Resend, with "early access" copy — these people don't have the app yet.
+- **`sendAppWelcomeEmail`** fires on every new `appSignups` doc (written by
+  the Android app on sign-in — see `AppSignupHelper.kt`) and emails
+  `offer.html?email=<their email>&source=app`, with "complete your setup /
+  choose your plan" copy — no "early access" wording, since these people
+  already have the app.
+
+Both point at the same `offer.html`; only the query string and the email
+copy that got them there differ.
 
 `offer.html`:
 - Reads `?email=` and shows "Welcome, `<email>`" (falls back to a small inline

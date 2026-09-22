@@ -54,7 +54,7 @@ class InboxConfirmActivity : AppCompatActivity() {
         }
 
         findViewById<TextView>(R.id.resendText).setOnClickListener {
-            resendWaitlistEmail()
+            resendSignupEmail()
         }
     }
 
@@ -81,18 +81,18 @@ class InboxConfirmActivity : AppCompatActivity() {
         finish()
     }
 
-    /** Delete + re-create the waitlist doc so onDocumentCreated fires again. */
-    private fun resendWaitlistEmail() {
+    /** Delete + re-create the appSignups doc so onDocumentCreated fires again. */
+    private fun resendSignupEmail() {
         if (!FirebaseGate.isAvailable(this) || email.isEmpty()) {
             Toast.makeText(this, R.string.inbox_resend_ok, Toast.LENGTH_SHORT).show()
             return
         }
         val normalized = email.trim().lowercase()
         val db = FirebaseFirestore.getInstance()
-        db.collection("waitlist").document(normalized)
+        db.collection("appSignups").document(normalized)
             .delete()
             .addOnCompleteListener {
-                db.collection("waitlist").document(normalized)
+                db.collection("appSignups").document(normalized)
                     .set(
                         mapOf(
                             "email" to normalized,

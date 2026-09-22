@@ -48,7 +48,8 @@ function offerLink(email, source) {
   return `${OFFER_BASE}?email=${encodeURIComponent(email)}&source=${src}`;
 }
 
-function buildHtml(link) {
+// ---- Template 1: WEBSITE waitlist signups (pre-launch, no app yet) --------
+function buildWaitlistHtml(link) {
   return `<!DOCTYPE html>
 <html>
   <body style="margin:0;background:#060608;font-family:Arial,Helvetica,sans-serif;color:#f5f5f7;">
@@ -82,7 +83,7 @@ function buildHtml(link) {
 </html>`;
 }
 
-function buildText(link) {
+function buildWaitlistText(link) {
   return [
     "You're in. Welcome to the rescue.",
     "",
@@ -96,8 +97,59 @@ function buildText(link) {
   ].join("\n");
 }
 
-// Fires once for every new document created in the `waitlist` collection
-// (the same collection the website writes signups to).
+// ---- Template 2: APP users (already have the app, choosing a plan) -------
+// Never says "early access" — that phrase is reserved for website waitlist
+// visitors who don't have the app yet. App users are past that stage.
+function buildAppHtml(link) {
+  return `<!DOCTYPE html>
+<html>
+  <body style="margin:0;background:#060608;font-family:Arial,Helvetica,sans-serif;color:#f5f5f7;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#060608;padding:32px 0;">
+      <tr><td align="center">
+        <table role="presentation" width="100%" style="max-width:520px;background:#0c0c11;border:1px solid #1c1c22;border-radius:16px;padding:36px;">
+          <tr><td>
+            <div style="font-size:26px;font-weight:800;letter-spacing:2px;color:#ffffff;">RESCUE<span style="color:#FF2233;">.</span></div>
+            <h1 style="font-size:24px;line-height:1.25;margin:22px 0 10px;color:#ffffff;">Complete your setup.</h1>
+            <p style="font-size:15px;line-height:1.6;color:#c9c9d2;margin:0 0 24px;">
+              You've signed in to RESCUE — one step left. Choose your plan below and
+              your protection activates the moment you do.
+            </p>
+            <a href="${link}" style="display:inline-block;background:#FF2233;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;padding:15px 34px;border-radius:12px;">
+              Choose your plan &rarr;
+            </a>
+            <p style="font-size:13px;line-height:1.6;color:#8a8a97;margin:26px 0 0;">
+              Or paste this link into your browser:<br />
+              <a href="${link}" style="color:#ff6a6a;word-break:break-all;">${link}</a>
+            </p>
+            <hr style="border:none;border-top:1px solid #1c1c22;margin:28px 0;" />
+            <p style="font-size:12px;color:#6c6c78;margin:0;">
+              You're receiving this because you signed in to the RESCUE app.
+              Questions? Just reply to this email.
+            </p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+}
+
+function buildAppText(link) {
+  return [
+    "Complete your setup.",
+    "",
+    "You've signed in to RESCUE — one step left. Choose your plan below and",
+    "your protection activates the moment you do:",
+    "",
+    link,
+    "",
+    "You're receiving this because you signed in to the RESCUE app.",
+    "Questions? Just reply to this email.",
+  ].join("\n");
+}
+
+// Fires once for every new document created in the `waitlist` collection —
+// WEBSITE campaign signups only (pre-launch visitors with no app yet).
 exports.sendWaitlistWelcome = onDocumentCreated(
   {
     document: "waitlist/{docId}",
@@ -126,8 +178,7 @@ exports.sendWaitlistWelcome = onDocumentCreated(
       return;
     }
 
-    const source = typeof data.source === "string" ? data.source : "";
-    const link = offerLink(email, source);
+    const link = offerLink(email, "web");
     const resend = new Resend(RESEND_API_KEY.value());
 
     try {
@@ -136,8 +187,8 @@ exports.sendWaitlistWelcome = onDocumentCreated(
         to: [email],
         replyTo: REPLY_TO,
         subject: "You're in - your RESCUE early-access offer",
-        html: buildHtml(link),
-        text: buildText(link),
+        html: buildWaitlistHtml(link),
+        text: buildWaitlistText(link),
       });
 
       if (error) {
@@ -152,6 +203,63 @@ exports.sendWaitlistWelcome = onDocumentCreated(
       logger.info("Welcome email sent", { email, id: sent && sent.id });
     } catch (e) {
       logger.error("Failed to send welcome email", { email, message: e && e.message });
+    }
+  }
+);
+
+// Fires once for every new document created in the `appSignups` collection —
+// APP users only (already signed in through the app, choosing a real plan).
+// Completely separate from sendWaitlistWelcome above: different collection,
+// different Cloud Function, different email copy. Nothing here ever says
+// "early access".
+exports.sendAppWelcomeEmail = onDocumentCreated(
+  {
+    document: "appSignups/{docId}",
+    secrets: [RESEND_API_KEY],
+    region: "asia-south2", // must match Firestore region — see note above
+  },
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return;
+    const data = snap.data() || {};
+
+    // Idempotency: never send twice for the same sign-in.
+    if (data.welcomeEmailSentAt) {
+      logger.info("App welcome email already sent, skipping", { docId: event.params.docId });
+      return;
+    }
+
+    const email = String(data.email || "").trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) {
+      logger.warn("Invalid or missing email on appSignups doc", { docId: event.params.docId });
+      return;
+    }
+
+    const link = offerLink(email, "app");
+    const resend = new Resend(RESEND_API_KEY.value());
+
+    try {
+      const { data: sent, error } = await resend.emails.send({
+        from: FROM,
+        to: [email],
+        replyTo: REPLY_TO,
+        subject: "Complete your setup — choose your RESCUE plan",
+        html: buildAppHtml(link),
+        text: buildAppText(link),
+      });
+
+      if (error) {
+        logger.error("Resend returned an error (app welcome email)", { email, error });
+        return;
+      }
+
+      await snap.ref.update({
+        welcomeEmailSentAt: admin.firestore.FieldValue.serverTimestamp(),
+        welcomeEmailId: sent && sent.id ? sent.id : null,
+      });
+      logger.info("App welcome email sent", { email, id: sent && sent.id });
+    } catch (e) {
+      logger.error("Failed to send app welcome email", { email, message: e && e.message });
     }
   }
 );
