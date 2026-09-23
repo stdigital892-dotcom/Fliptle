@@ -333,6 +333,15 @@ footer a{color:var(--accent)}
       const result = await call(payload);
       return result.data;
     },
+    // Fallback lookup used when verifyPayment fails or times out — proves the
+    // subscription was recorded (either by verifyPayment mid-request, or by
+    // razorpayWebhook independently). Never fabricates success: it only says
+    // "subscribed: true" if there's a matching Razorpay id on the doc.
+    async getSubscription(payload) {
+      const call = httpsCallable(fns, "getSubscription");
+      const result = await call(payload);
+      return result.data;
+    },
   };
 </script>
 
@@ -421,9 +430,69 @@ footer a{color:var(--accent)}
     });
   }
 
-  // Runs the full Razorpay flow. Resolves with verifyPayment's result, or
-  // rejects — the caller distinguishes between "user closed the modal" and
-  // real failures by err.message.
+  // After Razorpay's own success handler fires, actually confirm the payment.
+  //
+  // Preference is verifyPayment (fast, authoritative, writes the subscription
+  // itself). If that errors or takes too long, we fall back to polling
+  // getSubscription — because razorpayWebhook also writes subscriptions/{email}
+  // independently, and the user has demonstrably paid at this point.
+  //
+  // We NEVER surface "payment failed" to a user who just paid. Worst case,
+  // we throw a `payment_processing` error, which the caller shows as a soft
+  // "we're activating it" state, not a red error.
+  async function confirmPayment(payload) {
+    var VERIFY_TIMEOUT_MS = 20000;   // give verifyPayment 20s before falling back
+    var POLL_ATTEMPTS = 4;           // 4 attempts × ~2s = ~6s of polling
+    var POLL_INTERVAL_MS = 2000;
+
+    // Race verifyPayment against a 20s deadline so we don't block on a cold
+    // start / slow verify write while the user waits with no feedback.
+    var verifyPromise = window.OfferDB.verifyPayment(payload);
+    var timeout = new Promise(function (_, rej) {
+      setTimeout(function () { rej(new Error('verify_timeout')); }, VERIFY_TIMEOUT_MS);
+    });
+
+    try {
+      return await Promise.race([verifyPromise, timeout]);
+    } catch (verifyErr) {
+      console.warn(
+        '[RESCUE offer] verifyPayment failed after Razorpay success, checking subscription:',
+        verifyErr
+      );
+    }
+
+    // verifyPayment failed or timed out. The webhook may have already recorded
+    // the subscription — poll for it. Never claim payment failed if the record
+    // exists (or arrives during the polling window).
+    for (var i = 0; i < POLL_ATTEMPTS; i++) {
+      var sub = await window.OfferDB
+        .getSubscription({
+          email: payload.email,
+          razorpay_payment_id: payload.razorpay_payment_id,
+          razorpay_order_id: payload.razorpay_order_id,
+        })
+        .catch(function () { return null; });
+
+      if (sub && sub.subscribed) {
+        return { status: 'active', plan: sub.plan, planName: sub.planName };
+      }
+      if (i < POLL_ATTEMPTS - 1) {
+        await new Promise(function (r) { setTimeout(r, POLL_INTERVAL_MS); });
+      }
+    }
+
+    // Razorpay said the payment succeeded, but neither verifyPayment nor the
+    // webhook has produced a subscriptions/{email} doc that matches yet.
+    // This is rare — soft "processing" state, not a payment failure.
+    var e = new Error('payment_processing');
+    e.paymentId = payload.razorpay_payment_id;
+    throw e;
+  }
+
+  // Runs the full Razorpay flow. Resolves with confirmPayment's result, or
+  // rejects — the caller distinguishes between "user closed the modal",
+  // "payment succeeded but activation is still processing", and real
+  // failures by err.message.
   async function payWithRazorpay(userEmail, planId) {
     await ensureRazorpayLoaded();
     const order = await window.OfferDB.createOrder(userEmail, planId);
@@ -439,7 +508,7 @@ footer a{color:var(--accent)}
         theme: { color: '#FF2233' },
         handler: async function (resp) {
           try {
-            const result = await window.OfferDB.verifyPayment({
+            const result = await confirmPayment({
               razorpay_order_id: resp.razorpay_order_id,
               razorpay_payment_id: resp.razorpay_payment_id,
               razorpay_signature: resp.razorpay_signature,
@@ -506,6 +575,18 @@ footer a{color:var(--accent)}
         // Silent when the user just closed the Razorpay modal.
         if (err && err.message === 'payment_dismissed') {
           setPlansMsg('', false);
+        } else if (err && err.message === 'payment_processing') {
+          // Payment succeeded at Razorpay; subscriptions/{email} hasn't shown
+          // up yet. NEVER call this a failure — the webhook is our safety net
+          // and will finalise the record shortly.
+          markSelected(planId);
+          confirmBox.querySelector('#confirmBody').textContent =
+            "Payment received" +
+            (err.paymentId ? " (ref " + err.paymentId + ")" : "") +
+            ". We're activating your " + PLAN_LABELS[planId] +
+            " subscription — check your email in a moment, or open the Fliptle app to continue.";
+          confirmBox.hidden = false;
+          confirmBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } else if (PAID[planId]) {
           setPlansMsg('Could not complete payment — please try again.', true);
         } else {

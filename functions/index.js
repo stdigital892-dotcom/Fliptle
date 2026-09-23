@@ -420,6 +420,61 @@ exports.verifyPayment = onCall(
 );
 
 // ============================================================================
+// getSubscription — lets the client check subscriptions/{email} without
+// exposing the collection publicly. Purpose: never tell a user their payment
+// failed when it actually succeeded. If verifyPayment errors or times out
+// after Razorpay's success handler fires, the client calls this to see
+// whether razorpayWebhook (or verifyPayment itself, transactionally) has
+// already recorded the subscription.
+//
+// Enumeration guard: the caller must send at least one Razorpay id
+// (payment or order) they just got from Razorpay's checkout handler. If it
+// doesn't match what's stored on the doc, we return { subscribed: false }
+// exactly as if there were no doc — so this callable can only confirm what
+// the caller already helped pay for; it can't be used to scan emails.
+// ============================================================================
+exports.getSubscription = onCall(
+  {
+    region: RAZORPAY_REGION,
+    cors: true,
+  },
+  async (request) => {
+    const data = request.data || {};
+    const email = String(data.email || "").trim().toLowerCase();
+    const paymentId = String(data.razorpay_payment_id || "").trim();
+    const orderId = String(data.razorpay_order_id || "").trim();
+
+    if (!EMAIL_RE.test(email)) {
+      throw new HttpsError("invalid-argument", "A valid email is required.");
+    }
+    if (!paymentId && !orderId) {
+      throw new HttpsError(
+        "invalid-argument",
+        "razorpay_payment_id or razorpay_order_id is required."
+      );
+    }
+
+    const snap = await admin.firestore().doc("subscriptions/" + email).get();
+    if (!snap.exists) return { subscribed: false };
+
+    const doc = snap.data() || {};
+    // Only reveal the record to a caller who can prove they know a Razorpay
+    // id that's actually on it. Anything else — silent "not subscribed".
+    const matches =
+      (paymentId && doc.razorpayPaymentId === paymentId) ||
+      (orderId && doc.razorpayOrderId === orderId);
+    if (!matches) return { subscribed: false };
+
+    return {
+      subscribed: doc.status === "active",
+      status: doc.status || null,
+      plan: doc.plan || null,
+      planName: doc.planName || null,
+    };
+  }
+);
+
+// ============================================================================
 // razorpayWebhook — server-to-server safety net for `payment.captured`.
 //
 // Independent of verifyPayment above: if the app crashes or loses connection
