@@ -45,7 +45,16 @@ class MainActivity : AppCompatActivity() {
         // Steps that use a simple class reference (no extra data).
         val destination = when {
             !OnboardingState(this).complete -> OnboardingActivity::class.java
-            !Permissions.allEnforcementGranted(this) -> ProtectionGuardActivity::class.java
+            // Skip the permissions nag for a DENIED user — re-enabling
+            // accessibility/overlay accomplishes nothing while the paywall
+            // gate has enforcement paused, so send them to the renewal
+            // screen (below) instead of asking them to fix a permission for
+            // a service that's deliberately not acting on anything right
+            // now. DENIED can only be set for a currently-signed-in user
+            // (EntitlementStore is cleared on sign-out), so this can't skip
+            // a genuine sign-in requirement.
+            !entitlementDenies && !Permissions.allEnforcementGranted(this) ->
+                ProtectionGuardActivity::class.java
             AuthGate.required(this) -> com.fliptle.app.auth.SignInActivity::class.java
             !store.uninstallInfoSeen -> UninstallInfoActivity::class.java
             else -> null
