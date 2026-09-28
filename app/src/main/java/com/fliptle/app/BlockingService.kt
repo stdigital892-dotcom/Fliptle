@@ -112,8 +112,19 @@ class BlockingService : Service() {
      * If protection is off, keep the persistent notification in the "OFF" state and
      * re-launch the full-screen guard (throttled, and never over the phone/dialer,
      * so calls and emergencies are never blocked).
+     *
+     * Skipped entirely while entitlement is explicitly DENIED: this service is
+     * meant to be stopped in that case (see MainActivity/EntitlementWorker), but
+     * this is a defense-in-depth check against the narrow window between a
+     * stop() call and this service actually tearing down — nagging a DENIED
+     * user to re-enable a permission accomplishes nothing.
      */
     private fun checkProtection() {
+        if (com.fliptle.app.auth.EntitlementStore(this).state ==
+            com.fliptle.app.auth.EntitlementStore.State.DENIED
+        ) {
+            return
+        }
         val protectionOff = !Permissions.allEnforcementGranted(this)
         if (protectionOff != lastProtectionOff) {
             lastProtectionOff = protectionOff
