@@ -283,5 +283,16 @@ class BlockingService : Service() {
                 context.startService(intent)
             }
         }
+
+        /**
+         * Stop enforcement. Called when the paywall gate explicitly denies
+         * the current user (subscription expired past grace, trial ran out,
+         * tester mode turned off) — a paying user's protection is never
+         * stopped through this path because [MainActivity] only calls it on
+         * an explicit server DENIED, never on network failure.
+         */
+        fun stop(context: Context) {
+            context.stopService(Intent(context, BlockingService::class.java))
+        }
     }
 }

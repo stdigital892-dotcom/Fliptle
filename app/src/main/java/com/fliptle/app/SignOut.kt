@@ -45,6 +45,12 @@ object SignOut {
         }
         // The parent-phone step is per sign-in session; require it again next time.
         AuthStore(activity).parentPhoneProvided = false
+        // Entitlement is per-account, and the cache is what MainActivity's
+        // routing gate reads at launch — a stale ENTITLED cache from the
+        // previous user would let a fresh signed-in user briefly reach Home
+        // before the recheck lands. Clear it so the next sign-in starts from
+        // UNKNOWN and re-verifies through InboxConfirmActivity.
+        com.fliptle.app.auth.EntitlementStore(activity).clear()
         // Restart from the launcher -> the router sends the user to mandatory sign-in.
         activity.startActivity(
             Intent(activity, MainActivity::class.java)

@@ -3,6 +3,7 @@ package com.fliptle.app
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.fliptle.app.auth.EntitlementStore
 
 /**
  * Fires when a new app is installed. If the new package is a browser (and not the
@@ -22,7 +23,12 @@ class PackageInstallReceiver : BroadcastReceiver() {
         val set = store.get().toMutableSet()
         if (set.add(pkg)) {
             store.set(set)
-            BlockingService.start(context)
+            // Don't (re)start enforcement for a user the paywall gate has
+            // explicitly denied. The blocked-apps list is still updated so
+            // it's ready to run the moment they renew.
+            if (EntitlementStore(context).state != EntitlementStore.State.DENIED) {
+                BlockingService.start(context)
+            }
             CloudState.backup(context) // keep the cloud copy of blocked apps current
         }
     }

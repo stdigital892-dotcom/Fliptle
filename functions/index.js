@@ -475,6 +475,133 @@ exports.getSubscription = onCall(
 );
 
 // ============================================================================
+// getEntitlement — the paywall. Every protection feature in the app is gated
+// on this returning entitled: true. Auth is REQUIRED; the email is pulled
+// from the auth token and the client's email field (if any) is ignored,
+// so a signed-in attacker can't check someone else's entitlement.
+//
+// Precedence (first match wins):
+//   1. subscriptions/{email} status="active" and (no expiry OR within
+//      expiry + 3-day grace) → "paid"
+//   2. planSelections/{email} selectedPlan="trial" → "trial" (14 days from
+//      trialStartedAt, set on the server the FIRST time we see this doc and
+//      NEVER overwritten thereafter; 3-day grace after the 14-day mark)
+//   3. Remote Config `testerMode` ON + any planSelections/{email} doc →
+//      "tester". Flip testerMode OFF at public launch to turn this off in
+//      one go without redeploying anything.
+//   4. Otherwise not entitled. If the account had ever been paid or trialled
+//      (record exists but is past grace), reason is "expired"; otherwise
+//      "none".
+//
+// Never trusts the phone's clock — expiry math uses admin.firestore.
+// Timestamp.now() on the server.
+// ============================================================================
+const GRACE_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
+const TRIAL_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
+
+async function readTesterMode() {
+  // Remote Config: read the server template and evaluate defaults. If the
+  // parameter is missing, absent, or the API call fails, treat as OFF
+  // (safer default — a broken flag never widens access).
+  try {
+    const template = await admin.remoteConfig().getServerTemplate();
+    const config = template.evaluate();
+    return config.getBoolean("testerMode");
+  } catch (e) {
+    logger.warn("Remote Config read failed; treating testerMode as OFF", {
+      message: e && e.message,
+    });
+    return false;
+  }
+}
+
+exports.getEntitlement = onCall(
+  { region: RAZORPAY_REGION },
+  async (request) => {
+    // Auth REQUIRED. The email comes from the ID token, never from the
+    // client payload — a signed-in attacker can't probe another account.
+    if (!request.auth || !request.auth.token || !request.auth.token.email) {
+      throw new HttpsError("unauthenticated", "Sign in required.");
+    }
+    const email = String(request.auth.token.email).trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) {
+      throw new HttpsError("failed-precondition", "Auth token has no valid email.");
+    }
+
+    const db = admin.firestore();
+    const nowMs = admin.firestore.Timestamp.now().toMillis();
+
+    // ---- 1. Paid subscription ----
+    const subSnap = await db.doc("subscriptions/" + email).get();
+    const sub = subSnap.exists ? (subSnap.data() || {}) : null;
+    if (sub && sub.status === "active") {
+      const expTs = sub.expiresAt;
+      if (!expTs) {
+        // No expiry recorded — grandfather existing paid docs (verifyPayment
+        // doesn't yet write expiresAt; when it does, this branch stops being
+        // reached for those docs).
+        return { entitled: true, reason: "paid", expiresAt: null };
+      }
+      const expMs = expTs.toMillis ? expTs.toMillis() : Number(expTs);
+      if (nowMs <= expMs + GRACE_MS) {
+        return { entitled: true, reason: "paid", expiresAt: expMs };
+      }
+      // Past expiry + grace — fall through; user is "expired"
+    }
+
+    // ---- 2. Trial (14 days from server-stamped trialStartedAt) ----
+    const planRef = db.doc("planSelections/" + email);
+    const planSnap = await planRef.get();
+    const plan = planSnap.exists ? (planSnap.data() || {}) : null;
+
+    if (plan && plan.selectedPlan === "trial") {
+      let trialStartedAt = plan.trialStartedAt;
+      if (!trialStartedAt) {
+        // First time we've seen this trial — stamp it now with the SERVER
+        // clock. Immutable thereafter: we only ever set on merge if it's
+        // absent (this branch), so a client can't reset it by re-writing
+        // planSelections.
+        await planRef.set(
+          { trialStartedAt: admin.firestore.FieldValue.serverTimestamp() },
+          { merge: true }
+        );
+        // Re-read so we return the actual stored value, not a client-side guess.
+        const reread = await planRef.get();
+        trialStartedAt = (reread.data() || {}).trialStartedAt;
+      }
+      if (trialStartedAt && trialStartedAt.toMillis) {
+        const startMs = trialStartedAt.toMillis();
+        const trialEndMs = startMs + TRIAL_MS;
+        if (nowMs <= trialEndMs + GRACE_MS) {
+          return { entitled: true, reason: "trial", expiresAt: trialEndMs };
+        }
+        // Trial past grace — fall through
+      }
+    }
+
+    // ---- 3. Tester mode: ON + any planSelections doc → allow ----
+    if (plan) {
+      const testerMode = await readTesterMode();
+      if (testerMode) {
+        return { entitled: true, reason: "tester", expiresAt: null };
+      }
+    }
+
+    // ---- 4. Not entitled ----
+    // "expired" means they had an entitlement that ran out (subscription doc
+    // or trial); "none" means they've never had one at all.
+    const wasEntitledBefore =
+      (sub && (sub.status === "active" || sub.status === "expired")) ||
+      (plan && plan.selectedPlan === "trial");
+    return {
+      entitled: false,
+      reason: wasEntitledBefore ? "expired" : "none",
+      expiresAt: null,
+    };
+  }
+);
+
+// ============================================================================
 // razorpayWebhook — server-to-server safety net for `payment.captured`.
 //
 // Independent of verifyPayment above: if the app crashes or loses connection
