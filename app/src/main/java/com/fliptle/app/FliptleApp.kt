@@ -1,6 +1,7 @@
 package com.fliptle.app
 
 import android.app.Application
+import com.fliptle.app.auth.EntitlementWorker
 import com.fliptle.app.auth.FirebaseGate
 import com.fliptle.app.auth.Heartbeat
 import com.fliptle.app.auth.HeartbeatWorker
@@ -19,6 +20,7 @@ class FliptleApp : Application() {
         KeywordBlocklist.ensureLoaded(this)
         BlocklistUpdateWorker.schedule(this)
         HeartbeatWorker.schedule(this)
+        EntitlementWorker.schedule(this)
         Heartbeat.beat(this) // check in on process start
 
         if (FirebaseGate.isAvailable(this)) {
