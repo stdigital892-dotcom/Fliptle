@@ -23,6 +23,7 @@ import com.fliptle.app.PornBlockStore
 import com.fliptle.app.ReelsAllowance
 import com.fliptle.app.KeywordBlocklist
 import com.fliptle.app.R
+import com.fliptle.app.auth.EntitlementStore
 
 /**
  * SELF-CONTAINED MODULE — URL-based blocking via Accessibility.
@@ -88,6 +89,21 @@ class UrlBlockAccessibilityService : AccessibilityService() {
         val isBrowser = BrowserDetector.isBrowser(this, pkg)
         val isSurfaceApp = SurfaceDetector.isSurfaceApp(pkg)
         if (!isBrowser && !isSurfaceApp) return
+
+        // Paywall gate: an explicit DENIED from the server (subscription/trial
+        // expired past grace, tester mode off) suspends URL/porn/domain and
+        // Shorts/Reels enforcement — matching engine and blocklists are left
+        // untouched, this only decides whether to act on a match. We never
+        // disable the Accessibility service itself (that requires the user to
+        // go into system Settings), so the moment EntitlementStore flips back
+        // to ENTITLED, the very next event runs the normal path again with no
+        // re-enable step needed. UNKNOWN (never checked yet) still enforces —
+        // only an explicit DENIED suspends it.
+        if (EntitlementStore(this).state == EntitlementStore.State.DENIED) {
+            hideOverlay()
+            BlockOverlay.hide()
+            return
+        }
 
         // Throttle content-change spam; always handle window/state changes.
         val now = SystemClock.elapsedRealtime()
