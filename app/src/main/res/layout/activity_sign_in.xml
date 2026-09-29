@@ -137,6 +137,15 @@
                     android:layout_weight="1"
                     android:text="@string/auth_email_signup" />
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/legalNoticeText"
+                style="@style/Text.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:lineSpacingMultiplier="1.4" />
         </LinearLayout>
 
         <!-- Parent phone step (optional / skippable) -->

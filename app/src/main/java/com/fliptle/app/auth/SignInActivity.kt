@@ -86,6 +86,16 @@ class SignInActivity : AppCompatActivity() {
         phoneSection = findViewById(R.id.phoneSection)
         parentPhoneInput = findViewById(R.id.parentPhoneInput)
 
+        // Static, Firebase-independent — set before the availability check below
+        // so it still renders even in a degraded/unconfigured build.
+        findViewById<TextView>(R.id.legalNoticeText).apply {
+            text = android.text.Html.fromHtml(
+                getString(R.string.auth_legal_notice),
+                android.text.Html.FROM_HTML_MODE_LEGACY
+            )
+            movementMethod = android.text.method.LinkMovementMethod.getInstance()
+        }
+
         if (!FirebaseGate.isAvailable(this)) {
             status(getString(R.string.firebase_not_configured))
             disableAll()

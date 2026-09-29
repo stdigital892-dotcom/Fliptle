@@ -114,6 +114,7 @@
     <string name="auth_email_signin">Sign in</string>
     <string name="auth_email_signup">Create account</string>
     <string name="auth_email_hint">Enter an email and a password of at least 6 characters.</string>
+    <string name="auth_legal_notice">By proceeding, you agree to our &lt;a href="https://fliptle.com/privacy"&gt;Privacy Policy&lt;/a&gt; and &lt;a href="https://fliptle.com/terms"&gt;Terms&lt;/a&gt;.</string>
     <string name="auth_working">Working…</string>
     <string name="auth_verify_sent">Account created. A verification link was sent to %1$s — tap it to verify your email.</string>
     <string name="auth_email_failed">Email sign-in failed: %1$s</string>
