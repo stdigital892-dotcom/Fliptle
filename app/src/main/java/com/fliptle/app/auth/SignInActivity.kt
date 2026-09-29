@@ -168,6 +168,13 @@ class SignInActivity : AppCompatActivity() {
     private fun onSignedIn(method: String) {
         val user = auth?.currentUser ?: return
         showPhoneStep()
+        // Never let a stale entitlement cache from whichever account was
+        // previously signed in on this device leak into a fresh sign-in —
+        // EntitlementStore is a single unscoped local cache, not keyed by
+        // UID/email. Clearing here forces InboxConfirmActivity to start from
+        // UNKNOWN and wait for a real getEntitlement response before it can
+        // ever show "Continue" for this account.
+        EntitlementStore(this).clear()
         // Re-sync this account's progress from the cloud (restores after a reinstall
         // or a previous sign-out; a no-op for a brand-new account).
         CloudState.restore(this) {}
