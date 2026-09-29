@@ -155,8 +155,11 @@ h1.welcome-heading{
 .plans-msg.err{color:#ff7a7a}
 
 /* ---- FOOTER ---- */
-footer{padding:36px 20px;text-align:center;border-top:1px solid var(--line);color:var(--muted);font-size:.8rem}
-footer a{color:var(--accent)}
+footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line);color:var(--muted);font-size:.8rem}
+.footer-legal{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:14px 0}
+.footer-legal a{color:var(--muted)}
+.footer-legal a:hover{color:var(--accent)}
+.footer-copy{margin-top:6px;font-size:.78rem;color:#5c5c68}
 </style>
 </head>
 
@@ -281,7 +284,14 @@ footer a{color:var(--accent)}
 <!-- ======= FOOTER ======= -->
 <footer>
   <p>RESCUE — A movement against the legal drug silently harming millions.</p>
-  <p style="margin-top:8px"><a href="/">fliptle.com</a> · <a href="mailto:sales@fliptle.com">Contact</a></p>
+  <div class="footer-legal">
+    <a href="/">Home</a>
+    <a href="/privacy">Privacy Policy</a>
+    <a href="/terms">Terms &amp; Conditions</a>
+    <a href="/refund">Refund Policy</a>
+    <a href="/contact">Contact</a>
+  </div>
+  <p class="footer-copy">© 2026 RESCUE. fliptle.com</p>
 </footer>
 
 <!-- ===================== FIREBASE (module) ===================== -->

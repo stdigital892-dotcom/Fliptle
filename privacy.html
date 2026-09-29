@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Privacy Policy — RESCUE</title>
+<meta name="description" content="How Rescue collects, uses, and protects your data — and your rights under India's DPDP Act 2023." />
+<meta name="theme-color" content="#060608" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#060608;
+  --panel:rgba(255,255,255,.04);
+  --line:rgba(255,255,255,.09);
+  --text:#f5f5f7;
+  --muted:#9a9aa8;
+  --accent:#FF2233;
+  --accent-2:#ff5a3c;
+  --light:#ffd9a0;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);
+  line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none}
+::selection{background:rgba(255,34,51,.4);color:#fff}
+
+.wrap{width:100%;max-width:840px;margin:0 auto;padding:0 20px}
+.display{font-family:'Anton',Impact,sans-serif;font-weight:400;letter-spacing:.01em;line-height:.98;text-transform:uppercase}
+.eyebrow{display:inline-block;font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;font-weight:700;color:var(--accent);margin-bottom:18px}
+
+/* ---- HEADER ---- */
+header{
+  position:sticky;top:0;z-index:60;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;
+  background:rgba(6,6,8,.88);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.brand{font-family:'Anton',sans-serif;font-size:1.3rem;letter-spacing:.06em;text-transform:uppercase}
+.brand span{color:var(--accent)}
+.back-link{font-size:.82rem;color:var(--muted);font-weight:500}
+
+/* ---- LEGAL HERO ---- */
+.legal-hero{
+  padding:64px 0 40px;text-align:left;
+  background:radial-gradient(ellipse 70% 60% at 15% -10%, rgba(255,34,51,.16), transparent 60%), var(--bg);
+}
+.legal-hero h1{font-size:clamp(2rem,6vw,3rem);margin-bottom:10px}
+.legal-hero .updated{color:var(--muted);font-size:.86rem}
+
+/* ---- LEGAL CONTENT ---- */
+.legal{max-width:760px;margin:0 auto;padding:0 20px 80px}
+.legal .toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:40px}
+.legal .toc p{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;font-weight:700;color:var(--accent);margin-bottom:12px}
+.legal .toc ol{margin:0;list-style:none;display:grid;grid-template-columns:1fr;gap:7px;padding:0;color:inherit;font-size:inherit;line-height:inherit}
+@media(min-width:600px){.legal .toc ol{grid-template-columns:1fr 1fr}}
+.legal .toc a{color:#d7d7de;text-decoration:none;font-size:.88rem}
+.legal .toc a:hover{color:#fff}
+.legal h2{font-size:1.35rem;font-weight:800;letter-spacing:-.01em;margin:42px 0 14px;color:#fff;scroll-margin-top:80px}
+.legal h2:first-of-type{margin-top:0}
+.legal h3{font-size:1.02rem;font-weight:700;margin:22px 0 8px;color:var(--light)}
+.legal p{color:#c5c5d0;font-size:.96rem;line-height:1.75;margin-bottom:14px}
+.legal ul,.legal ol.plain{margin:0 0 16px 1.35em;color:#c5c5d0;font-size:.96rem;line-height:1.75}
+.legal li{margin-bottom:8px}
+.legal a.inline{color:#ff6a6a;text-decoration:underline;text-decoration-color:rgba(255,34,51,.4)}
+.legal a.inline:hover{text-decoration-color:#ff6a6a}
+.legal strong{color:#fff;font-weight:700}
+.legal .callout{
+  background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:10px;padding:16px 18px;margin:20px 0;
+}
+.legal .callout p:last-child{margin-bottom:0}
+.legal .not-collect{
+  background:rgba(255,217,160,.06);border:1px solid rgba(255,217,160,.25);border-left:3px solid var(--light);
+  border-radius:10px;padding:16px 18px;margin:20px 0;
+}
+.legal .not-collect p:last-child{margin-bottom:0}
+
+/* ---- FOOTER ---- */
+footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line);color:var(--muted);font-size:.8rem}
+.footer-legal{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:14px 0}
+.footer-legal a{color:var(--muted)}
+.footer-legal a:hover{color:var(--accent)}
+.footer-copy{margin-top:6px;font-size:.78rem;color:#5c5c68}
+</style>
+</head>
+
+<body>
+
+<!-- ======= HEADER ======= -->
+<header>
+  <div class="brand">RESCUE<span>.</span></div>
+  <a href="/" class="back-link">← Back to site</a>
+</header>
+
+<!-- ======= HERO ======= -->
+<section class="legal-hero">
+  <div class="wrap">
+    <span class="eyebrow">Legal</span>
+    <h1 class="display">Privacy Policy</h1>
+    <p class="updated">Last updated: September 29, 2026 · Applies to the Rescue app and fliptle.com</p>
+  </div>
+</section>
+
+<!-- ======= CONTENT ======= -->
+<div class="legal">
+
+  <div class="toc">
+    <p>On this page</p>
+    <ol>
+      <li><a href="#info-we-collect">1. Information we collect</a></li>
+      <li><a href="#what-we-dont-collect">2. What we do NOT collect</a></li>
+      <li><a href="#how-we-use">3. How we use your information</a></li>
+      <li><a href="#where-stored">4. Where your data is stored</a></li>
+      <li><a href="#payments">5. Payments</a></li>
+      <li><a href="#your-rights">6. Your rights (DPDP Act, 2023)</a></li>
+      <li><a href="#retention">7. Data retention</a></li>
+      <li><a href="#age">8. Age requirement</a></li>
+      <li><a href="#security">9. Security</a></li>
+      <li><a href="#changes">10. Changes to this policy</a></li>
+      <li><a href="#contact">11. Contact</a></li>
+    </ol>
+  </div>
+
+  <p>Rescue is built to help you break free from compulsive porn and social media use. Doing that job well means asking for your trust with your data — so this page tells you, plainly, exactly what we collect, why, and what we deliberately do not touch.</p>
+
+  <h2 id="info-we-collect">1. Information we collect</h2>
+  <p><strong>Account information.</strong> When you sign up, we collect your email address — either through Google Sign-In or email/password.</p>
+  <p><strong>Device identifiers.</strong> We collect a device identifier so the app can recognize your device, keep your protection settings active, and detect reinstalls.</p>
+  <p><strong>Data needed for blocking features to work.</strong> To run Rescue's core features, we store:</p>
+  <ul>
+    <li>which apps and sites you've chosen (or are required) to block,</li>
+    <li>your freeze status (whether a freeze is active and when it ends),</li>
+    <li>your porn-blocking activation date, used to calculate your streak.</li>
+  </ul>
+  <p><strong>Accountability partner (feature not active yet).</strong> Rescue is building an accountability partner feature. When it launches, if you choose to set one up, we will collect <strong>only the phone number you provide</strong> — nothing else about that person. We won't collect their name, contact list, or any other detail. That number will be used solely to send the status alerts you've explicitly agreed to (for example, a notification if you disable a protection). Until this feature goes live, no accountability-partner data is collected at all.</p>
+
+  <h2 id="what-we-dont-collect">2. What we do NOT collect</h2>
+  <div class="not-collect">
+    <p>We do <strong>not</strong> collect or store your browsing history, search content, or the specific content you view.</p>
+    <p>Rescue's blocking works by checking the URLs you visit against a blocklist stored on your own device. That check happens entirely on-device — the URLs are never logged, uploaded, or transmitted to our servers. We have no record of what sites you visited, what you searched for, or what you looked at.</p>
+  </div>
+
+  <h2 id="how-we-use">3. How we use your information</h2>
+  <ul>
+    <li>To run the app's features — blocking, freeze cycles, streak tracking, and (once live) accountability alerts.</li>
+    <li>To create and manage your subscription.</li>
+    <li>To send you account-related emails — for example, a welcome email or a service update.</li>
+    <li>To respond when you contact us for support.</li>
+  </ul>
+  <p>We do not use your data for advertising, and we do not sell it to anyone.</p>
+
+  <h2 id="where-stored">4. Where your data is stored</h2>
+  <p>Your data is stored on <strong>Firebase</strong>, Google Cloud's application platform. It is used only to run the app's features and to process your subscription — never for any purpose beyond that.</p>
+
+  <h2 id="payments">5. Payments</h2>
+  <p>Payments are processed by <strong>Razorpay</strong>, a licensed Indian payment gateway. We do not store your card number, CVV, or any full payment credentials — Razorpay handles that directly. What we do store, for billing history and support, is limited to your plan, subscription status, and Razorpay's own transaction reference for each payment.</p>
+
+  <h2 id="your-rights">6. Your rights (DPDP Act, 2023)</h2>
+  <p>Under India's Digital Personal Data Protection Act, 2023, you have the right to:</p>
+  <ul>
+    <li><strong>Access</strong> the personal data we hold about you.</li>
+    <li><strong>Correct</strong> any of your data that is inaccurate or incomplete.</li>
+    <li><strong>Delete</strong> your account and all associated data, at any time.</li>
+  </ul>
+  <div class="callout">
+    <p><strong>To delete your account:</strong> open the app, go to the <strong>Account</strong> screen, and use the delete option there — or email <a href="mailto:sales@fliptle.com" class="inline">sales@fliptle.com</a> and we'll handle it for you.</p>
+  </div>
+  <p>We do not sell your personal data to third parties, under any circumstances. For any question, request, or grievance about how your data is handled, contact us at <a href="mailto:sales@fliptle.com" class="inline">sales@fliptle.com</a> — every message is read by a real person.</p>
+
+  <h2 id="retention">7. Data retention</h2>
+  <p>We keep your data for as long as your account is active. When you delete your account, we delete your associated data, except where a limited retention period is required by law (for example, financial records connected to a payment).</p>
+
+  <h2 id="age">8. Age requirement</h2>
+  <p>Rescue is intended for users aged 16 and older — see our <a href="/terms" class="inline">Terms &amp; Conditions</a>. We do not knowingly collect personal data from anyone under 16.</p>
+
+  <h2 id="security">9. Security</h2>
+  <p>We use reasonable technical and organizational safeguards to protect your data — including encrypted connections and access-restricted infrastructure. No method of storage or transmission is 100% secure, but protecting your data is something we take seriously.</p>
+
+  <h2 id="changes">10. Changes to this policy</h2>
+  <p>We may update this Privacy Policy from time to time. If we make material changes, we'll update the "Last updated" date at the top of this page. Continuing to use Rescue after a change means you accept the updated policy.</p>
+
+  <h2 id="contact">11. Contact</h2>
+  <p>Questions about this policy, or a request about your data? Email <a href="mailto:sales@fliptle.com" class="inline">sales@fliptle.com</a>. See our <a href="/contact" class="inline">Contact page</a> for more.</p>
+
+</div>
+
+<!-- ======= FOOTER ======= -->
+<footer>
+  <p>RESCUE — A movement against the legal drug silently harming millions.</p>
+  <div class="footer-legal">
+    <a href="/">Home</a>
+    <a href="/offer">Offer</a>
+    <a href="/privacy">Privacy Policy</a>
+    <a href="/terms">Terms &amp; Conditions</a>
+    <a href="/refund">Refund Policy</a>
+    <a href="/contact">Contact</a>
+  </div>
+  <p class="footer-copy">© 2026 RESCUE. fliptle.com</p>
+</footer>
+
+</body>
+</html>

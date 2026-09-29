@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Contact — RESCUE</title>
+<meta name="description" content="Get in touch with the Rescue team." />
+<meta name="theme-color" content="#060608" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#060608;
+  --panel:rgba(255,255,255,.04);
+  --line:rgba(255,255,255,.09);
+  --text:#f5f5f7;
+  --muted:#9a9aa8;
+  --accent:#FF2233;
+  --accent-2:#ff5a3c;
+  --light:#ffd9a0;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);
+  line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none}
+::selection{background:rgba(255,34,51,.4);color:#fff}
+
+.wrap{width:100%;max-width:840px;margin:0 auto;padding:0 20px}
+.display{font-family:'Anton',Impact,sans-serif;font-weight:400;letter-spacing:.01em;line-height:.98;text-transform:uppercase}
+.eyebrow{display:inline-block;font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;font-weight:700;color:var(--accent);margin-bottom:18px}
+
+/* ---- HEADER ---- */
+header{
+  position:sticky;top:0;z-index:60;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;
+  background:rgba(6,6,8,.88);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.brand{font-family:'Anton',sans-serif;font-size:1.3rem;letter-spacing:.06em;text-transform:uppercase}
+.brand span{color:var(--accent)}
+.back-link{font-size:.82rem;color:var(--muted);font-weight:500}
+
+/* ---- HERO ---- */
+.hero{
+  padding:76px 0 60px;text-align:center;
+  background:radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255,34,51,.18), transparent 60%), var(--bg);
+}
+.hero h1{font-size:clamp(2.4rem,8vw,3.6rem);margin-bottom:16px}
+.hero p{color:#d0d0da;font-size:clamp(1rem,2.4vw,1.15rem);font-weight:300;max-width:480px;margin:0 auto}
+
+/* ---- CONTACT CARD ---- */
+.contact-wrap{max-width:520px;margin:0 auto;padding:0 20px 90px}
+.contact-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:20px;
+  padding:36px 32px;text-align:center;
+}
+.contact-icon{font-size:2.2rem;margin-bottom:16px}
+.email-btn{
+  display:inline-block;background:var(--accent);color:#fff;
+  font-family:'Inter',sans-serif;font-weight:800;font-size:1.1rem;
+  padding:17px 40px;border-radius:14px;margin:8px 0 20px;
+  box-shadow:0 10px 34px rgba(255,34,51,.45);transition:transform .25s,box-shadow .25s;
+}
+.email-btn:hover{transform:translateY(-3px);box-shadow:0 16px 46px rgba(255,34,51,.6)}
+.contact-note{color:var(--muted);font-size:.92rem;line-height:1.7;max-width:400px;margin:0 auto}
+.contact-note strong{color:#e7e7ee}
+
+.what-for{max-width:520px;margin:36px auto 0;text-align:left}
+.what-for p.label{
+  font-size:.72rem;letter-spacing:.24em;text-transform:uppercase;font-weight:700;
+  color:var(--accent);margin-bottom:14px;text-align:center;
+}
+.what-for ul{list-style:none;display:flex;flex-direction:column;gap:10px}
+.what-for li{
+  display:flex;gap:10px;align-items:flex-start;color:#c5c5d0;font-size:.92rem;
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 16px;
+}
+.what-for li::before{content:'✓';color:var(--accent);font-weight:800;flex:0 0 auto}
+
+/* ---- FOOTER ---- */
+footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line);color:var(--muted);font-size:.8rem}
+.footer-legal{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:14px 0}
+.footer-legal a{color:var(--muted)}
+.footer-legal a:hover{color:var(--accent)}
+.footer-copy{margin-top:6px;font-size:.78rem;color:#5c5c68}
+</style>
+</head>
+
+<body>
+
+<!-- ======= HEADER ======= -->
+<header>
+  <div class="brand">RESCUE<span>.</span></div>
+  <a href="/" class="back-link">← Back to site</a>
+</header>
+
+<!-- ======= HERO ======= -->
+<section class="hero">
+  <div class="wrap">
+    <h1 class="display">Get in touch.</h1>
+    <p>One inbox, one small team. If you email us, a real person reads it.</p>
+  </div>
+</section>
+
+<!-- ======= CONTACT ======= -->
+<div class="contact-wrap">
+  <div class="contact-card">
+    <div class="contact-icon">✉️</div>
+    <a href="mailto:sales@fliptle.com" class="email-btn">sales@fliptle.com</a>
+    <p class="contact-note">Rescue is a small, independently-run app. Response times may vary, but <strong>every email is read</strong> — billing questions, bug reports, feature requests, or just to say hi.</p>
+  </div>
+
+  <div class="what-for">
+    <p class="label">Email us about</p>
+    <ul>
+      <li>Billing, subscriptions, or a refund question</li>
+      <li>Privacy — accessing, correcting, or deleting your data</li>
+      <li>A bug, a crash, or something that feels broken</li>
+      <li>Feature ideas — including the upcoming accountability partner feature</li>
+      <li>Anything else — we'd genuinely like to hear it</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ======= FOOTER ======= -->
+<footer>
+  <p>RESCUE — A movement against the legal drug silently harming millions.</p>
+  <div class="footer-legal">
+    <a href="/">Home</a>
+    <a href="/offer">Offer</a>
+    <a href="/privacy">Privacy Policy</a>
+    <a href="/terms">Terms &amp; Conditions</a>
+    <a href="/refund">Refund Policy</a>
+    <a href="/contact">Contact</a>
+  </div>
+  <p class="footer-copy">© 2026 RESCUE. fliptle.com</p>
+</footer>
+
+</body>
+</html>

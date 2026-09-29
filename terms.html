@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Terms &amp; Conditions — RESCUE</title>
+<meta name="description" content="The terms that govern your use of the Rescue app — eligibility, subscriptions, billing, and how Rescue's blocking features work." />
+<meta name="theme-color" content="#060608" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#060608;
+  --panel:rgba(255,255,255,.04);
+  --line:rgba(255,255,255,.09);
+  --text:#f5f5f7;
+  --muted:#9a9aa8;
+  --accent:#FF2233;
+  --accent-2:#ff5a3c;
+  --light:#ffd9a0;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);
+  line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none}
+::selection{background:rgba(255,34,51,.4);color:#fff}
+
+.wrap{width:100%;max-width:840px;margin:0 auto;padding:0 20px}
+.display{font-family:'Anton',Impact,sans-serif;font-weight:400;letter-spacing:.01em;line-height:.98;text-transform:uppercase}
+.eyebrow{display:inline-block;font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;font-weight:700;color:var(--accent);margin-bottom:18px}
+
+/* ---- HEADER ---- */
+header{
+  position:sticky;top:0;z-index:60;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;
+  background:rgba(6,6,8,.88);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.brand{font-family:'Anton',sans-serif;font-size:1.3rem;letter-spacing:.06em;text-transform:uppercase}
+.brand span{color:var(--accent)}
+.back-link{font-size:.82rem;color:var(--muted);font-weight:500}
+
+/* ---- LEGAL HERO ---- */
+.legal-hero{
+  padding:64px 0 40px;text-align:left;
+  background:radial-gradient(ellipse 70% 60% at 15% -10%, rgba(255,34,51,.16), transparent 60%), var(--bg);
+}
+.legal-hero h1{font-size:clamp(2rem,6vw,3rem);margin-bottom:10px}
+.legal-hero .updated{color:var(--muted);font-size:.86rem}
+
+/* ---- LEGAL CONTENT ---- */
+.legal{max-width:760px;margin:0 auto;padding:0 20px 80px}
+.legal .toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:40px}
+.legal .toc p{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;font-weight:700;color:var(--accent);margin-bottom:12px}
+.legal .toc ol{margin:0;list-style:none;display:grid;grid-template-columns:1fr;gap:7px;padding:0;color:inherit;font-size:inherit;line-height:inherit}
+@media(min-width:600px){.legal .toc ol{grid-template-columns:1fr 1fr}}
+.legal .toc a{color:#d7d7de;text-decoration:none;font-size:.88rem}
+.legal .toc a:hover{color:#fff}
+.legal h2{font-size:1.35rem;font-weight:800;letter-spacing:-.01em;margin:42px 0 14px;color:#fff;scroll-margin-top:80px}
+.legal h2:first-of-type{margin-top:0}
+.legal h3{font-size:1.02rem;font-weight:700;margin:22px 0 8px;color:var(--light)}
+.legal p{color:#c5c5d0;font-size:.96rem;line-height:1.75;margin-bottom:14px}
+.legal ul,.legal ol.plain{margin:0 0 16px 1.35em;color:#c5c5d0;font-size:.96rem;line-height:1.75}
+.legal li{margin-bottom:8px}
+.legal a.inline{color:#ff6a6a;text-decoration:underline;text-decoration-color:rgba(255,34,51,.4)}
+.legal a.inline:hover{text-decoration-color:#ff6a6a}
+.legal strong{color:#fff;font-weight:700}
+.legal .callout{
+  background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:10px;padding:16px 18px;margin:20px 0;
+}
+.legal .callout p:last-child{margin-bottom:0}
+.legal .warn{
+  background:rgba(255,34,51,.07);border:1px solid rgba(255,34,51,.28);border-left:3px solid var(--accent);
+  border-radius:10px;padding:16px 18px;margin:20px 0;
+}
+.legal .warn p:last-child{margin-bottom:0}
+
+/* ---- FOOTER ---- */
+footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line);color:var(--muted);font-size:.8rem}
+.footer-legal{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:14px 0}
+.footer-legal a{color:var(--muted)}
+.footer-legal a:hover{color:var(--accent)}
+.footer-copy{margin-top:6px;font-size:.78rem;color:#5c5c68}
+</style>
+</head>
+
+<body>
+
+<!-- ======= HEADER ======= -->
+<header>
+  <div class="brand">RESCUE<span>.</span></div>
+  <a href="/" class="back-link">← Back to site</a>
+</header>
+
+<!-- ======= HERO ======= -->
+<section class="legal-hero">
+  <div class="wrap">
+    <span class="eyebrow">Legal</span>
+    <h1 class="display">Terms &amp; Conditions</h1>
+    <p class="updated">Last updated: September 29, 2026 · Applies to the Rescue app and fliptle.com</p>
+  </div>
+</section>
+
+<!-- ======= CONTENT ======= -->
+<div class="legal">
+
+  <div class="toc">
+    <p>On this page</p>
+    <ol>
+      <li><a href="#acceptance">1. Acceptance of these terms</a></li>
+      <li><a href="#eligibility">2. Eligibility</a></li>
+      <li><a href="#the-service">3. The service — how Rescue works</a></li>
+      <li><a href="#subscriptions">4. Subscriptions &amp; billing</a></li>
+      <li><a href="#account">5. Your account</a></li>
+      <li><a href="#acceptable-use">6. Acceptable use</a></li>
+      <li><a href="#ip">7. Intellectual property</a></li>
+      <li><a href="#disclaimer">8. Disclaimer — provided "as is"</a></li>
+      <li><a href="#liability">9. Limitation of liability</a></li>
+      <li><a href="#termination">10. Termination</a></li>
+      <li><a href="#changes">11. Changes to these terms</a></li>
+      <li><a href="#law">12. Governing law</a></li>
+      <li><a href="#contact">13. Contact</a></li>
+    </ol>
+  </div>
+
+  <p>These Terms &amp; Conditions ("Terms") govern your use of Rescue (the "app") and fliptle.com (the "site"). By creating an account or using Rescue, you agree to these Terms. Please read them before you start your free trial.</p>
+
+  <h2 id="acceptance">1. Acceptance of these terms</h2>
+  <p>By downloading, installing, signing up for, or otherwise using Rescue, you agree to be bound by these Terms and by our <a href="/privacy" class="inline">Privacy Policy</a>. If you don't agree, please don't use the app.</p>
+
+  <h2 id="eligibility">2. Eligibility</h2>
+  <p>You must be <strong>16 years of age or older</strong> to use Rescue. By using the app, you confirm that you meet this requirement.</p>
+
+  <h2 id="the-service">3. The service — how Rescue works</h2>
+  <p>Rescue is a self-control tool designed to help you reduce compulsive porn and social media use. We describe its features honestly here, because they're deliberately strict — that strictness is the point.</p>
+  <div class="warn">
+    <p><strong>Porn blocking is a one-way switch.</strong> Once you enable porn blocking, it <strong>cannot be turned off from within the app</strong>. The only way to remove it is to <strong>uninstall the app entirely.</strong> This is intentional — Rescue is built so your in-the-moment self can't undo what your committed self decided.</p>
+  </div>
+  <p>Other features include:</p>
+  <ul>
+    <li><strong>3-day freeze system</strong> — once started, a freeze locks your commitment to stay off selected distracting apps or sites for its duration; it cannot be shortened or cancelled early.</li>
+    <li><strong>Shorts &amp; Reels control</strong> — a limited daily session allowance for short-form video, rather than a total block.</li>
+    <li><strong>New browser auto-block</strong> — if you install a new browser app, Rescue automatically applies your blocking rules to it.</li>
+    <li><strong>Accountability partner alerts</strong> — a feature we're building. Not active yet; when it launches, it will be entirely opt-in.</li>
+  </ul>
+  <p>Because these features are designed to resist being disabled in the moment, please make sure you understand them before enabling them.</p>
+
+  <h2 id="subscriptions">4. Subscriptions &amp; billing</h2>
+  <p>Rescue offers a <strong>14-day free trial</strong>. Starting the trial requires a valid payment method (card or UPI) via Razorpay.</p>
+  <p>After the trial ends, your subscription automatically converts to a paid plan and is billed until you cancel:</p>
+  <ul>
+    <li><strong>Monthly plan:</strong> ₹99, billed every month.</li>
+    <li><strong>Annual plan:</strong> ₹799, billed every year.</li>
+  </ul>
+  <p>You can cancel at any time to stop future billing — from the app's Account screen, your Play Store subscriptions page, or by emailing <a href="mailto:sales@fliptle.com" class="inline">sales@fliptle.com</a>. Cancelling stops future charges but does not refund the current billing period — see our <a href="/refund" class="inline">Refund &amp; Cancellation Policy</a> for full details.</p>
+
+  <h2 id="account">5. Your account</h2>
+  <p>You're responsible for keeping your account credentials secure and for all activity under your account. Please provide accurate information when you sign up.</p>
+
+  <h2 id="acceptable-use">6. Acceptable use</h2>
+  <p>You agree not to misuse Rescue — including attempting to reverse-engineer, tamper with, or circumvent the app's blocking mechanisms in bad faith, or to use the service in any way that violates applicable law.</p>
+
+  <h2 id="ip">7. Intellectual property</h2>
+  <p>Rescue, its name, branding, and app content are owned by us. Using the app gives you a limited, personal, non-transferable license to use it for its intended purpose — it doesn't give you any ownership rights in the app itself.</p>
+
+  <h2 id="disclaimer">8. Disclaimer — provided "as is"</h2>
+  <p>Rescue is provided <strong>"as is"</strong> and <strong>"as available,"</strong> without warranties of any kind, whether express or implied, including uninterrupted or error-free operation. Rescue is a self-control tool intended to support behavior change — it is <strong>not a medical device and not a substitute for professional medical, psychological, or addiction treatment</strong>. If you need that kind of support, please seek it from a qualified professional.</p>
+
+  <h2 id="liability">9. Limitation of liability</h2>
+  <p>To the maximum extent permitted by law, we are not liable for any indirect, incidental, or consequential damages arising from your use of Rescue. Our total liability for any claim relating to the app is limited to the amount you paid us in the 12 months before the claim arose.</p>
+
+  <h2 id="termination">10. Termination</h2>
+  <p>We may suspend or terminate your account if you violate these Terms. You may stop using Rescue and cancel your subscription at any time.</p>
+
+  <h2 id="changes">11. Changes to these terms</h2>
+  <p>We may update these Terms from time to time. If we make material changes, we'll update the "Last updated" date above. Continuing to use Rescue after a change means you accept the updated Terms.</p>
+
+  <h2 id="law">12. Governing law</h2>
+  <p>These Terms are governed by the laws of India.</p>
+
+  <h2 id="contact">13. Contact</h2>
+  <p>Questions about these Terms? Email <a href="mailto:sales@fliptle.com" class="inline">sales@fliptle.com</a>.</p>
+
+</div>
+
+<!-- ======= FOOTER ======= -->
+<footer>
+  <p>RESCUE — A movement against the legal drug silently harming millions.</p>
+  <div class="footer-legal">
+    <a href="/">Home</a>
+    <a href="/offer">Offer</a>
+    <a href="/privacy">Privacy Policy</a>
+    <a href="/terms">Terms &amp; Conditions</a>
+    <a href="/refund">Refund Policy</a>
+    <a href="/contact">Contact</a>
+  </div>
+  <p class="footer-copy">© 2026 RESCUE. fliptle.com</p>
+</footer>
+
+</body>
+</html>
