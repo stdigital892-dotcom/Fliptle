@@ -56,6 +56,25 @@ class AuthStore(context: Context) {
         get() = prefs.getBoolean(KEY_INBOX_CONFIRM_SHOWN, false)
         set(value) = prefs.edit().putBoolean(KEY_INBOX_CONFIRM_SHOWN, value).apply()
 
+    /**
+     * Reset every per-account flag after the signed-in account is permanently
+     * deleted. Firebase Auth never reuses a UID — even a fresh sign-up with the
+     * exact same email afterward is a brand-new account — so any of these flags
+     * surviving would incorrectly skip steps (inbox confirm, uninstall info,
+     * phone step) for what is, server-side, a completely new identity.
+     *
+     * [installId] is deliberately left untouched: it identifies this device
+     * install, not any particular account, and is unrelated to who is signed in.
+     */
+    fun resetForAccountDeletion() {
+        prefs.edit()
+            .remove(KEY_PHONE)
+            .remove(KEY_PHONE_PROVIDED)
+            .remove(KEY_UNINSTALL_INFO_SEEN)
+            .remove(KEY_INBOX_CONFIRM_SHOWN)
+            .apply()
+    }
+
     companion object {
         private const val KEY_INSTALL_ID = "install_id"
         private const val KEY_PHONE = "phone"

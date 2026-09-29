@@ -62,6 +62,15 @@
                 android:layout_marginTop="12dp"
                 android:lineSpacingMultiplier="1.4"
                 android:text="@string/auth_sign_out_note" />
+
+            <Button
+                android:id="@+id/deleteAccountButton"
+                style="@style/Widget.Fliptle.Button.Text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="28dp"
+                android:text="@string/auth_delete_account" />
         </LinearLayout>
 
         <!-- Sign-in controls (mandatory gate) -->

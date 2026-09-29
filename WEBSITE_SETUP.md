@@ -391,3 +391,45 @@ firebase functions:secrets:set RAZORPAY_WEBHOOK_SECRET
 ```
 
 then redeploy so the function picks it up.
+
+---
+
+## 7. Account deletion
+
+`deleteAccount` (`onCall` v2, region `asia-south2`) is a self-service,
+permanent account-deletion endpoint, triggered from the "Delete my account"
+button in the Android app's Account screen (`SignInActivity`'s signed-in
+view, via `DeleteAccount.kt`).
+
+**Who it can delete:** only the caller's own account. `uid` and `email` come
+exclusively from `request.auth` (the caller's ID token) — never from any
+client-supplied field — so there is no request shape that lets a signed-in
+user delete a different account.
+
+**What it deletes, in order:**
+1. `installs/{uid}` — recursively (`db.recursiveDelete`), because this
+   document has an `events` subcollection (install/reinstall history from
+   `InstallTracker`); a plain `delete()` would leave those orphaned. This is
+   also where the parent/accountability-partner contact phone number lives
+   today (`installs/{uid}.parentPhone`) — there is no separate partner-data
+   collection yet. **When one is built, delete it here too**, scoped by this
+   same uid/email, never a client-supplied identifier.
+2. `appSignups/{email}`, `planSelections/{email}`, `subscriptions/{email}` —
+   plain deletes; none have subcollections today. `delete()` on a doc that
+   doesn't exist is a safe no-op.
+3. The Firebase Auth user itself (`admin.auth().deleteUser(uid)`) — always
+   last, after data cleanup succeeds. If Firestore cleanup fails, the Auth
+   account is left intact so the user can retry from the app rather than
+   ending up with a deleted account and orphaned data.
+
+**Client-side, on success:** `DeleteAccount.kt` clears every local trace of
+the account — `EntitlementStore` (same as sign-out) plus a full
+`AuthStore.resetForAccountDeletion()` (phone, `uninstallInfoSeen`,
+`inboxConfirmShown` — everything sign-out deliberately leaves alone, because
+Firebase Auth never reuses a UID: even a fresh sign-up with the identical
+email afterward is a brand-new account and must go through the full
+first-time flow again) — then signs out of Firebase/Google and restarts
+through the launcher, which lands on the sign-in screen.
+
+No new secrets required — this function only uses the Admin SDK, which
+already has full access via the deployed service account.

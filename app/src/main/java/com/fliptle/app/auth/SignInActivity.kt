@@ -99,6 +99,7 @@ class SignInActivity : AppCompatActivity() {
         findViewById<Button>(R.id.savePhoneButton).setOnClickListener { saveParentPhone() }
         findViewById<Button>(R.id.skipPhoneButton).setOnClickListener { skipPhone() }
         findViewById<Button>(R.id.signOutButton).setOnClickListener { signOut() }
+        findViewById<Button>(R.id.deleteAccountButton).setOnClickListener { DeleteAccount.confirm(this) }
 
         // Already authenticated -> this is the Account screen, not a sign-in prompt.
         if (auth?.currentUser != null) showAccountState()

@@ -240,6 +240,14 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="auth_account_title">Account</string>
     <string name="auth_sign_out">Sign out</string>
     <string name="auth_sign_out_note">Your progress (porn-blocking streak, freeze, blocked apps and domains) is saved to your account and to this device. Signing out keeps all of it — signing back in re-syncs it from the cloud.</string>
+    <string name="auth_delete_account">Delete my account</string>
+    <string name="delete_account_title">Delete your account?</string>
+    <string name="delete_account_warning">This is permanent and cannot be undone. Your account, subscription record, and everything tied to it will be permanently deleted. This does not remove the app or its on-device blocking from this phone — only your account and cloud data.</string>
+    <string name="delete_account_confirm">Delete permanently</string>
+    <string name="delete_account_cancel">Cancel</string>
+    <string name="delete_account_working">Deleting your account…</string>
+    <string name="delete_account_failed">Could not delete your account. Please try again.</string>
+    <string name="delete_account_failed_detail">Could not delete your account: %1$s</string>
     <!-- Setup: combined Freeze section subtitle -->
     <string name="setup_freeze_caption">Blocked apps, blocked domains and in-app surfaces are all governed together by the 3-day freeze cycle.</string>
     <!-- Sign out warning -->

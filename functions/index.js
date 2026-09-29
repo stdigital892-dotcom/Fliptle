@@ -475,6 +475,82 @@ exports.getSubscription = onCall(
 );
 
 // ============================================================================
+// deleteAccount — permanent, self-service account deletion.
+//
+// Auth REQUIRED. uid and email come ONLY from the caller's ID token
+// (request.auth), never from any client payload — this function has no
+// concept of a "target user" other than whoever is calling it, so there is
+// no code path by which a signed-in caller could delete someone else's
+// account even if they tried to pass a different id.
+//
+// Order matters: Firestore data is deleted FIRST, the Auth identity LAST.
+// If the Firestore step throws, the Auth account still exists and the
+// client can tell the user to retry — better than an account that's gone
+// while its data lingers. If the Auth deletion step itself fails after data
+// cleanup already succeeded, that's logged for manual follow-up; it can't
+// be fully avoided without a cross-system transaction, which Firestore and
+// Firebase Auth don't offer.
+// ============================================================================
+exports.deleteAccount = onCall(
+  { region: RAZORPAY_REGION },
+  async (request) => {
+    if (!request.auth || !request.auth.token || !request.auth.token.email) {
+      throw new HttpsError("unauthenticated", "Sign in required.");
+    }
+    const uid = request.auth.uid;
+    const email = String(request.auth.token.email).trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) {
+      throw new HttpsError("failed-precondition", "Auth token has no valid email.");
+    }
+
+    const db = admin.firestore();
+
+    try {
+      // installs/{uid} has an `events` subcollection (see InstallTracker) — a
+      // plain delete() would leave it orphaned, so this recursively removes
+      // the doc and everything under it. This is also where the parent/
+      // accountability-partner contact phone lives today (there is no
+      // separate partner-data collection yet); when one exists, delete it
+      // here too, scoped by this same uid/email — never a client-supplied id.
+      await db.recursiveDelete(db.doc("installs/" + uid));
+
+      // Plain deletes: none of these have subcollections today. delete() on
+      // a doc that doesn't exist is a safe no-op, so no existence checks
+      // are needed before any of these.
+      await Promise.all([
+        db.doc("appSignups/" + email).delete(),
+        db.doc("planSelections/" + email).delete(),
+        db.doc("subscriptions/" + email).delete(),
+      ]);
+    } catch (e) {
+      logger.error("deleteAccount: Firestore cleanup failed", {
+        uid,
+        email,
+        message: e && e.message,
+      });
+      throw new HttpsError("internal", "Could not delete account data. Please try again.");
+    }
+
+    try {
+      await admin.auth().deleteUser(uid);
+    } catch (e) {
+      logger.error("deleteAccount: Auth user deletion failed after data was removed", {
+        uid,
+        email,
+        message: e && e.message,
+      });
+      throw new HttpsError(
+        "internal",
+        "Account data was deleted but the sign-in credential could not be removed. Please contact support."
+      );
+    }
+
+    logger.info("Account deleted", { uid, email });
+    return { deleted: true };
+  }
+);
+
+// ============================================================================
 // getEntitlement — the paywall. Every protection feature in the app is gated
 // on this returning entitled: true. Auth is REQUIRED; the email is pulled
 // from the auth token and the client's email field (if any) is ignored,
