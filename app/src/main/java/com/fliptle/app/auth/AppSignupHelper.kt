@@ -24,22 +24,28 @@ object AppSignupHelper {
 
     private const val COLLECTION = "appSignups"
 
-    fun maybeRecordSignup(context: Context, email: String) {
+    fun maybeRecordSignup(context: Context, email: String, displayName: String? = null) {
         if (!FirebaseGate.isAvailable(context)) return
         val normalized = email.trim().lowercase()
         if (normalized.isEmpty()) return
+        val data = mutableMapOf<String, Any>(
+            "email" to normalized,
+            "source" to "app",
+            "signedAt" to FieldValue.serverTimestamp()
+        )
+        // Only set when present (e.g. Google Sign-In populates this; plain
+        // email/password sign-in usually doesn't). Deliberately NOT included
+        // in the map when blank, so a merge from a later sign-in method never
+        // erases a name captured on an earlier one.
+        val trimmedName = displayName?.trim()
+        if (!trimmedName.isNullOrEmpty()) {
+            data["displayName"] = trimmedName
+        }
         // Use email as doc ID — idempotent by design; merge preserves any
         // existing fields (e.g. welcomeEmailSentAt set by the Cloud Function).
         FirebaseFirestore.getInstance()
             .collection(COLLECTION)
             .document(normalized)
-            .set(
-                mapOf(
-                    "email" to normalized,
-                    "source" to "app",
-                    "signedAt" to FieldValue.serverTimestamp()
-                ),
-                SetOptions.merge()
-            )
+            .set(data, SetOptions.merge())
     }
 }

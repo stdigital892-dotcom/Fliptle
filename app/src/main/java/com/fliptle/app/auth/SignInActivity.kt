@@ -193,7 +193,7 @@ class SignInActivity : AppCompatActivity() {
         // Cloud Function). Separate from the website's `waitlist` collection —
         // app users already have the app and are choosing a plan, not waiting
         // for early access.
-        user.email?.let { AppSignupHelper.maybeRecordSignup(this, it) }
+        user.email?.let { AppSignupHelper.maybeRecordSignup(this, it, user.displayName) }
         InstallTracker.recordSignIn(this, user.uid, user.email, method, AuthStore(this).installId()) { msg ->
             runOnUiThread {
                 val verified = if (user.isEmailVerified) getString(R.string.auth_verified)

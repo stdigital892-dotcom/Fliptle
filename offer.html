@@ -362,6 +362,9 @@ footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line)
   const params = new URLSearchParams(location.search);
   const source = (params.get('source') || 'web').trim().toLowerCase();
   let email = (params.get('email') || '').trim().toLowerCase();
+  // Optional — only present when the welcome email link included it (e.g.
+  // Google Sign-In in the app). Not lowercased: names keep their casing.
+  const name = (params.get('name') || '').trim();
 
   const heading = document.getElementById('welcomeHeading');
   const emailGate = document.getElementById('emailGate');
@@ -375,13 +378,18 @@ footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line)
   }
 
   function renderHeading() {
-    if (EMAIL_RE.test(email)) {
+    // Email validity still gates the "enter your email" prompt below — the
+    // name is purely cosmetic for the greeting, the rest of the page (plan
+    // selection, payment, subscription lookup) always needs a real email.
+    const hasEmail = EMAIL_RE.test(email);
+    if (name) {
+      heading.innerHTML = 'Welcome, <span class="accent-text">' + escHtml(name) + '</span>';
+    } else if (hasEmail) {
       heading.innerHTML = 'Welcome, <span class="accent-text">' + escHtml(email) + '</span>';
-      emailGate.hidden = true;
     } else {
       heading.textContent = 'Welcome.';
-      emailGate.hidden = false;
     }
+    emailGate.hidden = hasEmail;
   }
   renderHeading();
 

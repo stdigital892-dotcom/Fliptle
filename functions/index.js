@@ -43,9 +43,14 @@ const REPLY_TO = "sales@fliptle.com";
 // Early-access / offer page.
 const OFFER_BASE = "https://fliptle.com/offer";
 
-function offerLink(email, source) {
+function offerLink(email, source, name) {
   const src = source === "app" ? "app" : "web";
-  return `${OFFER_BASE}?email=${encodeURIComponent(email)}&source=${src}`;
+  let url = `${OFFER_BASE}?email=${encodeURIComponent(email)}&source=${src}`;
+  // Only appended when a display name is available (currently: app sign-ins
+  // via Google, which populate FirebaseUser.displayName). The offer page
+  // falls back to greeting by email when this is absent.
+  if (name) url += `&name=${encodeURIComponent(name)}`;
+  return url;
 }
 
 // ---- Template 1: WEBSITE waitlist signups (pre-launch, no app yet) --------
@@ -235,7 +240,8 @@ exports.sendAppWelcomeEmail = onDocumentCreated(
       return;
     }
 
-    const link = offerLink(email, "app");
+    const displayName = typeof data.displayName === "string" ? data.displayName.trim() : "";
+    const link = offerLink(email, "app", displayName);
     const resend = new Resend(RESEND_API_KEY.value());
 
     try {
