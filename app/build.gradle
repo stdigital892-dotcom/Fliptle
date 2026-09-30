@@ -31,6 +31,21 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        // Release signing: NEVER committed. Populated entirely from environment
+        // variables that only exist in CI (set from GitHub Actions secrets — see
+        // .github/workflows/release.yml). A local `./gradlew bundleRelease` with
+        // none of these set simply produces an unsigned release build instead of
+        // failing, since the `release` signingConfig below is applied
+        // conditionally on RELEASE_KEYSTORE_PATH being present.
+        release {
+            def ksPath = System.getenv("RELEASE_KEYSTORE_PATH")
+            if (ksPath != null) {
+                storeFile file(ksPath)
+                storePassword System.getenv("RELEASE_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword System.getenv("RELEASE_KEY_PASSWORD")
+            }
+        }
     }
 
     buildFeatures {
@@ -51,6 +66,11 @@ android {
             // Hard off in release: DevMode short-circuits, so no debug timing or
             // developer UI is reachable in a shipped build.
             buildConfigField "boolean", "DEV_TOOLS", "false"
+            // Only signed when the release keystore env vars are present (CI).
+            // See the release signingConfig above.
+            if (System.getenv("RELEASE_KEYSTORE_PATH") != null) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 
