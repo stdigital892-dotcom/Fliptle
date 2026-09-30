@@ -123,19 +123,14 @@
     <string name="auth_signed_in">Signed in as %1$s</string>
     <string name="auth_verified">Email: verified ✓</string>
     <string name="auth_unverified">Email: not verified — check your inbox for the verification link.</string>
-    <string name="auth_name_label">What should we call you?</string>
+    <string name="auth_profile_title">Tell us about you (optional)</string>
     <string name="auth_name_hint">Optional. We\'ll use it instead of your email wherever the app greets you.</string>
     <string name="auth_name_field">Your name</string>
-    <string name="auth_save_name">Save and continue</string>
-    <string name="auth_skip_name">Skip for now</string>
     <string name="auth_name_too_long">Keep it under 40 characters.</string>
-    <string name="auth_parent_phone_label">Parent\'s phone number (optional)</string>
     <string name="auth_parent_phone_hint">Optional for now. Contact info only — not used for login or verification.</string>
     <string name="auth_parent_phone_field">e.g. +15551234567</string>
-    <string name="auth_save_phone">Save and continue</string>
-    <string name="auth_skip_phone">Skip for now</string>
+    <string name="auth_profile_continue">Continue</string>
     <string name="auth_phone_invalid">Enter a valid phone number (7–15 digits, e.g. +15551234567).</string>
-    <string name="auth_phone_saved">Phone number saved.</string>
 
     <!-- Typing gate -->
     <string name="typing_title">Typing gate</string>
@@ -173,6 +168,7 @@
 
     <!-- Onboarding -->
     <string name="ob_watch_tutorial">▶  Watch tutorial</string>
+    <string name="ob_progress_format">Step %1$d of %2$d</string>
     <string name="ob_intro_title">Take your focus back.</string>
     <string name="ob_intro_body">This app blocks porn permanently and puts your distractions on a 3-day lock.
 

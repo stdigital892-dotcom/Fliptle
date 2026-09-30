@@ -7,6 +7,29 @@
     android:orientation="vertical"
     android:padding="24dp">
 
+    <LinearLayout
+        android:id="@+id/progressSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/progressText"
+            style="@style/Text.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="6dp"
+            android:layout_marginTop="6dp"
+            android:max="100"
+            android:progressBackgroundTint="@color/border"
+            android:progressTint="@color/accent" />
+    </LinearLayout>
+
     <TextView
         android:id="@+id/stepTitle"
         style="@style/Text.Display"

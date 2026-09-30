@@ -148,9 +148,40 @@
                 android:lineSpacingMultiplier="1.4" />
         </LinearLayout>
 
-        <!-- Optional display-name step (skippable), shown first after sign-in -->
+        <!-- Onboarding progress indicator — visible only while OnboardingState
+             isn't yet complete (see SignInActivity); hidden for a returning
+             user re-signing in on an already-onboarded device. -->
         <LinearLayout
-            android:id="@+id/nameSection"
+            android:id="@+id/authProgressSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/authProgressText"
+                style="@style/Text.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <ProgressBar
+                android:id="@+id/authProgressBar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="6dp"
+                android:layout_marginTop="6dp"
+                android:max="100"
+                android:progressBackgroundTint="@color/border"
+                android:progressTint="@color/accent" />
+        </LinearLayout>
+
+        <!-- Combined optional profile step (name + phone), shown once after
+             sign-in. Both fields are independently skippable — leaving a
+             field blank IS how you skip it; there's a single Continue
+             button rather than separate save/skip actions per field. -->
+        <LinearLayout
+            android:id="@+id/profileSection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
@@ -161,7 +192,7 @@
                 style="@style/Text.CardTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/auth_name_label" />
+                android:text="@string/auth_profile_title" />
 
             <TextView
                 style="@style/Text.Caption"
@@ -182,44 +213,11 @@
                 android:maxLength="40"
                 android:textColor="@color/ink" />
 
-            <Button
-                android:id="@+id/saveNameButton"
-                style="@style/Widget.Fliptle.Button.Primary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="@string/auth_save_name" />
-
-            <Button
-                android:id="@+id/skipNameButton"
-                style="@style/Widget.Fliptle.Button.Text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="4dp"
-                android:text="@string/auth_skip_name" />
-        </LinearLayout>
-
-        <!-- Parent phone step (optional / skippable) -->
-        <LinearLayout
-            android:id="@+id/phoneSection"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <TextView
-                style="@style/Text.CardTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/auth_parent_phone_label" />
-
             <TextView
                 style="@style/Text.Caption"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="20dp"
                 android:lineSpacingMultiplier="1.4"
                 android:text="@string/auth_parent_phone_hint" />
 
@@ -234,21 +232,12 @@
                 android:inputType="phone" />
 
             <Button
-                android:id="@+id/savePhoneButton"
+                android:id="@+id/continueProfileButton"
                 style="@style/Widget.Fliptle.Button.Primary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="@string/auth_save_phone" />
-
-            <Button
-                android:id="@+id/skipPhoneButton"
-                style="@style/Widget.Fliptle.Button.Text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="4dp"
-                android:text="@string/auth_skip_phone" />
+                android:layout_marginTop="16dp"
+                android:text="@string/auth_profile_continue" />
         </LinearLayout>
 
         <TextView

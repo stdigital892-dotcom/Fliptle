@@ -7,12 +7,15 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.fliptle.app.CloudState
 import com.fliptle.app.MainActivity
+import com.fliptle.app.OnboardingProgress
+import com.fliptle.app.OnboardingState
 import com.fliptle.app.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -23,17 +26,24 @@ import com.google.firebase.auth.GoogleAuthProvider
 /**
  * Free authentication (no billing): Google one-tap and email/password with the
  * built-in email-verification link. The user record and reinstall tracking are
- * keyed off the Firebase Auth UID. Two optional steps follow a fresh sign-in,
- * in order: a display name (cosmetic — shown in place of the email wherever
- * the app greets the user), then a parent phone number (contact-only info,
- * never used for login/verification). Both are freely skippable.
+ * keyed off the Firebase Auth UID. One combined, optional profile step follows
+ * a fresh sign-in: a display name (cosmetic — shown in place of the email
+ * wherever the app greets the user) and a parent phone number (contact-only
+ * info, never used for login/verification), both on one screen. Each field is
+ * independently skippable by leaving it blank — there's no separate skip
+ * button per field.
+ *
+ * These are PER-ACCOUNT concerns, re-asked for any new account signing in —
+ * even on an already-onboarded device — which is why they live here rather
+ * than in OnboardingActivity's per-device step machine. A shared "Step X of Y"
+ * indicator (see [OnboardingProgress]) bridges the two Activities; it's only
+ * shown here while first-run onboarding is still in progress.
  *
  * Three faces, chosen by auth state:
  *  • ALREADY signed in (opened from Home → Account): the account view — email +
  *    "Sign out". Never shows a sign-in prompt to an authenticated user.
  *  • NOT signed in (the mandatory gate): the sign-in controls.
- *  • JUST signed in via an action here: the optional name step, then the
- *    optional parent-phone step.
+ *  • JUST signed in via an action here: the combined optional profile step.
  *
  * Sign-in is mandatory app-wide (see AuthGate); this screen is also the account
  * screen once authenticated.
@@ -50,9 +60,11 @@ class SignInActivity : AppCompatActivity() {
     private lateinit var accountSection: LinearLayout
     private lateinit var accountEmailText: TextView
     private lateinit var accountDetailText: TextView
-    private lateinit var nameSection: LinearLayout
+    private lateinit var authProgressSection: LinearLayout
+    private lateinit var authProgressText: TextView
+    private lateinit var authProgressBar: ProgressBar
+    private lateinit var profileSection: LinearLayout
     private lateinit var nameInput: EditText
-    private lateinit var phoneSection: LinearLayout
     private lateinit var parentPhoneInput: EditText
 
     private val googleLauncher = registerForActivityResult(
@@ -88,9 +100,11 @@ class SignInActivity : AppCompatActivity() {
         accountSection = findViewById(R.id.accountSection)
         accountEmailText = findViewById(R.id.accountEmailText)
         accountDetailText = findViewById(R.id.accountDetailText)
-        nameSection = findViewById(R.id.nameSection)
+        authProgressSection = findViewById(R.id.authProgressSection)
+        authProgressText = findViewById(R.id.authProgressText)
+        authProgressBar = findViewById(R.id.authProgressBar)
+        profileSection = findViewById(R.id.profileSection)
         nameInput = findViewById(R.id.nameInput)
-        phoneSection = findViewById(R.id.phoneSection)
         parentPhoneInput = findViewById(R.id.parentPhoneInput)
 
         // Static, Firebase-independent — set before the availability check below
@@ -113,10 +127,7 @@ class SignInActivity : AppCompatActivity() {
         findViewById<Button>(R.id.googleSignInButton).setOnClickListener { startGoogleSignIn() }
         findViewById<Button>(R.id.emailSignUpButton).setOnClickListener { signUpEmail() }
         findViewById<Button>(R.id.emailSignInButton).setOnClickListener { signInEmail() }
-        findViewById<Button>(R.id.saveNameButton).setOnClickListener { saveName() }
-        findViewById<Button>(R.id.skipNameButton).setOnClickListener { skipName() }
-        findViewById<Button>(R.id.savePhoneButton).setOnClickListener { saveParentPhone() }
-        findViewById<Button>(R.id.skipPhoneButton).setOnClickListener { skipPhone() }
+        findViewById<Button>(R.id.continueProfileButton).setOnClickListener { continueProfile() }
         findViewById<Button>(R.id.signOutButton).setOnClickListener { signOut() }
         findViewById<Button>(R.id.deleteAccountButton).setOnClickListener { DeleteAccount.confirm(this) }
 
@@ -187,7 +198,7 @@ class SignInActivity : AppCompatActivity() {
 
     private fun onSignedIn(method: String) {
         val user = auth?.currentUser ?: return
-        showNameStep()
+        showProfileStep()
         // Never let a stale entitlement cache from whichever account was
         // previously signed in on this device leak into a fresh sign-in —
         // EntitlementStore is a single unscoped local cache, not keyed by
@@ -205,7 +216,7 @@ class SignInActivity : AppCompatActivity() {
         //
         // The name used here MUST be the confirmed installs/{uid}.displayName
         // from Firestore — not AuthStore(this).signedInName. That local cache
-        // is populated by showNameStep()'s call to InstallTracker.fetchDisplayName
+        // is populated by showProfileStep()'s call to InstallTracker.fetchDisplayName
         // just above, which is asynchronous: its callback has not run yet at
         // this point in onSignedIn(), so reading the cache here synchronously
         // was silently seeing last session's value (null, for a returning user
@@ -237,8 +248,8 @@ class SignInActivity : AppCompatActivity() {
     private fun showAccountState() {
         titleText.setText(R.string.auth_account_title)
         signInControls.visibility = View.GONE
-        nameSection.visibility = View.GONE
-        phoneSection.visibility = View.GONE
+        profileSection.visibility = View.GONE
+        authProgressSection.visibility = View.GONE
         statusText.visibility = View.GONE
         accountSection.visibility = View.VISIBLE
 
@@ -255,19 +266,21 @@ class SignInActivity : AppCompatActivity() {
     private fun signOut() = com.fliptle.app.SignOut.confirm(this)
 
     /**
-     * After a sign-in ACTION here, reveal the optional display-name step — the
-     * first thing shown after sign-in, before the phone step. Mirrors
-     * [showPhoneStep] exactly: prefill from the local cache, then best-effort
-     * adopt whatever's already stored in Firestore for a returning/reinstalled
-     * user so they aren't re-prompted.
+     * After a sign-in ACTION here, reveal the combined optional profile step —
+     * name and parent phone together on one screen, each independently
+     * prefilled from the local cache and then best-effort adopted from
+     * Firestore for a returning/reinstalled user so they aren't re-prompted.
      */
-    private fun showNameStep() {
+    private fun showProfileStep() {
         signInControls.visibility = View.GONE
-        nameSection.visibility = View.VISIBLE
+        profileSection.visibility = View.VISIBLE
 
         val store = AuthStore(this)
         if (nameInput.text.isNullOrEmpty()) {
             store.signedInName?.let { nameInput.setText(it) }
+        }
+        if (parentPhoneInput.text.isNullOrEmpty()) {
+            store.signedInPhone?.let { parentPhoneInput.setText(it) }
         }
         val user = auth?.currentUser
         if (user != null && !store.nameProvided) {
@@ -281,57 +294,6 @@ class SignInActivity : AppCompatActivity() {
                 }
             }
         }
-    }
-
-    private fun saveName() {
-        val user = auth?.currentUser
-        val name = nameInput.text.toString().trim()
-        if (name.isEmpty()) {
-            // Nothing entered — treat exactly like Skip rather than erroring.
-            skipName()
-            return
-        }
-        if (name.length > 40) {
-            Toast.makeText(this, R.string.auth_name_too_long, Toast.LENGTH_SHORT).show()
-            return
-        }
-        // Save locally first (optimistic) so an offline user is never trapped,
-        // then sync to Firestore under the same UID key.
-        val store = AuthStore(this)
-        store.signedInName = name
-        store.nameProvided = true
-        if (user != null) {
-            InstallTracker.saveDisplayName(this, user.uid, name) { msg ->
-                runOnUiThread { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() }
-            }
-        }
-        showPhoneStep()
-    }
-
-    /** Skip the name step — purely cosmetic, so there is nothing to gate on. */
-    private fun skipName() {
-        AuthStore(this).nameProvided = true
-        showPhoneStep()
-    }
-
-    /**
-     * After a sign-in ACTION here, reveal the parent-phone section. The sign-in
-     * controls are hidden because sign-in is done. The phone number itself is
-     * OPTIONAL — "Skip for now" proceeds without one (see PhoneGate, whose
-     * enforcement switch is currently off).
-     */
-    private fun showPhoneStep() {
-        nameSection.visibility = View.GONE
-        phoneSection.visibility = View.VISIBLE
-
-        val store = AuthStore(this)
-        // Prefill any number we already have on device.
-        if (parentPhoneInput.text.isNullOrEmpty()) {
-            store.signedInPhone?.let { parentPhoneInput.setText(it) }
-        }
-        // Best-effort: if this user already stored a phone (e.g. after a reinstall),
-        // adopt it so they aren't needlessly re-prompted.
-        val user = auth?.currentUser
         if (user != null && !store.parentPhoneProvided) {
             InstallTracker.fetchParentPhone(this, user.uid) { existing ->
                 runOnUiThread {
@@ -343,48 +305,85 @@ class SignInActivity : AppCompatActivity() {
                 }
             }
         }
-    }
 
-    private fun saveParentPhone() {
-        val user = auth?.currentUser
-        if (user == null) {
-            Toast.makeText(this, R.string.auth_email_hint, Toast.LENGTH_SHORT).show()
-            return
+        // "Step 3 of 7" — only during active first-run onboarding; hidden for a
+        // returning user re-signing in on an already-onboarded device.
+        if (!OnboardingState(this).complete) {
+            authProgressSection.visibility = View.VISIBLE
+            authProgressText.text = getString(
+                R.string.ob_progress_format, OnboardingProgress.PROFILE, OnboardingProgress.TOTAL
+            )
+            authProgressBar.progress = (OnboardingProgress.PROFILE * 100) / OnboardingProgress.TOTAL
+        } else {
+            authProgressSection.visibility = View.GONE
         }
-        val normalized = normalizePhone(parentPhoneInput.text.toString())
-        if (normalized == null) {
-            Toast.makeText(this, R.string.auth_phone_invalid, Toast.LENGTH_SHORT).show()
-            return
-        }
-        // Save locally first (optimistic) so an offline user is never trapped by
-        // the mandatory gate, then sync to Firestore under the same UID key.
-        val store = AuthStore(this)
-        store.signedInPhone = normalized
-        store.parentPhoneProvided = true
-        parentPhoneInput.setText(normalized)
-        InstallTracker.saveParentPhone(this, user.uid, normalized) { msg ->
-            runOnUiThread { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() }
-        }
-        Toast.makeText(this, R.string.auth_phone_saved, Toast.LENGTH_SHORT).show()
-        proceed()
     }
 
     /**
-     * Skip the phone step for now (optional until the partner system ships). Marks
-     * the phone as "handled" so the gate — if it is ever re-enabled — is satisfied,
-     * and proceeds to the main app without saving a number.
+     * Single "Continue" for the combined profile step. Each field is
+     * independently optional — a blank field IS how you skip it, there's no
+     * separate skip button. Name has no real validation beyond a length cap;
+     * phone keeps its format validation and blocks continuing if what's typed
+     * doesn't look like a number at all.
      */
-    private fun skipPhone() {
-        AuthStore(this).parentPhoneProvided = true
+    private fun continueProfile() {
+        val user = auth?.currentUser
+        val store = AuthStore(this)
+
+        val name = nameInput.text.toString().trim()
+        if (name.isEmpty()) {
+            store.nameProvided = true
+        } else if (name.length > 40) {
+            Toast.makeText(this, R.string.auth_name_too_long, Toast.LENGTH_SHORT).show()
+            return
+        } else {
+            store.signedInName = name
+            store.nameProvided = true
+            if (user != null) {
+                InstallTracker.saveDisplayName(this, user.uid, name) { msg ->
+                    runOnUiThread { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() }
+                }
+            }
+        }
+
+        val phoneRaw = parentPhoneInput.text.toString().trim()
+        if (phoneRaw.isEmpty()) {
+            store.parentPhoneProvided = true
+        } else {
+            val normalized = normalizePhone(phoneRaw)
+            if (normalized == null) {
+                Toast.makeText(this, R.string.auth_phone_invalid, Toast.LENGTH_SHORT).show()
+                return
+            }
+            store.signedInPhone = normalized
+            store.parentPhoneProvided = true
+            parentPhoneInput.setText(normalized)
+            if (user != null) {
+                InstallTracker.saveParentPhone(this, user.uid, normalized) { msg ->
+                    runOnUiThread { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() }
+                }
+            }
+        }
+
         proceed()
     }
 
     /**
-     * Continue into the app after the phone step. On first sign-in, routes through
-     * the inbox-confirm screen (shown once per account). On subsequent sign-ins,
-     * goes directly to MainActivity.
+     * Continue after the profile step. If first-run onboarding hasn't finished
+     * yet, this screen was reached mid-onboarding (from OnboardingActivity's
+     * sign-in step) — just finish() and let OnboardingActivity, sitting paused
+     * underneath in the back stack, resume its own step sequence. Using the
+     * CLEAR_TASK routing below in that case would wipe OnboardingActivity out
+     * of the back stack entirely, forcing it to restart from Intro later.
+     * Otherwise (a returning user signing in on an already-onboarded device),
+     * route through inbox-confirm (shown once per account) or straight to
+     * MainActivity.
      */
     private fun proceed() {
+        if (!OnboardingState(this).complete) {
+            finish()
+            return
+        }
         if (!AuthStore(this).inboxConfirmShown) {
             startActivity(
                 Intent(this, InboxConfirmActivity::class.java)
@@ -418,7 +417,7 @@ class SignInActivity : AppCompatActivity() {
     private fun disableAll() {
         for (id in intArrayOf(
             R.id.googleSignInButton, R.id.emailSignUpButton,
-            R.id.emailSignInButton, R.id.saveNameButton, R.id.savePhoneButton
+            R.id.emailSignInButton, R.id.continueProfileButton
         )) findViewById<Button>(id).isEnabled = false
     }
 

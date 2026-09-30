@@ -6,22 +6,31 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.View
 import android.widget.Button
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.fliptle.app.auth.SignInActivity
 
 /**
- * First-launch flow: intro -> optional sign-in -> permissions requested one at a
- * time in order (usage access, overlay, Accessibility, battery-optimization
- * exemption), each with a plain-language reason. The Accessibility step carries
- * the full disclosure. An OEM-specific guidance step (Xiaomi/Oppo/Vivo/OnePlus/
- * Samsung battery killers) sits between Accessibility and the battery step,
- * informational only — skipped entirely on any other manufacturer.
+ * First-launch flow: intro -> optional sign-in (+ the combined name/phone
+ * screen, hosted in SignInActivity) -> permissions requested one at a time in
+ * order (usage access, overlay, Accessibility, then a combined OEM-guidance +
+ * battery-optimization step), each with a plain-language reason. The
+ * Accessibility step carries the full disclosure. The final step shows
+ * brand-specific guidance (Xiaomi/Oppo/Vivo/OnePlus/Samsung battery killers)
+ * alongside the battery-exemption request on known-aggressive manufacturers,
+ * and just the battery request on everyone else.
+ *
+ * A "Step X of Y" indicator (see [OnboardingProgress]) spans this Activity
+ * and the name/phone screen in SignInActivity — hidden on Intro only.
  */
 class OnboardingActivity : AppCompatActivity() {
 
     private var step = STEP_INTRO
 
+    private lateinit var progressSection: View
+    private lateinit var progressText: TextView
+    private lateinit var progressBar: ProgressBar
     private lateinit var titleText: TextView
     private lateinit var bodyText: TextView
     private lateinit var statusText: TextView
@@ -39,6 +48,9 @@ class OnboardingActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_onboarding)
         root = findViewById(R.id.onboardingRoot)
+        progressSection = findViewById(R.id.progressSection)
+        progressText = findViewById(R.id.progressText)
+        progressBar = findViewById(R.id.progressBar)
         titleText = findViewById(R.id.stepTitle)
         bodyText = findViewById(R.id.stepBody)
         statusText = findViewById(R.id.stepStatus)
@@ -53,10 +65,7 @@ class OnboardingActivity : AppCompatActivity() {
 
         tutorialButton.setOnClickListener { openTutorial() }
         actionButton.setOnClickListener { onAction() }
-        backButton.setOnClickListener {
-            val prev = stepBefore(step)
-            if (prev >= STEP_INTRO) { step = prev; render() }
-        }
+        backButton.setOnClickListener { if (step > STEP_INTRO) { step--; render() } }
         nextButton.setOnClickListener { onNext() }
 
         // If onboarding was already completed but a permission is now missing,
@@ -85,10 +94,7 @@ class OnboardingActivity : AppCompatActivity() {
                 Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
             )
             STEP_ACCESSIBILITY -> startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-            STEP_OEM_GUIDANCE -> startActivity(
-                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
-            )
-            STEP_BATTERY -> try {
+            STEP_OEM_BATTERY -> try {
                 startActivity(
                     Intent(
                         Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
@@ -105,27 +111,9 @@ class OnboardingActivity : AppCompatActivity() {
         }
     }
 
-    /** True unless this is the OEM-guidance step and the device's manufacturer
-     *  isn't one of the known-aggressive brands — that step is skipped entirely
-     *  for everyone else. Every other step is always applicable. */
-    private fun isStepApplicable(s: Int): Boolean =
-        s != STEP_OEM_GUIDANCE || OemGuidance.detect() != null
-
-    private fun stepAfter(s: Int): Int {
-        var next = s + 1
-        while (next <= STEP_LAST && !isStepApplicable(next)) next++
-        return next
-    }
-
-    private fun stepBefore(s: Int): Int {
-        var prev = s - 1
-        while (prev >= STEP_INTRO && !isStepApplicable(prev)) prev--
-        return prev
-    }
-
     private fun onNext() {
         if (step < STEP_LAST) {
-            step = stepAfter(step)
+            step++
             render()
         } else {
             // Finishing requires every enforcement permission to be granted.
@@ -144,14 +132,12 @@ class OnboardingActivity : AppCompatActivity() {
         finish()
     }
 
-    /** Index of the first ungranted permission step, or -1 if all are granted.
-     *  STEP_OEM_GUIDANCE is deliberately excluded — it's informational only and
-     *  never gates anything. */
+    /** Index of the first ungranted permission step, or -1 if all are granted. */
     private fun firstMissingPermissionStep(): Int = when {
         !Permissions.hasUsageAccess(this) -> STEP_USAGE
         !Permissions.hasOverlay(this) -> STEP_OVERLAY
         !Permissions.isAccessibilityEnabled(this) -> STEP_ACCESSIBILITY
-        !Permissions.hasBatteryExemption(this) -> STEP_BATTERY
+        !Permissions.hasBatteryExemption(this) -> STEP_OEM_BATTERY
         else -> -1
     }
 
@@ -165,9 +151,7 @@ class OnboardingActivity : AppCompatActivity() {
         STEP_USAGE -> Permissions.hasUsageAccess(this)
         STEP_OVERLAY -> Permissions.hasOverlay(this)
         STEP_ACCESSIBILITY -> Permissions.isAccessibilityEnabled(this)
-        // Informational only — never blocks progress.
-        STEP_OEM_GUIDANCE -> true
-        STEP_BATTERY -> Permissions.hasBatteryExemption(this)
+        STEP_OEM_BATTERY -> Permissions.hasBatteryExemption(this)
         else -> true
     }
 
@@ -193,6 +177,19 @@ class OnboardingActivity : AppCompatActivity() {
         nextButton.text = getString(if (step == STEP_LAST) R.string.ob_finish else R.string.ob_next)
         // Compulsory: Next/Finish stays disabled until the step is actually satisfied.
         nextButton.isEnabled = stepSatisfied()
+
+        // "Step X of Y" — hidden on Intro (an atmospheric welcome screen, not a
+        // numbered task), visible everywhere else. DISPLAY_POSITION skips
+        // position 3, reserved for the combined name/phone screen that lives
+        // in SignInActivity, not this Activity's own step machine.
+        if (step == STEP_INTRO) {
+            progressSection.visibility = View.GONE
+        } else {
+            progressSection.visibility = View.VISIBLE
+            val position = DISPLAY_POSITION[step]
+            progressText.text = getString(R.string.ob_progress_format, position, OnboardingProgress.TOTAL)
+            progressBar.progress = (position * 100) / OnboardingProgress.TOTAL
+        }
 
         when (step) {
             STEP_INTRO -> {
@@ -236,18 +233,21 @@ class OnboardingActivity : AppCompatActivity() {
                 stepText3.setText(R.string.ob_a11y_step3)
                 showEnabled(Permissions.isAccessibilityEnabled(this))
             }
-            STEP_OEM_GUIDANCE -> {
+            STEP_OEM_BATTERY -> {
+                // Combined screen: brand-specific guidance (if this manufacturer
+                // is a known battery killer) shown together with the battery-
+                // exemption request, since both address the same underlying
+                // problem (background survival). Unlisted brands see only the
+                // generic battery explanation — same content as before, just no
+                // longer a separate screen.
                 val brand = OemGuidance.detect()
                 if (brand != null) {
                     titleText.setText(brand.titleRes)
-                    bodyText.setText(brand.bodyRes)
+                    bodyText.text = getString(brand.bodyRes) + "\n\n" + getString(R.string.ob_battery_body)
+                } else {
+                    titleText.setText(R.string.ob_battery_title)
+                    bodyText.setText(R.string.ob_battery_body)
                 }
-                actionButton.setText(R.string.ob_oem_action)
-                statusText.visibility = View.GONE
-            }
-            STEP_BATTERY -> {
-                titleText.setText(R.string.ob_battery_title)
-                bodyText.setText(R.string.ob_battery_body)
                 actionButton.setText(R.string.ob_battery_action)
                 showGranted(Permissions.hasBatteryExemption(this))
             }
@@ -278,8 +278,19 @@ class OnboardingActivity : AppCompatActivity() {
         private const val STEP_USAGE = 2
         private const val STEP_OVERLAY = 3
         private const val STEP_ACCESSIBILITY = 4
-        private const val STEP_OEM_GUIDANCE = 5
-        private const val STEP_BATTERY = 6
-        private const val STEP_LAST = STEP_BATTERY
+        private const val STEP_OEM_BATTERY = 5
+        private const val STEP_LAST = STEP_OEM_BATTERY
+
+        /** Maps this Activity's own step index to the shared "Step X of Y"
+         *  display position — skips display position 3, reserved for the
+         *  combined name/phone screen hosted in SignInActivity. */
+        private val DISPLAY_POSITION = intArrayOf(
+            OnboardingProgress.INTRO,          // STEP_INTRO
+            OnboardingProgress.SIGNIN,         // STEP_SIGNIN
+            OnboardingProgress.USAGE,          // STEP_USAGE
+            OnboardingProgress.OVERLAY,        // STEP_OVERLAY
+            OnboardingProgress.ACCESSIBILITY,  // STEP_ACCESSIBILITY
+            OnboardingProgress.OEM_BATTERY,    // STEP_OEM_BATTERY
+        )
     }
 }

@@ -56,7 +56,6 @@ class MainActivity : AppCompatActivity() {
             !entitlementDenies && !Permissions.allEnforcementGranted(this) ->
                 ProtectionGuardActivity::class.java
             AuthGate.required(this) -> com.fliptle.app.auth.SignInActivity::class.java
-            !store.uninstallInfoSeen -> UninstallInfoActivity::class.java
             else -> null
         }
         if (destination != null) {
@@ -86,6 +85,16 @@ class MainActivity : AppCompatActivity() {
         // familiar "check your email → confirm" flow is the fallback.
         if (entitlement.state != EntitlementStore.State.ENTITLED) {
             routeToInboxConfirm()
+            return
+        }
+
+        // Shown exactly once, right after onboarding AND the entitlement gate
+        // both clear — the moment the user is about to reach Home for the
+        // first time — rather than blocking the path to first use earlier in
+        // onboarding. Still unskippable when it appears.
+        if (!store.uninstallInfoSeen) {
+            startActivity(Intent(this, UninstallInfoActivity::class.java))
+            finish()
             return
         }
 
