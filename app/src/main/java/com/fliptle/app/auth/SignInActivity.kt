@@ -202,14 +202,27 @@ class SignInActivity : AppCompatActivity() {
         // Cloud Function). Separate from the website's `waitlist` collection —
         // app users already have the app and are choosing a plan, not waiting
         // for early access.
-        // Prefer the user's own name from the app's name step (once they've
-        // provided it, on any sign-in after the first) over Google's profile
-        // name — it's user-chosen and works for email/password sign-in too,
-        // where Google's displayName is never populated. Falls back to
-        // Google's name for a brand-new sign-in, since the name step's own
-        // save happens later than this call and can't have landed yet.
-        user.email?.let {
-            AppSignupHelper.maybeRecordSignup(this, it, AuthStore(this).signedInName ?: user.displayName)
+        //
+        // The name used here MUST be the confirmed installs/{uid}.displayName
+        // from Firestore — not AuthStore(this).signedInName. That local cache
+        // is populated by showNameStep()'s call to InstallTracker.fetchDisplayName
+        // just above, which is asynchronous: its callback has not run yet at
+        // this point in onSignedIn(), so reading the cache here synchronously
+        // was silently seeing last session's value (null, for a returning user
+        // on a fresh local install) and falling through to user.displayName —
+        // Google's own account profile name, NOT what was typed into Rescue's
+        // own name step. sendAppWelcomeEmail only fires once, on the very first
+        // appSignups/{email} doc creation, so getting this right on the first
+        // try is the only chance there is — hence explicitly awaiting the read
+        // rather than trusting whatever's cached locally at this instant.
+        //
+        // Falls back to nothing (omits the name entirely, not to Google's
+        // profile name) if installs/{uid}.displayName truly doesn't exist yet —
+        // the offer page already greets by email whenever no name is present.
+        user.email?.let { email ->
+            InstallTracker.fetchDisplayName(this, user.uid) { savedName ->
+                AppSignupHelper.maybeRecordSignup(this, email, savedName)
+            }
         }
         InstallTracker.recordSignIn(this, user.uid, user.email, method, AuthStore(this).installId()) { msg ->
             runOnUiThread {

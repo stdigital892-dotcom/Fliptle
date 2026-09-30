@@ -33,10 +33,10 @@ object AppSignupHelper {
             "source" to "app",
             "signedAt" to FieldValue.serverTimestamp()
         )
-        // Only set when present (e.g. Google Sign-In populates this; plain
-        // email/password sign-in usually doesn't). Deliberately NOT included
-        // in the map when blank, so a merge from a later sign-in method never
-        // erases a name captured on an earlier one.
+        // Only set when present — the caller passes the confirmed
+        // installs/{uid}.displayName (or null if none is saved yet).
+        // Deliberately NOT included in the map when blank, so a merge from a
+        // later sign-in never erases a name captured on an earlier one.
         val trimmedName = displayName?.trim()
         if (!trimmedName.isNullOrEmpty()) {
             data["displayName"] = trimmedName
