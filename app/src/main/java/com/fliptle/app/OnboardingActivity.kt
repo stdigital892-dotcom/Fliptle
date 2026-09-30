@@ -12,8 +12,11 @@ import com.fliptle.app.auth.SignInActivity
 
 /**
  * First-launch flow: intro -> optional sign-in -> permissions requested one at a
- * time in order (usage access, overlay, Accessibility), each with a plain-language
- * reason. The Accessibility step carries the full disclosure.
+ * time in order (usage access, overlay, Accessibility, battery-optimization
+ * exemption), each with a plain-language reason. The Accessibility step carries
+ * the full disclosure. An OEM-specific guidance step (Xiaomi/Oppo/Vivo/OnePlus/
+ * Samsung battery killers) sits between Accessibility and the battery step,
+ * informational only — skipped entirely on any other manufacturer.
  */
 class OnboardingActivity : AppCompatActivity() {
 
@@ -50,7 +53,10 @@ class OnboardingActivity : AppCompatActivity() {
 
         tutorialButton.setOnClickListener { openTutorial() }
         actionButton.setOnClickListener { onAction() }
-        backButton.setOnClickListener { if (step > 0) { step--; render() } }
+        backButton.setOnClickListener {
+            val prev = stepBefore(step)
+            if (prev >= STEP_INTRO) { step = prev; render() }
+        }
         nextButton.setOnClickListener { onNext() }
 
         // If onboarding was already completed but a permission is now missing,
@@ -79,12 +85,47 @@ class OnboardingActivity : AppCompatActivity() {
                 Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
             )
             STEP_ACCESSIBILITY -> startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            STEP_OEM_GUIDANCE -> startActivity(
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
+            )
+            STEP_BATTERY -> try {
+                startActivity(
+                    Intent(
+                        Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                        Uri.parse("package:$packageName")
+                    )
+                )
+            } catch (_: Exception) {
+                // Some OEM skins don't implement this standard dialog; fall back
+                // to the app's own settings screen.
+                startActivity(
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
+                )
+            }
         }
+    }
+
+    /** True unless this is the OEM-guidance step and the device's manufacturer
+     *  isn't one of the known-aggressive brands — that step is skipped entirely
+     *  for everyone else. Every other step is always applicable. */
+    private fun isStepApplicable(s: Int): Boolean =
+        s != STEP_OEM_GUIDANCE || OemGuidance.detect() != null
+
+    private fun stepAfter(s: Int): Int {
+        var next = s + 1
+        while (next <= STEP_LAST && !isStepApplicable(next)) next++
+        return next
+    }
+
+    private fun stepBefore(s: Int): Int {
+        var prev = s - 1
+        while (prev >= STEP_INTRO && !isStepApplicable(prev)) prev--
+        return prev
     }
 
     private fun onNext() {
         if (step < STEP_LAST) {
-            step++
+            step = stepAfter(step)
             render()
         } else {
             // Finishing requires every enforcement permission to be granted.
@@ -103,11 +144,14 @@ class OnboardingActivity : AppCompatActivity() {
         finish()
     }
 
-    /** Index of the first ungranted permission step, or -1 if all are granted. */
+    /** Index of the first ungranted permission step, or -1 if all are granted.
+     *  STEP_OEM_GUIDANCE is deliberately excluded — it's informational only and
+     *  never gates anything. */
     private fun firstMissingPermissionStep(): Int = when {
         !Permissions.hasUsageAccess(this) -> STEP_USAGE
         !Permissions.hasOverlay(this) -> STEP_OVERLAY
         !Permissions.isAccessibilityEnabled(this) -> STEP_ACCESSIBILITY
+        !Permissions.hasBatteryExemption(this) -> STEP_BATTERY
         else -> -1
     }
 
@@ -121,6 +165,9 @@ class OnboardingActivity : AppCompatActivity() {
         STEP_USAGE -> Permissions.hasUsageAccess(this)
         STEP_OVERLAY -> Permissions.hasOverlay(this)
         STEP_ACCESSIBILITY -> Permissions.isAccessibilityEnabled(this)
+        // Informational only — never blocks progress.
+        STEP_OEM_GUIDANCE -> true
+        STEP_BATTERY -> Permissions.hasBatteryExemption(this)
         else -> true
     }
 
@@ -189,6 +236,21 @@ class OnboardingActivity : AppCompatActivity() {
                 stepText3.setText(R.string.ob_a11y_step3)
                 showEnabled(Permissions.isAccessibilityEnabled(this))
             }
+            STEP_OEM_GUIDANCE -> {
+                val brand = OemGuidance.detect()
+                if (brand != null) {
+                    titleText.setText(brand.titleRes)
+                    bodyText.setText(brand.bodyRes)
+                }
+                actionButton.setText(R.string.ob_oem_action)
+                statusText.visibility = View.GONE
+            }
+            STEP_BATTERY -> {
+                titleText.setText(R.string.ob_battery_title)
+                bodyText.setText(R.string.ob_battery_body)
+                actionButton.setText(R.string.ob_battery_action)
+                showGranted(Permissions.hasBatteryExemption(this))
+            }
         }
     }
 
@@ -216,6 +278,8 @@ class OnboardingActivity : AppCompatActivity() {
         private const val STEP_USAGE = 2
         private const val STEP_OVERLAY = 3
         private const val STEP_ACCESSIBILITY = 4
-        private const val STEP_LAST = STEP_ACCESSIBILITY
+        private const val STEP_OEM_GUIDANCE = 5
+        private const val STEP_BATTERY = 6
+        private const val STEP_LAST = STEP_BATTERY
     }
 }

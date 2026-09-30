@@ -49,6 +49,14 @@
             android:layout_marginTop="8dp"
             android:text="@string/guard_enable_overlay" />
 
+        <Button
+            android:id="@+id/enableBatteryButton"
+            style="@style/Widget.Fliptle.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/guard_enable_battery" />
+
         <TextView
             style="@style/Text.Caption"
             android:layout_width="match_parent"

@@ -2,6 +2,7 @@
 
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
@@ -803,5 +804,86 @@ exports.razorpayWebhook = onRequest(
       logger.error("Razorpay webhook: Firestore write failed", { email, message: e && e.message });
       res.status(500).send("internal error");
     }
+  }
+);
+
+// ============================================================================
+// flagStaleProtection — daily server-side backstop for "protection has been
+// down for an unusually long time", independent of any reinstall or sign-in
+// event. Two independent, single-field queries (each auto-indexed by
+// Firestore already — no composite index needed):
+//
+//   1. lastHeartbeatMs < now - STALE_MS -> the app has gone dark entirely
+//      (OEM killed everything, including the periodic heartbeat itself, or
+//      a genuine uninstall nobody ever came back from).
+//   2. protectionActive == false, filtered in-memory to only those with a
+//      RECENT heartbeat -> the app is still alive and checking in, but the
+//      thing it's supposed to protect with (Accessibility/BlockingService)
+//      is off. This is the more precise signal for an OEM battery killer
+//      that leaves the process able to wake occasionally.
+//
+// Idempotent: only writes protectionDownFlaggedAt the first time an account
+// is found in either state; Heartbeat.beat() (Android) clears it client-side
+// the moment protection is confirmed back on. Never re-writes a flag that's
+// already set, so an account stuck down for weeks costs one write, not one
+// per day.
+// ============================================================================
+const STALE_MS = 48 * 60 * 60 * 1000; // 48h — longer than Heartbeat's 24h reinstall grace
+const RECENT_MS = 24 * 60 * 60 * 1000; // freshness window for the protectionActive=false check
+
+exports.flagStaleProtection = onSchedule(
+  { schedule: "every 24 hours", region: RAZORPAY_REGION },
+  async () => {
+    const db = admin.firestore();
+    const now = Date.now();
+
+    // ---- 1. Gone dark entirely ----
+    const darkSnap = await db
+      .collection("installs")
+      .where("lastHeartbeatMs", "<", now - STALE_MS)
+      .get();
+
+    let darkFlagged = 0;
+    for (const doc of darkSnap.docs) {
+      const data = doc.data() || {};
+      if (data.protectionDownFlaggedAt) continue; // already flagged, skip
+      await doc.ref.set(
+        {
+          protectionDownFlaggedAt: admin.firestore.FieldValue.serverTimestamp(),
+          protectionDownReason: "no_heartbeat",
+        },
+        { merge: true }
+      );
+      darkFlagged++;
+    }
+
+    // ---- 2. Alive, but not protecting ----
+    const offSnap = await db
+      .collection("installs")
+      .where("protectionActive", "==", false)
+      .get();
+
+    let offFlagged = 0;
+    for (const doc of offSnap.docs) {
+      const data = doc.data() || {};
+      if (data.protectionDownFlaggedAt) continue; // already flagged, skip
+      const lastBeat = typeof data.lastHeartbeatMs === "number" ? data.lastHeartbeatMs : 0;
+      if (now - lastBeat > RECENT_MS) continue; // stale data — query 1 already covers it
+      await doc.ref.set(
+        {
+          protectionDownFlaggedAt: admin.firestore.FieldValue.serverTimestamp(),
+          protectionDownReason: "protection_off",
+        },
+        { merge: true }
+      );
+      offFlagged++;
+    }
+
+    logger.info("flagStaleProtection run complete", {
+      darkChecked: darkSnap.size,
+      darkFlagged,
+      offChecked: offSnap.size,
+      offFlagged,
+    });
   }
 );

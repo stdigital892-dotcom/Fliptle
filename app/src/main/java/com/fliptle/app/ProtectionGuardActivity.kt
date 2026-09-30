@@ -10,9 +10,9 @@ import androidx.appcompat.app.AppCompatActivity
 
 /**
  * Full-screen "protection is OFF" screen shown whenever an enforcement permission
- * (Accessibility, usage access, overlay) is missing after setup. It offers
- * one-tap buttons to re-enable each missing piece and blocks the rest of the app
- * until protection is restored.
+ * (Accessibility, usage access, overlay, battery-optimization exemption) is
+ * missing after setup. It offers one-tap buttons to re-enable each missing
+ * piece and blocks the rest of the app until protection is restored.
  *
  * HARD RULE: this screen is always exitable. Back and Home are NOT overridden, so
  * the phone stays fully usable (calls, emergencies). It nags relentlessly by being
@@ -35,6 +35,22 @@ class ProtectionGuardActivity : AppCompatActivity() {
                 Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
             )
         }
+        findViewById<Button>(R.id.enableBatteryButton).setOnClickListener {
+            try {
+                startActivity(
+                    Intent(
+                        Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                        Uri.parse("package:$packageName")
+                    )
+                )
+            } catch (_: Exception) {
+                // Some OEM skins don't implement this standard dialog; fall back
+                // to the app's own battery settings screen.
+                startActivity(
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
+                )
+            }
+        }
     }
 
     override fun onResume() {
@@ -52,6 +68,7 @@ class ProtectionGuardActivity : AppCompatActivity() {
         showIfMissing(R.id.enableAccessibilityButton, Permissions.isAccessibilityEnabled(this))
         showIfMissing(R.id.enableUsageButton, Permissions.hasUsageAccess(this))
         showIfMissing(R.id.enableOverlayButton, Permissions.hasOverlay(this))
+        showIfMissing(R.id.enableBatteryButton, Permissions.hasBatteryExemption(this))
     }
 
     private fun showIfMissing(buttonId: Int, granted: Boolean) {

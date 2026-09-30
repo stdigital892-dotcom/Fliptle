@@ -3,6 +3,7 @@ package com.fliptle.app
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.os.PowerManager
 import android.provider.Settings
 import android.text.TextUtils
 import com.fliptle.app.accessibility.UrlBlockAccessibilityService
@@ -13,11 +14,20 @@ import com.google.firebase.auth.FirebaseAuth
 /** Central status checks for the permissions the app's features rely on. */
 object Permissions {
 
-    /** All enforcement permissions are compulsory for the app to function. */
+    /**
+     * All enforcement permissions are compulsory for the app to function.
+     * Battery-optimization exemption is included deliberately, not just
+     * requested once during onboarding: some OEMs (MIUI, ColorOS,
+     * FuntouchOS) re-apply battery restriction after a system update or
+     * period of inactivity even after the user granted the exemption. Making
+     * it part of this gate means [ProtectionGuardActivity] re-nags the
+     * instant that happens, the same way it already does for Accessibility.
+     */
     fun allEnforcementGranted(context: Context): Boolean =
         hasUsageAccess(context) &&
             hasOverlay(context) &&
-            isAccessibilityEnabled(context)
+            isAccessibilityEnabled(context) &&
+            hasBatteryExemption(context)
 
     /**
      * If any enforcement permission is missing, send the user to the full-screen
@@ -52,6 +62,11 @@ object Permissions {
     fun hasUsageAccess(context: Context): Boolean = ForegroundApp.hasUsageAccess(context)
 
     fun hasOverlay(context: Context): Boolean = Settings.canDrawOverlays(context)
+
+    fun hasBatteryExemption(context: Context): Boolean {
+        val pm = context.getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return false
+        return pm.isIgnoringBatteryOptimizations(context.packageName)
+    }
 
     fun isAccessibilityEnabled(context: Context): Boolean {
         val expected = "${context.packageName}/${UrlBlockAccessibilityService::class.java.name}"

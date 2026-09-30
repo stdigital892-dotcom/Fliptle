@@ -1,6 +1,7 @@
 package com.fliptle.app.auth
 
 import android.content.Context
+import com.fliptle.app.Permissions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -8,14 +9,23 @@ import com.google.firebase.firestore.SetOptions
 
 /**
  * Periodic check-in ("heartbeat"). While the app is installed and a user is
- * signed in, it writes a fresh timestamp to installs/{uid}. If the app is
- * uninstalled directly (no approved uninstall flow), it stops checking in.
+ * signed in, it writes a fresh timestamp — and whether protection is actually
+ * enforcing right now — to installs/{uid}. If the app is uninstalled directly
+ * (no approved uninstall flow), it stops checking in.
  *
  * Android can't have an uninstalled app report its own removal, and we don't use
  * paid Cloud Functions, so a DIRECT uninstall is detected at the next sign-in
  * after a reinstall: if the previous heartbeat is older than the grace window and
  * the account was never uninstall-approved, a "direct_uninstall" event is logged
  * (see InstallTracker). This mirrors the reinstall-detection design.
+ *
+ * The `protectionActive` field is a SEPARATE, more precise signal than raw
+ * liveness: an OEM battery killer can leave the app process able to wake
+ * briefly (e.g. for an unrelated WorkManager tick) while the Accessibility
+ * service or BlockingService it killed stays dead. A fresh heartbeat with
+ * protectionActive=false means "the app is alive but not protecting" — a
+ * different, more actionable server-side signal than "gone dark entirely".
+ * See the scheduled Cloud Function `flagStaleProtection` in functions/index.js.
  */
 object Heartbeat {
 
@@ -45,14 +55,22 @@ object Heartbeat {
     fun beat(context: Context) {
         if (!FirebaseGate.isAvailable(context)) return
         val user = FirebaseAuth.getInstance().currentUser ?: return
+        val protectionActive = Permissions.allEnforcementGranted(context)
+        val data = mutableMapOf<String, Any?>(
+            "lastHeartbeatAt" to FieldValue.serverTimestamp(),
+            "lastHeartbeatMs" to System.currentTimeMillis(),
+            "email" to user.email,
+            "protectionActive" to protectionActive
+        )
+        // Only clear a previously-set staleness flag once protection is
+        // confirmed back on — if protection is still off, leave whatever flag
+        // the scheduled function set alone; it'll re-evaluate on its own
+        // schedule rather than being cleared just because the process woke up.
+        if (protectionActive) {
+            data["protectionDownFlaggedAt"] = FieldValue.delete()
+            data["protectionDownReason"] = FieldValue.delete()
+        }
         FirebaseFirestore.getInstance().collection(COLLECTION).document(user.uid)
-            .set(
-                mapOf(
-                    "lastHeartbeatAt" to FieldValue.serverTimestamp(),
-                    "lastHeartbeatMs" to System.currentTimeMillis(),
-                    "email" to user.email
-                ),
-                SetOptions.merge()
-            )
+            .set(data, SetOptions.merge())
     }
 }

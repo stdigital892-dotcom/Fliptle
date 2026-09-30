@@ -218,6 +218,7 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="guard_enable_accessibility">Enable Accessibility (URL blocking)</string>
     <string name="guard_enable_usage">Grant usage access</string>
     <string name="guard_enable_overlay">Allow display over other apps</string>
+    <string name="guard_enable_battery">Allow running in the background</string>
     <string name="guard_exit_hint">You can leave this screen with Back or Home at any time — your phone stays fully usable for calls and emergencies. This app will keep reminding you until protection is back on.</string>
     <string name="guard_notif_title">Protection is OFF</string>
     <string name="guard_notif_text">Tap to re-enable protection.</string>
@@ -275,6 +276,24 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="ob_a11y_step1">Tap Installed services and find %1$s</string>
     <string name="ob_a11y_step2">Tap the switch to turn ON</string>
     <string name="ob_a11y_step3">Tap Allow to confirm</string>
+
+    <!-- OEM battery-killer guidance (shown only on known-aggressive brands) -->
+    <string name="ob_oem_action">Open app settings</string>
+    <string name="ob_oem_xiaomi_title">One more thing for Xiaomi phones</string>
+    <string name="ob_oem_xiaomi_body">MIUI can silently stop this app to save battery.\n\n1. Battery saver → set to \'No restrictions\'\n2. Also open the Security app → Permissions → Autostart → turn it ON</string>
+    <string name="ob_oem_oppo_title">One more thing for Oppo phones</string>
+    <string name="ob_oem_oppo_body">ColorOS can silently stop this app to save battery.\n\n1. Battery → App Battery Management → set to \'Allow background running\'\n2. Also enable Autostart for this app in App Management</string>
+    <string name="ob_oem_vivo_title">One more thing for Vivo phones</string>
+    <string name="ob_oem_vivo_body">FuntouchOS/OriginOS can silently stop this app to save battery.\n\n1. Battery → Background power consumption management → allow this app\n2. Also enable Autostart in i Manager → App manager</string>
+    <string name="ob_oem_oneplus_title">One more thing for OnePlus phones</string>
+    <string name="ob_oem_oneplus_body">OxygenOS can silently stop this app to save battery.\n\n1. Battery → Battery optimization → find this app → Don\'t optimize\n2. If shown, turn OFF \'Advanced optimization\' for this app</string>
+    <string name="ob_oem_samsung_title">One more thing for Samsung phones</string>
+    <string name="ob_oem_samsung_body">One UI can put unused apps to sleep.\n\n1. Settings → Apps → this app → Battery → set to \'Unrestricted\'\n2. Make sure it isn\'t listed under Device care → Battery → Sleeping apps</string>
+
+    <!-- Battery-optimization exemption step -->
+    <string name="ob_battery_title">4. Allow background use</string>
+    <string name="ob_battery_body">Your phone can stop this app in the background to save battery, which would silently turn protection off. Exempting it keeps protection running.</string>
+    <string name="ob_battery_action">Allow background use</string>
     <!-- Once-per-account uninstall-process explainer (post sign-in, pre-Home). -->
     <string name="uninstall_info_title">⚠️  How to uninstall this app</string>
     <string name="uninstall_info_lede">If you ever want to leave, there\'s a proper way.\nFollow it — don\'t skip it.</string>

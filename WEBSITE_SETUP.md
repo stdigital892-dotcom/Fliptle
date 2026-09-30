@@ -433,3 +433,67 @@ through the launcher, which lands on the sign-in screen.
 
 No new secrets required — this function only uses the Admin SDK, which
 already has full access via the deployed service account.
+
+---
+
+## 8. OEM battery-killer hardening + server-side stale-protection flag
+
+Three of the four layers are entirely client-side (Android):
+
+- **Onboarding guidance:** `OemGuidance.kt` detects `Build.MANUFACTURER`
+  (Xiaomi, Oppo, Vivo, OnePlus, Samsung) and, only for those brands,
+  `OnboardingActivity` shows one extra informational step between
+  Accessibility and the battery-exemption step, with brand-specific text
+  (all copy lives in `strings.xml`, `ob_oem_*`). Skipped entirely on any
+  other manufacturer — never blocks onboarding.
+- **Battery-optimization exemption:** a new compulsory step
+  (`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`), added to
+  `Permissions.allEnforcementGranted()` alongside usage access, overlay, and
+  Accessibility — so `ProtectionGuardActivity` re-nags if an OEM re-applies
+  battery restriction later, the same way it already does for Accessibility.
+- **Kill detection:** unchanged — `BlockingService.checkProtection()` already
+  polls live OS state every second, so it was already cause-agnostic (manual
+  disable vs. OEM kill look identical to a live poll). The one thing no
+  on-device poll can catch is the poll's own host process being killed
+  outright — that's what the next point is for.
+
+**`flagStaleProtection`** (new Cloud Function, `onSchedule` v2, region
+`asia-south2`) is the server-side backstop for exactly that case. Runs once
+every 24 hours and does two independent, single-field Firestore queries
+(neither needs a composite index):
+
+1. `installs` where `lastHeartbeatMs` is older than 48h → the app has gone
+   dark entirely (heartbeat itself stopped — OEM kill or a real uninstall
+   nobody came back from).
+2. `installs` where `protectionActive == false`, filtered in code to only
+   those with a heartbeat inside the last 24h → the app is still alive and
+   checking in, but Accessibility/BlockingService is off. This is the more
+   precise signal for an OEM killer that leaves the process able to wake
+   occasionally for something unrelated.
+
+Either case sets `protectionDownFlaggedAt` + `protectionDownReason`
+(`"no_heartbeat"` or `"protection_off"`) on `installs/{uid}`, but **only the
+first time** — already-flagged accounts are skipped, so a account stuck down
+for weeks costs one write total, not one per day. `Heartbeat.beat()`
+(Android) clears both fields the moment `protectionActive` is confirmed
+`true` again on a fresh beat.
+
+**Cost at low user counts — $0, comfortably within the free tier:**
+- This project is already on the Blaze (pay-as-you-go) plan — it has to be,
+  since `createOrder`/`verifyPayment`/`razorpayWebhook` already make outbound
+  HTTPS calls, which Spark doesn't allow. Scheduled functions also require
+  Blaze, so this introduces no new plan requirement.
+- Blaze keeps every one of Spark's free quotas; you only pay past them.
+  `flagStaleProtection` is the **only** scheduled function in this project —
+  Cloud Scheduler's first 3 jobs per GCP project are free, so this costs
+  $0/month regardless of usage.
+- ~30 invocations/month (once daily) against a 2,000,000/month free Cloud
+  Functions invocation quota.
+- Firestore reads scale with how many accounts are **actually** stale or
+  unprotected, not total user count — both queries are targeted range/
+  equality filters, not a full collection scan. At low-to-moderate user
+  counts (up to several thousand active installs) this stays trivially
+  inside the 50,000 reads/day free tier even if a meaningful fraction were
+  simultaneously flagged, which in practice they won't be.
+- Writes are bounded the same way, and are one-time per stale episode thanks
+  to the already-flagged check.
