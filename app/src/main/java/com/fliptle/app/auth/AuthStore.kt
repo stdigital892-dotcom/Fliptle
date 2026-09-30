@@ -27,6 +27,22 @@ class AuthStore(context: Context) {
         get() = prefs.getString(KEY_PHONE, null)
         set(value) = prefs.edit().putString(KEY_PHONE, value).apply()
 
+    /** Optional display name, shown in place of the email wherever the app
+     *  greets the user (Home's wordmark slot, the inbox-confirm headline). */
+    var signedInName: String?
+        get() = prefs.getString(KEY_NAME, null)
+        set(value) = prefs.edit().putString(KEY_NAME, value).apply()
+
+    /**
+     * Whether the name step has been handled for the current signed-in user —
+     * either a name was entered or it was skipped. Mirrors [parentPhoneProvided]
+     * exactly, so a returning/reinstalled user who already made a choice isn't
+     * re-prompted.
+     */
+    var nameProvided: Boolean
+        get() = prefs.getBoolean(KEY_NAME_PROVIDED, false)
+        set(value) = prefs.edit().putBoolean(KEY_NAME_PROVIDED, value).apply()
+
     /**
      * Whether the parent phone step has been handled for the current signed-in
      * user — either a number was entered or it was skipped. Set optimistically on
@@ -70,6 +86,8 @@ class AuthStore(context: Context) {
         prefs.edit()
             .remove(KEY_PHONE)
             .remove(KEY_PHONE_PROVIDED)
+            .remove(KEY_NAME)
+            .remove(KEY_NAME_PROVIDED)
             .remove(KEY_UNINSTALL_INFO_SEEN)
             .remove(KEY_INBOX_CONFIRM_SHOWN)
             .apply()
@@ -79,6 +97,8 @@ class AuthStore(context: Context) {
         private const val KEY_INSTALL_ID = "install_id"
         private const val KEY_PHONE = "phone"
         private const val KEY_PHONE_PROVIDED = "phone_provided"
+        private const val KEY_NAME = "display_name"
+        private const val KEY_NAME_PROVIDED = "name_provided"
         private const val KEY_UNINSTALL_INFO_SEEN = "uninstall_info_seen"
         private const val KEY_INBOX_CONFIRM_SHOWN = "inbox_confirm_shown"
     }

@@ -23,14 +23,17 @@ import com.google.firebase.auth.GoogleAuthProvider
 /**
  * Free authentication (no billing): Google one-tap and email/password with the
  * built-in email-verification link. The user record and reinstall tracking are
- * keyed off the Firebase Auth UID. An optional parent phone number is collected
- * after sign-in as contact-only info (never used for login/verification).
+ * keyed off the Firebase Auth UID. Two optional steps follow a fresh sign-in,
+ * in order: a display name (cosmetic — shown in place of the email wherever
+ * the app greets the user), then a parent phone number (contact-only info,
+ * never used for login/verification). Both are freely skippable.
  *
  * Three faces, chosen by auth state:
  *  • ALREADY signed in (opened from Home → Account): the account view — email +
  *    "Sign out". Never shows a sign-in prompt to an authenticated user.
  *  • NOT signed in (the mandatory gate): the sign-in controls.
- *  • JUST signed in via an action here: the optional parent-phone step.
+ *  • JUST signed in via an action here: the optional name step, then the
+ *    optional parent-phone step.
  *
  * Sign-in is mandatory app-wide (see AuthGate); this screen is also the account
  * screen once authenticated.
@@ -47,6 +50,8 @@ class SignInActivity : AppCompatActivity() {
     private lateinit var accountSection: LinearLayout
     private lateinit var accountEmailText: TextView
     private lateinit var accountDetailText: TextView
+    private lateinit var nameSection: LinearLayout
+    private lateinit var nameInput: EditText
     private lateinit var phoneSection: LinearLayout
     private lateinit var parentPhoneInput: EditText
 
@@ -83,6 +88,8 @@ class SignInActivity : AppCompatActivity() {
         accountSection = findViewById(R.id.accountSection)
         accountEmailText = findViewById(R.id.accountEmailText)
         accountDetailText = findViewById(R.id.accountDetailText)
+        nameSection = findViewById(R.id.nameSection)
+        nameInput = findViewById(R.id.nameInput)
         phoneSection = findViewById(R.id.phoneSection)
         parentPhoneInput = findViewById(R.id.parentPhoneInput)
 
@@ -106,6 +113,8 @@ class SignInActivity : AppCompatActivity() {
         findViewById<Button>(R.id.googleSignInButton).setOnClickListener { startGoogleSignIn() }
         findViewById<Button>(R.id.emailSignUpButton).setOnClickListener { signUpEmail() }
         findViewById<Button>(R.id.emailSignInButton).setOnClickListener { signInEmail() }
+        findViewById<Button>(R.id.saveNameButton).setOnClickListener { saveName() }
+        findViewById<Button>(R.id.skipNameButton).setOnClickListener { skipName() }
         findViewById<Button>(R.id.savePhoneButton).setOnClickListener { saveParentPhone() }
         findViewById<Button>(R.id.skipPhoneButton).setOnClickListener { skipPhone() }
         findViewById<Button>(R.id.signOutButton).setOnClickListener { signOut() }
@@ -178,7 +187,7 @@ class SignInActivity : AppCompatActivity() {
 
     private fun onSignedIn(method: String) {
         val user = auth?.currentUser ?: return
-        showPhoneStep()
+        showNameStep()
         // Never let a stale entitlement cache from whichever account was
         // previously signed in on this device leak into a fresh sign-in —
         // EntitlementStore is a single unscoped local cache, not keyed by
@@ -193,7 +202,15 @@ class SignInActivity : AppCompatActivity() {
         // Cloud Function). Separate from the website's `waitlist` collection —
         // app users already have the app and are choosing a plan, not waiting
         // for early access.
-        user.email?.let { AppSignupHelper.maybeRecordSignup(this, it, user.displayName) }
+        // Prefer the user's own name from the app's name step (once they've
+        // provided it, on any sign-in after the first) over Google's profile
+        // name — it's user-chosen and works for email/password sign-in too,
+        // where Google's displayName is never populated. Falls back to
+        // Google's name for a brand-new sign-in, since the name step's own
+        // save happens later than this call and can't have landed yet.
+        user.email?.let {
+            AppSignupHelper.maybeRecordSignup(this, it, AuthStore(this).signedInName ?: user.displayName)
+        }
         InstallTracker.recordSignIn(this, user.uid, user.email, method, AuthStore(this).installId()) { msg ->
             runOnUiThread {
                 val verified = if (user.isEmailVerified) getString(R.string.auth_verified)
@@ -207,6 +224,7 @@ class SignInActivity : AppCompatActivity() {
     private fun showAccountState() {
         titleText.setText(R.string.auth_account_title)
         signInControls.visibility = View.GONE
+        nameSection.visibility = View.GONE
         phoneSection.visibility = View.GONE
         statusText.visibility = View.GONE
         accountSection.visibility = View.VISIBLE
@@ -224,13 +242,73 @@ class SignInActivity : AppCompatActivity() {
     private fun signOut() = com.fliptle.app.SignOut.confirm(this)
 
     /**
+     * After a sign-in ACTION here, reveal the optional display-name step — the
+     * first thing shown after sign-in, before the phone step. Mirrors
+     * [showPhoneStep] exactly: prefill from the local cache, then best-effort
+     * adopt whatever's already stored in Firestore for a returning/reinstalled
+     * user so they aren't re-prompted.
+     */
+    private fun showNameStep() {
+        signInControls.visibility = View.GONE
+        nameSection.visibility = View.VISIBLE
+
+        val store = AuthStore(this)
+        if (nameInput.text.isNullOrEmpty()) {
+            store.signedInName?.let { nameInput.setText(it) }
+        }
+        val user = auth?.currentUser
+        if (user != null && !store.nameProvided) {
+            InstallTracker.fetchDisplayName(this, user.uid) { existing ->
+                runOnUiThread {
+                    if (!existing.isNullOrBlank()) {
+                        store.signedInName = existing
+                        store.nameProvided = true
+                        if (nameInput.text.isNullOrEmpty()) nameInput.setText(existing)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun saveName() {
+        val user = auth?.currentUser
+        val name = nameInput.text.toString().trim()
+        if (name.isEmpty()) {
+            // Nothing entered — treat exactly like Skip rather than erroring.
+            skipName()
+            return
+        }
+        if (name.length > 40) {
+            Toast.makeText(this, R.string.auth_name_too_long, Toast.LENGTH_SHORT).show()
+            return
+        }
+        // Save locally first (optimistic) so an offline user is never trapped,
+        // then sync to Firestore under the same UID key.
+        val store = AuthStore(this)
+        store.signedInName = name
+        store.nameProvided = true
+        if (user != null) {
+            InstallTracker.saveDisplayName(this, user.uid, name) { msg ->
+                runOnUiThread { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() }
+            }
+        }
+        showPhoneStep()
+    }
+
+    /** Skip the name step — purely cosmetic, so there is nothing to gate on. */
+    private fun skipName() {
+        AuthStore(this).nameProvided = true
+        showPhoneStep()
+    }
+
+    /**
      * After a sign-in ACTION here, reveal the parent-phone section. The sign-in
      * controls are hidden because sign-in is done. The phone number itself is
      * OPTIONAL — "Skip for now" proceeds without one (see PhoneGate, whose
      * enforcement switch is currently off).
      */
     private fun showPhoneStep() {
-        signInControls.visibility = View.GONE
+        nameSection.visibility = View.GONE
         phoneSection.visibility = View.VISIBLE
 
         val store = AuthStore(this)
@@ -327,7 +405,7 @@ class SignInActivity : AppCompatActivity() {
     private fun disableAll() {
         for (id in intArrayOf(
             R.id.googleSignInButton, R.id.emailSignUpButton,
-            R.id.emailSignInButton, R.id.savePhoneButton
+            R.id.emailSignInButton, R.id.saveNameButton, R.id.savePhoneButton
         )) findViewById<Button>(id).isEnabled = false
     }
 

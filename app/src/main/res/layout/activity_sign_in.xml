@@ -148,6 +148,58 @@
                 android:lineSpacingMultiplier="1.4" />
         </LinearLayout>
 
+        <!-- Optional display-name step (skippable), shown first after sign-in -->
+        <LinearLayout
+            android:id="@+id/nameSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                style="@style/Text.CardTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/auth_name_label" />
+
+            <TextView
+                style="@style/Text.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:lineSpacingMultiplier="1.4"
+                android:text="@string/auth_name_hint" />
+
+            <EditText
+                android:id="@+id/nameInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:autofillHints="name"
+                android:hint="@string/auth_name_field"
+                android:inputType="textPersonName|textCapWords"
+                android:maxLength="40"
+                android:textColor="@color/ink" />
+
+            <Button
+                android:id="@+id/saveNameButton"
+                style="@style/Widget.Fliptle.Button.Primary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/auth_save_name" />
+
+            <Button
+                android:id="@+id/skipNameButton"
+                style="@style/Widget.Fliptle.Button.Text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="4dp"
+                android:text="@string/auth_skip_name" />
+        </LinearLayout>
+
         <!-- Parent phone step (optional / skippable) -->
         <LinearLayout
             android:id="@+id/phoneSection"

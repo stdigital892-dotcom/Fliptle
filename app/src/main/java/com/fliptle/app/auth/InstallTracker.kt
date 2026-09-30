@@ -168,6 +168,33 @@ object InstallTracker {
             .addOnFailureListener { onResult(null) }
     }
 
+    /** Save the optional display name, shown in place of the email wherever the
+     *  app greets the user. Mirrors [saveParentPhone] exactly. */
+    fun saveDisplayName(context: Context, uid: String, name: String, onResult: (String) -> Unit) {
+        if (!FirebaseGate.isAvailable(context)) {
+            onResult("Firebase not configured — name saved on device only.")
+            return
+        }
+        FirebaseFirestore.getInstance().collection(COLLECTION).document(uid)
+            .set(mapOf("displayName" to name), com.google.firebase.firestore.SetOptions.merge())
+            .addOnSuccessListener { onResult("Name saved.") }
+            .addOnFailureListener { e -> onResult("Could not sync name (saved on device): ${e.message}") }
+    }
+
+    /** Best-effort read of any display name already stored for this user, so a
+     *  returning/reinstalled user who already provided one isn't re-prompted.
+     *  Mirrors [fetchParentPhone] exactly. */
+    fun fetchDisplayName(context: Context, uid: String, onResult: (String?) -> Unit) {
+        if (!FirebaseGate.isAvailable(context)) {
+            onResult(null)
+            return
+        }
+        FirebaseFirestore.getInstance().collection(COLLECTION).document(uid)
+            .get()
+            .addOnSuccessListener { onResult(it.getString("displayName")) }
+            .addOnFailureListener { onResult(null) }
+    }
+
     private fun logEvent(
         doc: DocumentReference,
         analytics: FirebaseAnalytics,

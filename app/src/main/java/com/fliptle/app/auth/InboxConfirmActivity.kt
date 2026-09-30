@@ -61,6 +61,16 @@ class InboxConfirmActivity : AppCompatActivity() {
         store.inboxConfirmShown = true
         CloudState.backup(this)
 
+        // Personalize the headline with the display name if one was given —
+        // never the subtext below, which names the email the link was sent to
+        // (necessary information a name can't stand in for).
+        val name = store.signedInName
+        findViewById<TextView>(R.id.inboxHeadline).text = if (!name.isNullOrBlank()) {
+            getString(R.string.inbox_confirm_headline_named, name)
+        } else {
+            getString(R.string.inbox_confirm_headline)
+        }
+
         inboxSubtext = findViewById(R.id.inboxSubtext)
         inboxSubtext.text = getString(R.string.inbox_confirm_subtext, email.ifEmpty { "your email" })
 

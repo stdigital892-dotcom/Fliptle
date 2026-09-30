@@ -123,6 +123,12 @@
     <string name="auth_signed_in">Signed in as %1$s</string>
     <string name="auth_verified">Email: verified ✓</string>
     <string name="auth_unverified">Email: not verified — check your inbox for the verification link.</string>
+    <string name="auth_name_label">What should we call you?</string>
+    <string name="auth_name_hint">Optional. We\'ll use it instead of your email wherever the app greets you.</string>
+    <string name="auth_name_field">Your name</string>
+    <string name="auth_save_name">Save and continue</string>
+    <string name="auth_skip_name">Skip for now</string>
+    <string name="auth_name_too_long">Keep it under 40 characters.</string>
     <string name="auth_parent_phone_label">Parent\'s phone number (optional)</string>
     <string name="auth_parent_phone_hint">Optional for now. Contact info only — not used for login or verification.</string>
     <string name="auth_parent_phone_field">e.g. +15551234567</string>
@@ -287,6 +293,7 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
 
     <!-- Inbox confirmation screen (shown once after first sign-in) -->
     <string name="inbox_confirm_headline">Your Rescue starts in your inbox.</string>
+    <string name="inbox_confirm_headline_named">%1$s, your Rescue starts in your inbox.</string>
     <string name="inbox_confirm_subtext">We\'ve sent a link to %1$s. Open your email and tap the link inside — your protection activates the moment you do.</string>
     <string name="inbox_confirm_cta">Take me to my email</string>
     <string name="inbox_confirm_continue">I\'ve confirmed — continue</string>

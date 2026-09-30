@@ -64,7 +64,11 @@ class HomeActivity : AppCompatActivity() {
         freezeStatusText = findViewById(R.id.freezeStatusText)
 
         // Hidden developer unlock (debug builds only; inert in release).
-        DevMode.attachUnlockGesture(findViewById(R.id.homeTitle))
+        val homeTitle = findViewById<TextView>(R.id.homeTitle)
+        DevMode.attachUnlockGesture(homeTitle)
+        // Optional display name, in place of the wordmark slot. Left blank
+        // (current behavior) if the user skipped the name step.
+        homeTitle.text = com.fliptle.app.auth.AuthStore(this).signedInName ?: ""
 
         findViewById<Button>(R.id.startJourneyButton).setOnClickListener {
             startActivity(Intent(this, PornBlockActivity::class.java))
