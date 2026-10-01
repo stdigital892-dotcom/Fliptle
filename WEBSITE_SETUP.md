@@ -296,7 +296,7 @@ never has to touch the Razorpay Key Secret:
   compares it against the signature in constant time (`crypto.timingSafeEqual`).
   If the signature matches, the Admin SDK writes `subscriptions/{email}` with
   `{ email, plan, planName, amount, currency, status: "active",
-  razorpayPaymentId, razorpayOrderId, razorpaySignature, startedAt, updatedAt,
+  razorpayPaymentId, razorpayOrderId, startedAt, updatedAt,
   source: "website" }`. If it doesn't match, the whole request is refused with
   `permission-denied` and **no write happens**.
 

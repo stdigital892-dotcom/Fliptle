@@ -415,7 +415,6 @@ exports.verifyPayment = onCall(
       status: "active",
       razorpayPaymentId: paymentId,
       razorpayOrderId: orderId,
-      razorpaySignature: signature,
       startedAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       source: "website",
