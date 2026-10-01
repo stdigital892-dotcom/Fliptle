@@ -1,25 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Shared functional-screen background: graphite ground + a soft top-biased ochre
-     glow + a faint grain tile. Set as the window background so every screen
-     inherits the same subtle depth (roots stay transparent over it). -->
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@color/graphite" />
-    <item>
-        <shape android:shape="rectangle">
-            <gradient
-                android:type="radial"
-                android:centerX="0.5"
-                android:centerY="-0.05"
-                android:gradientRadius="85%p"
-                android:startColor="#24C98A3F"
-                android:centerColor="#0AC98A3F"
-                android:endColor="#00C98A3F" />
-        </shape>
-    </item>
-    <item>
-        <bitmap
-            android:src="@drawable/grain"
-            android:gravity="fill"
-            android:tileMode="repeat" />
-    </item>
-</layer-list>
+<!--
+  Shared window background: solid near-black (CSS --bg #060608) to match
+  fliptle.com's base. Per-screen glow/gradient overlays live in their own
+  drawables (see bg_welcome.xml for the hero treatment). Grain removed —
+  the site is clean solid-plus-gradients, no noise texture.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/graphite" />
+</shape>

@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Fliptle dark identity. Committed dark (the app is dark-only by design). -->
+    <!--
+      RESCUE theme — mirrors fliptle.com exactly.
+      Near-black ground, Anton display + Inter body, urgent-red accent used only
+      on primary CTAs / eyebrows / focus. Button corners drop from the earlier
+      pill-radius (28dp) to the site's 14dp. Dark-only by design.
+    -->
     <style name="Theme.HelloApp" parent="Theme.Material3.Dark.NoActionBar">
         <item name="colorPrimary">@color/accent</item>
         <item name="colorOnPrimary">@color/on_accent</item>
@@ -13,6 +18,7 @@
         <item name="android:textColorPrimary">@color/ink</item>
         <item name="android:textColorSecondary">@color/ink_dim</item>
         <item name="android:textColorHint">@color/ink_dim</item>
+        <item name="android:textColorHighlight">@color/text_highlight</item>
 
         <!-- Shared functional-screen depth (glow + grain) behind every window.
              Roots stay transparent so this shows through. Welcome overrides it. -->
@@ -20,40 +26,49 @@
         <item name="android:statusBarColor">@color/graphite</item>
         <item name="android:navigationBarColor">@color/graphite</item>
 
-        <!-- Bare <Button> defaults to the neutral pill; primary/text are tagged. -->
+        <!-- Bare <Button> defaults to the neutral filled; primary/text are tagged. -->
         <item name="materialButtonStyle">@style/Widget.Fliptle.Button.Secondary</item>
-        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:fontFamily">@font/inter</item>
     </style>
 
-    <!-- ===================== Buttons (soft full-radius pills) ===================== -->
+    <!-- ===================== Buttons ===================== -->
+    <!-- Site radii: hero CTA 14px, pill 40px, plan CTA 12px. Primary gets red glow
+         via tinted elevation shadow (outline*ShadowColor on API 28+ falls back to
+         standard black shadow on older APIs; the accent fill is unaffected). -->
 
     <style name="Widget.Fliptle.Button.Primary" parent="Widget.Material3.Button">
         <item name="backgroundTint">@color/accent</item>
+        <item name="rippleColor">@color/accent_press</item>
         <item name="android:textColor">@color/on_accent</item>
-        <item name="cornerRadius">28dp</item>
-        <item name="android:minHeight">52dp</item>
-        <item name="android:paddingTop">15dp</item>
-        <item name="android:paddingBottom">15dp</item>
-        <item name="android:paddingLeft">26dp</item>
-        <item name="android:paddingRight">26dp</item>
-        <item name="android:textSize">15sp</item>
-        <item name="android:textStyle">bold</item>
+        <item name="cornerRadius">14dp</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:paddingTop">18dp</item>
+        <item name="android:paddingBottom">18dp</item>
+        <item name="android:paddingLeft">36dp</item>
+        <item name="android:paddingRight">36dp</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:fontFamily">@font/inter_extrabold</item>
         <item name="android:letterSpacing">0.01</item>
         <item name="android:textAllCaps">false</item>
-        <item name="elevation">0dp</item>
+        <item name="android:elevation">8dp</item>
+        <item name="android:outlineSpotShadowColor">@color/accent</item>
+        <item name="android:outlineAmbientShadowColor">@color/accent</item>
     </style>
 
+    <!-- Secondary = neutral filled (used where Primary would be too loud). The
+         site reserves accent-red for primary CTAs only, so a filled Secondary
+         uses an unobtrusive elevated surface, not a tinted red. -->
     <style name="Widget.Fliptle.Button.Secondary" parent="Widget.Material3.Button">
         <item name="backgroundTint">@color/elevated</item>
         <item name="android:textColor">@color/ink</item>
-        <item name="cornerRadius">28dp</item>
+        <item name="cornerRadius">14dp</item>
         <item name="android:minHeight">52dp</item>
-        <item name="android:paddingTop">15dp</item>
-        <item name="android:paddingBottom">15dp</item>
+        <item name="android:paddingTop">16dp</item>
+        <item name="android:paddingBottom">16dp</item>
         <item name="android:paddingLeft">26dp</item>
         <item name="android:paddingRight">26dp</item>
-        <item name="android:textSize">15sp</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">@font/inter_bold</item>
         <item name="android:letterSpacing">0.01</item>
         <item name="android:textAllCaps">false</item>
         <item name="elevation">0dp</item>
@@ -62,72 +77,140 @@
     <style name="Widget.Fliptle.Button.Outline" parent="Widget.Material3.Button.OutlinedButton">
         <item name="android:textColor">@color/ink</item>
         <item name="strokeColor">@color/border</item>
-        <item name="cornerRadius">28dp</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="cornerRadius">14dp</item>
         <item name="android:minHeight">52dp</item>
-        <item name="android:textSize">15sp</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:paddingTop">16dp</item>
+        <item name="android:paddingBottom">16dp</item>
+        <item name="android:paddingLeft">26dp</item>
+        <item name="android:paddingRight">26dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">@font/inter_bold</item>
         <item name="android:letterSpacing">0.01</item>
         <item name="android:textAllCaps">false</item>
     </style>
 
     <style name="Widget.Fliptle.Button.Text" parent="Widget.Material3.Button.TextButton">
-        <item name="android:textColor">@color/accent_ico</item>
+        <item name="android:textColor">@color/ink_dim</item>
         <item name="android:textSize">15sp</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">@font/inter_semibold</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:letterSpacing">0.01</item>
     </style>
 
-    <!-- ===================== Text roles ===================== -->
+    <!-- Header-style pill CTA (CSS .header-cta): smaller, pill-radius, used for
+         compact "join / sign in / continue" accents in app chrome. -->
+    <style name="Widget.Fliptle.Button.Pill" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/accent</item>
+        <item name="rippleColor">@color/accent_press</item>
+        <item name="android:textColor">@color/on_accent</item>
+        <item name="cornerRadius">24dp</item>
+        <item name="android:minHeight">40dp</item>
+        <item name="android:paddingTop">10dp</item>
+        <item name="android:paddingBottom">10dp</item>
+        <item name="android:paddingLeft">20dp</item>
+        <item name="android:paddingRight">20dp</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:fontFamily">@font/inter_bold</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:elevation">6dp</item>
+        <item name="android:outlineSpotShadowColor">@color/accent</item>
+        <item name="android:outlineAmbientShadowColor">@color/accent</item>
+    </style>
 
+    <!-- ===================== Text roles ===================== -->
+    <!-- Mapped from the site's clamp()s at the small-screen end. Anton on all
+         display-size headlines; Inter everywhere else. Weights pulled from
+         actual site classes (section-title 800, card h3 700, lead 300, etc.). -->
+
+    <!-- Hero display: Anton 400, autosizes 40sp→56sp so short headlines fill
+         the width and longer ones (sign-in, "Allow background use") step
+         down without wrapping awkwardly on small screens. -->
+    <style name="Text.Hero" parent="">
+        <item name="android:textColor">@color/ink</item>
+        <item name="android:fontFamily">@font/anton_regular</item>
+        <item name="android:textSize">56sp</item>
+        <item name="android:letterSpacing">0.01</item>
+        <item name="android:lineSpacingMultiplier">1.0</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:maxLines">2</item>
+        <!-- AppCompat autosize (no android: prefix) covers API 14+; native
+             android:autoSizeTextType requires API 26. On AppCompatTextView
+             (auto-inflated by Material3) this works all the way to minSdk 24. -->
+        <item name="autoSizeTextType">uniform</item>
+        <item name="autoSizeMinTextSize">40sp</item>
+        <item name="autoSizeMaxTextSize">56sp</item>
+        <item name="autoSizeStepGranularity">2sp</item>
+    </style>
+
+    <!-- Display: Inter 800 for prose-style page titles ("Welcome back", etc.) -->
     <style name="Text.Display" parent="">
         <item name="android:textColor">@color/ink</item>
-        <item name="android:fontFamily">sans-serif</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:textSize">34sp</item>
+        <item name="android:fontFamily">@font/inter_extrabold</item>
+        <item name="android:textSize">28sp</item>
         <item name="android:letterSpacing">-0.02</item>
-        <item name="android:lineSpacingMultiplier">1.03</item>
+        <item name="android:lineSpacingMultiplier">1.08</item>
     </style>
 
     <style name="Text.Title" parent="">
         <item name="android:textColor">@color/ink</item>
-        <item name="android:fontFamily">sans-serif</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:textSize">25sp</item>
+        <item name="android:fontFamily">@font/inter_bold</item>
+        <item name="android:textSize">22sp</item>
         <item name="android:letterSpacing">-0.01</item>
+        <item name="android:lineSpacingMultiplier">1.15</item>
     </style>
 
     <style name="Text.CardTitle" parent="">
         <item name="android:textColor">@color/ink</item>
-        <item name="android:fontFamily">sans-serif-medium</item>
-        <item name="android:textSize">17sp</item>
+        <item name="android:fontFamily">@font/inter_bold</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:lineSpacingMultiplier">1.25</item>
     </style>
 
+    <!-- Body: Inter 300 (lead) feels light on mobile; use Regular 400 for
+         sustained reading, Light for intro/lead passages. Default is Regular. -->
     <style name="Text.Body" parent="">
-        <item name="android:textColor">@color/ink_dim</item>
-        <item name="android:fontFamily">sans-serif</item>
-        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/ink</item>
+        <item name="android:fontFamily">@font/inter_regular</item>
+        <item name="android:textSize">16sp</item>
         <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+
+    <style name="Text.Lead" parent="Text.Body">
+        <item name="android:fontFamily">@font/inter_light</item>
+        <item name="android:textColor">@color/ink</item>
+        <item name="android:textSize">17sp</item>
     </style>
 
     <style name="Text.Caption" parent="">
         <item name="android:textColor">@color/ink_dim</item>
-        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:fontFamily">@font/inter_regular</item>
         <item name="android:textSize">13sp</item>
+        <item name="android:lineSpacingMultiplier">1.45</item>
     </style>
 
+    <!-- Section label / small bold caption used above a card (not an eyebrow) -->
     <style name="Text.SectionLabel" parent="">
         <item name="android:textColor">@color/ink</item>
-        <item name="android:fontFamily">sans-serif-medium</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">@font/inter_semibold</item>
         <item name="android:textSize">14sp</item>
         <item name="android:letterSpacing">0.02</item>
+    </style>
+
+    <!-- Eyebrow (CSS .eyebrow): tiny red uppercase label with wide tracking -->
+    <style name="Text.Eyebrow" parent="">
+        <item name="android:textColor">@color/accent</item>
+        <item name="android:fontFamily">@font/inter_bold</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:letterSpacing">0.3</item>
+        <item name="android:textAllCaps">true</item>
     </style>
 
     <!-- Cards -->
     <style name="Card.Fliptle" parent="">
         <item name="android:background">@drawable/card_bg</item>
-        <item name="android:padding">18dp</item>
+        <item name="android:padding">22dp</item>
     </style>
 
     <!-- EditText fields on dark -->

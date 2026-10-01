@@ -1,57 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Welcome-only atmospheric illustration: abstract ridgelines fading into fog with
-  a low ochre glow, plus a baked bottom scrim so headline/buttons stay readable.
-  Fully vector (no photo, no faces). Scales to any screen.
+  Welcome / hero background: mirrors fliptle.com's hero overlay stack. Near-black
+  ground, a top-biased urgent-red radial glow (CSS: radial-gradient(120% 90% at
+  50% -8%, rgba(255,34,51,.16), transparent 55%)), and a bottom scrim so
+  headlines/CTAs stay readable (CSS: linear-gradient to rgba(6,6,8,.97)).
+  Vector-only, no bitmap — scales to any screen.
 -->
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
-    android:width="360dp"
-    android:height="780dp"
-    android:viewportWidth="320"
-    android:viewportHeight="700">
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base: near-black -->
+    <item android:drawable="@color/graphite" />
 
-    <!-- sky -->
-    <path android:pathData="M0,0 L320,0 L320,700 L0,700 Z">
-        <aapt:attr name="android:fillColor">
-            <gradient android:type="linear" android:startX="0" android:startY="0" android:endX="0" android:endY="700">
-                <item android:offset="0" android:color="#FF0F0E0D" />
-                <item android:offset="0.5" android:color="#FF17150F" />
-                <item android:offset="1" android:color="#FF1B160E" />
-            </gradient>
-        </aapt:attr>
-    </path>
+    <!-- Urgent-red radial glow, top-centre, approx 16% alpha falling to 0 -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:centerX="0.5"
+                android:centerY="-0.08"
+                android:gradientRadius="90%p"
+                android:startColor="#29FF2233"
+                android:centerColor="#0DFF2233"
+                android:endColor="#00FF2233" />
+        </shape>
+    </item>
 
-    <!-- ochre glow, low centre -->
-    <path android:pathData="M0,0 L320,0 L320,700 L0,700 Z">
-        <aapt:attr name="android:fillColor">
-            <gradient android:type="radial" android:centerX="160" android:centerY="518" android:gradientRadius="230">
-                <item android:offset="0" android:color="#6BC98A3F" />
-                <item android:offset="0.45" android:color="#299A6A2E" />
-                <item android:offset="1" android:color="#009A6A2E" />
-            </gradient>
-        </aapt:attr>
-    </path>
+    <!-- Bottom scrim: darken the lower third so text/buttons retain contrast -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="90"
+                android:startColor="#00060608"
+                android:centerColor="#73060608"
+                android:endColor="#F2060608" />
+        </shape>
+    </item>
 
-    <!-- far ridge -->
-    <path android:fillColor="#241D12" android:fillAlpha="0.85"
-        android:pathData="M0,486 C58,470 94,452 146,458 C208,465 245,486 320,470 L320,700 L0,700 Z" />
-    <!-- mid ridge -->
-    <path android:fillColor="#1E190F" android:fillAlpha="0.9"
-        android:pathData="M0,540 C52,520 100,532 156,520 C220,506 262,536 320,522 L320,700 L0,700 Z" />
-    <!-- near ridge -->
-    <path android:fillColor="#141109" android:fillAlpha="0.96"
-        android:pathData="M0,596 C68,584 116,600 180,590 C242,581 280,600 320,592 L320,700 L0,700 Z" />
-
-    <!-- bottom scrim for text legibility -->
-    <path android:pathData="M0,0 L320,0 L320,700 L0,700 Z">
-        <aapt:attr name="android:fillColor">
-            <gradient android:type="linear" android:startX="0" android:startY="0" android:endX="0" android:endY="700">
-                <item android:offset="0" android:color="#260E0D0C" />
-                <item android:offset="0.5" android:color="#000E0D0C" />
-                <item android:offset="0.72" android:color="#730E0D0C" />
-                <item android:offset="1" android:color="#E60E0D0C" />
-            </gradient>
-        </aapt:attr>
-    </path>
-</vector>
+    <!-- Soft vignette for the corners -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:centerX="0.5"
+                android:centerY="0.42"
+                android:gradientRadius="120%p"
+                android:startColor="#00000000"
+                android:centerColor="#00000000"
+                android:endColor="#CC000000" />
+        </shape>
+    </item>
+</layer-list>
