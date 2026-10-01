@@ -178,6 +178,7 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="home_freeze_verifying">Locked — verifying real time after reboot</string>
     <string name="home_freeze_review">Day %1$d — review open</string>
     <string name="home_setup_button">Setup</string>
+    <string name="home_account_button">Account</string>
 
     <!-- Protection guard -->
     <string name="guard_eyebrow">Action required</string>

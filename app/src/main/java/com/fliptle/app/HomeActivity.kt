@@ -82,6 +82,11 @@ class HomeActivity : AppCompatActivity() {
         findViewById<Button>(R.id.signOutButton).setOnClickListener {
             SignOut.confirm(this)
         }
+        // Signed in, SignInActivity shows the Account view (email, Sign out,
+        // Delete my account).
+        findViewById<Button>(R.id.accountButton).setOnClickListener {
+            startActivity(Intent(this, com.fliptle.app.auth.SignInActivity::class.java))
+        }
 
         // Foreground-safe startup: enforcement service + browser auto-block. These
         // run regardless of auth state — blocking never depends on being signed in.

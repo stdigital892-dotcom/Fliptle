@@ -135,5 +135,15 @@
                 android:text="@string/auth_sign_out" />
         </LinearLayout>
 
+        <!-- Always visible (both Home states): opens the Account screen, which
+             holds Sign out and Delete my account. -->
+        <Button
+            android:id="@+id/accountButton"
+            style="@style/Widget.Fliptle.Button.Outline"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/home_account_button" />
+
     </LinearLayout>
 </ScrollView>
