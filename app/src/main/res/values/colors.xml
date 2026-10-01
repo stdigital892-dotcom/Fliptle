@@ -1,34 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  RESCUE / Fliptle design system — mirrors fliptle.com exactly.
+  RESCUE / Fliptle design system - mirrors fliptle.com exactly.
   Near-black ground, urgent red accent used sparingly, warm "emerging light"
   for soft emphasis. Token names are stable (callers still reference @color/accent,
-  @color/ink, @color/border, etc.) — only the values flipped from the previous
+  @color/ink, @color/border, etc.) - only the values flipped from the previous
   ochre-on-graphite palette to this red-on-near-black one.
 -->
 <resources>
     <!-- Ground -->
-    <color name="graphite">#060608</color>       <!-- app background (CSS --bg) -->
-    <color name="bg_deep">#0B0B10</color>         <!-- deeper band gradient stop (CSS --bg2) -->
+    <color name="graphite">#060608</color>       <!-- app background (CSS bg) -->
+    <color name="bg_deep">#0B0B10</color>         <!-- deeper band gradient stop (CSS bg2) -->
     <color name="surface">#0F0F13</color>         <!-- cards, solid approximation of rgba(255,255,255,.04) over bg -->
     <color name="panel_deep">#0A0A10</color>      <!-- app-teaser dark panel (CSS: #0a0a10 under red wash) -->
     <color name="elevated">#16161B</color>        <!-- secondary buttons / chips / pressed -->
-    <color name="border">#1F1F26</color>          <!-- hairlines (approx CSS --line rgba(255,255,255,.09)) -->
+    <color name="border">#1F1F26</color>          <!-- hairlines (approx CSS line rgba(255,255,255,.09)) -->
 
     <!-- Ink -->
-    <color name="ink">#F5F5F7</color>             <!-- primary text (CSS --text) -->
-    <color name="ink_dim">#9A9AA8</color>         <!-- secondary text (CSS --muted) -->
+    <color name="ink">#F5F5F7</color>             <!-- primary text (CSS text) -->
+    <color name="ink_dim">#9A9AA8</color>         <!-- secondary text (CSS muted) -->
 
-    <!-- Urgent red accent (CSS --accent) — used sparingly on CTAs, eyebrows, focus -->
+    <!-- Urgent red accent (CSS accent) - used sparingly on CTAs, eyebrows, focus -->
     <color name="accent">#FF2233</color>
     <color name="accent_press">#D81B2A</color>    <!-- press state (deeper red) -->
     <color name="accent_ico">#FF2233</color>      <!-- eyebrows / quiet links use the accent itself -->
     <color name="accent_well">#2A0D11</color>     <!-- tinted well behind icons (approx rgba(255,34,51,.14) on bg) -->
     <color name="accent_glow">#73FF2233</color>   <!-- outer glow for primary CTAs (approx 0.45 alpha) -->
     <color name="accent_ring">#2EFF2233</color>   <!-- focus ring (approx 0.18 alpha) -->
-    <color name="on_accent">#FFFFFF</color>       <!-- text on the red accent — white per site -->
+    <color name="on_accent">#FFFFFF</color>       <!-- text on the red accent - white per site -->
 
-    <!-- Emerging warm light (CSS --light) — chips, "coming soon" badges, selected -->
+    <!-- Emerging warm light (CSS light) - chips, "coming soon" badges, selected -->
     <color name="warm_light">#FFD9A0</color>
     <color name="warm_light_dim">#D9B583</color>  <!-- muted variant for notice text -->
     <color name="on_warm_light">#060608</color>   <!-- dark ink on the warm chip -->
@@ -36,7 +36,7 @@
     <!-- Legacy name kept for existing drawables (notice banner) -->
     <color name="notice_bg">#2E2614</color>       <!-- approx rgba(255,217,160,.08) on bg -->
     <color name="notice_border">#3F3321</color>   <!-- approx rgba(255,217,160,.32) -->
-    <color name="notice_text">#FFD9A0</color>     <!-- the --light token directly -->
+    <color name="notice_text">#FFD9A0</color>     <!-- the warm-light token directly -->
 
     <!-- Text selection highlight (CSS ::selection rgba(255,34,51,.4)) -->
     <color name="text_highlight">#66FF2233</color>

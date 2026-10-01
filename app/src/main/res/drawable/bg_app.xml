@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Shared window background: solid near-black (CSS --bg #060608) to match
+  Shared window background: solid near-black (CSS bg, #060608) to match
   fliptle.com's base. Per-screen glow/gradient overlays live in their own
   drawables (see bg_welcome.xml for the hero treatment). Grain removed —
   the site is clean solid-plus-gradients, no noise texture.
