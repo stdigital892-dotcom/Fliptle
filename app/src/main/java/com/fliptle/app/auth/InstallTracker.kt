@@ -5,7 +5,6 @@ import android.os.Bundle
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 
 /**
  * Records install/reinstall history per user in Firestore, keyed by the Firebase
@@ -23,7 +22,6 @@ object InstallTracker {
 
     private const val COLLECTION = "installs"
     private const val EVENTS = "events"
-    private const val KEY_THRESHOLD = "reinstall_price_increase_threshold"
 
     fun recordSignIn(
         context: Context,
@@ -40,8 +38,6 @@ object InstallTracker {
 
         val db = FirebaseFirestore.getInstance()
         val analytics = FirebaseAnalytics.getInstance(context)
-        val threshold = FirebaseRemoteConfig.getInstance().getLong(KEY_THRESHOLD)
-            .let { if (it <= 0L) 1L else it }
         val graceMs = Heartbeat.graceMs(context)
         val doc = db.collection(COLLECTION).document(uid)
 
@@ -58,8 +54,7 @@ object InstallTracker {
                         "installCount" to 1L,
                         "reinstallCount" to 0L,
                         "lastInstallId" to installId,
-                        "lastSignInAt" to now,
-                        "priceIncreaseFlagged" to false
+                        "lastSignInAt" to now
                     )
                 )
                 Outcome.Install
@@ -73,8 +68,6 @@ object InstallTracker {
                 if (storedId != null && storedId != installId) {
                     val reinstalls = (snap.getLong("reinstallCount") ?: 0L) + 1
                     val installs = (snap.getLong("installCount") ?: 0L) + 1
-                    val already = snap.getBoolean("priceIncreaseFlagged") ?: false
-                    val flagged = already || reinstalls >= threshold
                     // Direct uninstall = previous install went dark past the grace
                     // window without ever being uninstall-approved.
                     val approved = snap.getBoolean("uninstall_approved") ?: false
@@ -87,12 +80,11 @@ object InstallTracker {
                             "reinstallCount" to reinstalls,
                             "lastInstallId" to installId,
                             "previousInstallId" to storedId,
-                            "lastReinstallAt" to now,
-                            "priceIncreaseFlagged" to flagged
+                            "lastReinstallAt" to now
                         )
                     )
                     Outcome.Reinstall(
-                        reinstalls, threshold, flaggedNow = flagged && !already,
+                        reinstalls,
                         prevId = storedId, directUninstall = directUninstall, darkMs = darkMs
                     )
                 } else {
@@ -119,16 +111,9 @@ object InstallTracker {
                             mapOf("darkMs" to outcome.darkMs, "previousInstallId" to outcome.prevId)
                         )
                     }
-                    if (outcome.flaggedNow) {
-                        logEvent(
-                            doc, analytics, "price_increase_flagged",
-                            mapOf("reinstallCount" to outcome.count, "threshold" to outcome.threshold)
-                        )
-                    }
                     onResult(
                         "Reinstall #${outcome.count} detected." +
-                            (if (outcome.directUninstall) " (direct uninstall logged.)" else "") +
-                            (if (outcome.flaggedNow) " Account flagged for a price increase." else "")
+                            (if (outcome.directUninstall) " (direct uninstall logged.)" else "")
                     )
                 }
                 is Outcome.SignIn -> {
@@ -216,8 +201,6 @@ object InstallTracker {
         object SignIn : Outcome()
         data class Reinstall(
             val count: Long,
-            val threshold: Long,
-            val flaggedNow: Boolean,
             val prevId: String,
             val directUninstall: Boolean,
             val darkMs: Long

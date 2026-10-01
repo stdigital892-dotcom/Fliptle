@@ -38,9 +38,6 @@ them in Google Cloud console. On the next CI build the APK will be Firebase-enab
   (keyed by Auth UID); the parent phone is stored there as `parentPhone`
   (contact-only). Typing-gate attempts are written under
   `typing_gate/{uid}/attempts/{autoId}`.
-- **Remote Config →** add a parameter:
-  - key `reinstall_price_increase_threshold`, value `1` (change any time to move
-    the reinstall threshold without rebuilding).
 
 ### Firestore Security Rules (server-side validation)
 These make the **server** validate the typing gate: an attempt write is only
