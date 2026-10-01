@@ -5,7 +5,7 @@
     <!-- Freeze: fixed 3-day commitment cycle -->
     <string name="freeze_eyebrow">Freeze</string>
     <string name="freeze_title">Your commitment</string>
-    <string name="freeze_body">A commitment runs in fixed 3-day cycles. While a cycle is running, your blocked apps, blocked domains and Reels allowance are locked — they can\'t be loosened. On day 3 a review opens and you can change anything; changing something starts a fresh 3-day cycle.</string>
+    <string name="freeze_body">A commitment runs in fixed 3-day cycles. You choose what to block, then start it. While a cycle is running, your blocked apps, blocked domains and Reels/Shorts blocking are locked and nothing can be changed. On day 3 a review opens and you can change anything; changing something starts a fresh 3-day cycle.</string>
     <string name="freeze_start">Start my 3-day commitment</string>
     <string name="freeze_none_status">No commitment running.</string>
     <string name="freeze_none_detail">Start one and your choices stay locked for %1$d days.</string>
@@ -18,10 +18,6 @@
     <string name="verifying_locked">Reboot detected — settings stay LOCKED until real time is verified from the network.\nConnect to the internet to verify.</string>
 
     <!-- Commitment lock messages (shared by every committed setting) -->
-    <string name="commit_locked">Locked — day %1$d of %2$d. You can change this when the review opens on day %2$d.</string>
-    <string name="commit_locked_verifying">Locked — verifying real time after a reboot. Connect to the internet.</string>
-    <string name="commit_not_started">No commitment running — changes apply immediately.</string>
-    <string name="commit_review_open">Day %1$d — review open. A change starts a new 3-day cycle.</string>
     <string name="commit_restarted">Change saved. A fresh %1$d-day cycle has started.</string>
 
     <!-- Porn blocking: one-way switch -->
@@ -39,34 +35,10 @@
     <string name="porn_day_counter">Day %1$d since you enabled Porn Blocking</string>
     <string name="porn_on_body">Porn blocking is on and cannot be turned off. This counter only ever counts up — it has no reset.</string>
 
-    <!-- Reels/Shorts allowance (part of the commitment) -->
-    <string name="allowance_title">Shorts and Reels allowance</string>
-    <string name="allowance_start">Start a session</string>
-    <string name="allowance_locked">Reels, Stories and Shorts are blocked.</string>
-    <string name="allowance_open">Session OPEN — Reels/Shorts/Stories are allowed.</string>
-    <string name="allowance_cooldown">Session over — cooling down.</string>
-    <string name="allowance_cap_reached">Daily allowance used up.</string>
-    <string name="allowance_verifying">Reboot detected — verifying real time…</string>
-    <string name="allowance_closes_in">Ends in %1$s</string>
-    <string name="allowance_ready_in">Next session in %1$s</string>
-    <string name="allowance_used">Sessions used: %1$d / %2$d today</string>
-    <string name="allowance_session_label">Session length (minutes)</string>
-    <string name="allowance_perday_label">Sessions per day</string>
-    <string name="allowance_cooldown_label">Cooldown between sessions (minutes)</string>
-    <string name="allowance_bounds">Limits: session ≤ %1$d min, ≤ %2$d per day, cooldown ≥ %3$d min. Values outside are clamped.</string>
-    <string name="allowance_save">Save allowance</string>
-    <string name="allowance_saved">Allowance saved.</string>
-    <string name="allowance_no_change">No changes.</string>
-    <string name="allowance_started">Session started.</string>
-    <string name="allowance_cap_toast">Daily allowance used up — no override.</string>
-    <string name="allowance_cooldown_toast">Still cooling down — wait for the cooldown to finish.</string>
-
     <!-- Developer mode (debug builds only, hidden behind a gesture) -->
     <string name="dev_mode_on">[DEV MODE] Short timers active — one cycle is %1$s.</string>
 
-    <string name="select_apps">Select Apps to Block</string>
     <string name="save">Save</string>
-    <string name="apps_saved">Blocked apps saved.</string>
     <string name="blocked_overlay_title">This app is blocked</string>
     <string name="return_home">Return to Home</string>
     <string name="service_title">Focus freeze active</string>
@@ -76,7 +48,6 @@
     <string name="browser_rescan">Re-scan browsers</string>
     <string name="no_browsers_found">No browsers detected.</string>
 
-    <string name="blocked_domains">Blocked Domains</string>
     <string name="domain_hint">Enter a domain, e.g. example.com</string>
     <string name="add_domain">Add Domain</string>
     <string name="enter_domain">Enter a domain first.</string>
@@ -88,9 +59,9 @@
     <string name="website_blocked_subtitle">This site is on your blocklist.</string>
     <string name="website_blocked_home">Go to home screen</string>
     <string name="a11y_service_label">Focus URL Blocking</string>
-    <string name="a11y_service_description">Reads the address bar of browsers to block pages on your blocklist and enforce safe-search, and detects specific in-app surfaces (Instagram Reels/Stories, YouTube Shorts) to block them. Once you enable porn blocking it can never be switched off; distraction surfaces can be opened briefly via your daily Reels allowance. No browsing data is stored or sent anywhere.</string>
+    <string name="a11y_service_description">Reads the address bar of browsers to block pages on your blocklist and enforce safe-search, and detects specific in-app surfaces (Instagram Reels and Stories, YouTube Shorts) to block them. Once you enable porn blocking it can never be switched off. No browsing data is stored or sent anywhere.</string>
     <string name="a11y_disclosure_title">Website URL Blocking</string>
-    <string name="a11y_disclosure_body">This feature uses Android\'s Accessibility service to read the URL shown in your browser\'s address bar.\n\nWhat it does with that text:\n• Compares the current URL against your local blocklist.\n• If it matches, it navigates the browser away from the page and shows a brief \"Blocked\" notice.\n• For Google, Bing, and DuckDuckGo searches it enforces safe-search, and blocks searches containing banned keywords.\n• In Instagram and YouTube it detects specific surfaces you\'ve chosen to block (Reels, Stories, Shorts) and navigates away — the rest of those apps stays usable.\n\nImportant guarantees:\n• It reads the address bar of browser apps to block adult sites (always) and configured distraction surfaces.\n• It does NOT log, store, or transmit your browsing history — matching happens entirely on-device.\n• This is a separate, optional module. You can turn it off any time in Accessibility settings without affecting the rest of the app.</string>
+    <string name="a11y_disclosure_body">This feature uses Android\'s Accessibility service to read the URL shown in your browser\'s address bar.\n\nWhat it does with that text:\n• Compares the current URL against your local blocklist.\n• If it matches, it navigates the browser away from the page and shows a brief \"Blocked\" notice.\n• For Google, Bing, and DuckDuckGo searches it enforces safe-search, and blocks searches containing banned keywords.\n• In Instagram and YouTube it detects specific surfaces you\'ve chosen to block (Instagram Reels and Stories, YouTube Shorts) and navigates away — the rest of those apps stays usable.\n\nImportant guarantees:\n• It reads the address bar of browser apps to block adult sites (always) and configured distraction surfaces.\n• It does NOT log, store, or transmit your browsing history — matching happens entirely on-device.\n• This is a separate, optional module. You can turn it off any time in Accessibility settings without affecting the rest of the app.</string>
     <string name="a11y_open_settings">Open Accessibility Settings</string>
     <string name="a11y_status_on">Status: ENABLED</string>
     <string name="a11y_status_off">Status: not enabled — tap below to turn it on.</string>
@@ -229,18 +200,9 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="setup_section_account">Account safety</string>
     <string name="setup_eyebrow">Settings</string>
     <string name="setup_title">Setup</string>
-    <string name="setup_apps">Blocked apps</string>
-    <string name="setup_domains">Blocked domains</string>
     <string name="setup_schedule">Freeze &amp; schedule</string>
-    <string name="setup_surfaces">Shorts and Reels</string>
 
     <!-- In-app surface blocking -->
-    <string name="surfaces_eyebrow">Allowance</string>
-    <string name="surfaces_title">Shorts and Reels</string>
-    <string name="surfaces_body">Block specific distraction surfaces inside apps. Each is independent — the rest of Instagram and YouTube stays usable. Access is governed by the Reels allowance below, which is part of your commitment. Requires the Accessibility service to be on.</string>
-    <string name="surface_reels">Block Instagram Reels</string>
-    <string name="surface_stories">Block Instagram Stories</string>
-    <string name="surface_shorts">Block YouTube Shorts</string>
     <string name="surfaces_caveat">Note: these surfaces are detected from Instagram\'s and YouTube\'s internal view IDs, which are not a public API and may break when those apps update. Only the full-screen player is blocked — the feed, DMs, profile, search and normal videos stay usable.</string>
     <string name="surfaces_debug_toggle">Debug: log matches, don\'t block</string>
     <string name="surfaces_debug_hint">With debug on, nothing is blocked; the app records the view IDs it matches so you can see exactly what triggers a block. Open Instagram/YouTube, browse around, then come back and Refresh.</string>
@@ -267,15 +229,11 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="sign_out_confirm">Sign out</string>
     <string name="sign_out_cancel">Cancel</string>
     <!-- Freeze: what it covers -->
-    <string name="freeze_covers_title">What this freeze covers</string>
     <!-- Uninstall hard reset -->
     <string name="uninstall_reset_toast">A day was missed — progress has reset to day 1.</string>
     <string name="setup_freeze_sub">Start a cycle and manage what it holds.</string>
     <string name="setup_uninstall_sub">Five days of daily gates before removal.</string>
     <string name="setup_account_caption">A slow, deliberate path — here when you truly need it.</string>
-    <string name="freeze_apps_sub">Apps you choose to cover</string>
-    <string name="freeze_domains_sub">Adult list + your sites</string>
-    <string name="freeze_shorts_sub">Timed sessions only</string>
     <string name="ob_a11y_step1">Tap Installed services and find %1$s</string>
     <string name="ob_a11y_step2">Tap the switch to turn ON</string>
     <string name="ob_a11y_step3">Tap Allow to confirm</string>
@@ -323,4 +281,31 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="inbox_confirm_resend">Didn\'t get it? Check spam, or resend</string>
     <string name="inbox_confirm_quote">The best time to start was yesterday.\nThe next best time is right now.</string>
     <string name="inbox_resend_ok">Email resent — check your inbox.</string>
+
+    <!-- Freeze setup wizard -->
+    <string name="freeze_setup_button">Set up my 3-day freeze</string>
+    <string name="freeze_change_button">Change my freeze</string>
+    <string name="wizard_apps_title">Block apps</string>
+    <string name="wizard_apps_body">Choose the apps to block for the next 3 days. Nothing is locked until the last step.</string>
+    <string name="wizard_domains_title">Block domains</string>
+    <string name="wizard_domains_body">Add the websites to block. Tap one to remove it.</string>
+    <string name="wizard_domain_builtin">built-in</string>
+    <string name="wizard_domain_tap_remove">tap to remove</string>
+    <string name="wizard_surfaces_title">Shorts and Reels</string>
+    <string name="wizard_surfaces_body">Block the full-screen Reels and Shorts players. The rest of Instagram and YouTube stays usable. Needs the Accessibility service to be on.</string>
+    <string name="wizard_reels_label">Instagram Reels</string>
+    <string name="wizard_reels_hint">Also blocks Instagram Stories.</string>
+    <string name="wizard_shorts_label">YouTube Shorts</string>
+    <string name="wizard_ready_title">You\'re ready to go</string>
+    <string name="wizard_ready_body">Check what you\'re about to block.</string>
+    <string name="wizard_ready_lock_note">For the next 3 days, nothing can be changed.</string>
+    <string name="wizard_summary_apps">Apps blocked: %1$d</string>
+    <string name="wizard_summary_domains">Domains blocked: %1$d</string>
+    <string name="wizard_summary_reels">Instagram Reels and Stories: %1$s</string>
+    <string name="wizard_summary_shorts">YouTube Shorts: %1$s</string>
+    <string name="wizard_on">On</string>
+    <string name="wizard_off">Off</string>
+    <string name="wizard_empty_hint">Block at least one app, domain, Reels or Shorts to start.</string>
+    <string name="wizard_no_changes">No changes. Your current freeze keeps running.</string>
+    <string name="wizard_started">Your 3-day commitment has started.</string>
 </resources>

@@ -45,10 +45,6 @@
             android:exported="false" />
 
         <activity
-            android:name=".SurfaceBlockActivity"
-            android:exported="false" />
-
-        <activity
             android:name=".ProtectionGuardActivity"
             android:exported="false"
             android:launchMode="singleTask"
@@ -59,15 +55,11 @@
             android:exported="false" />
 
         <activity
-            android:name=".AppListActivity"
+            android:name=".FreezeWizardActivity"
             android:exported="false" />
 
         <activity
             android:name=".BrowserListActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".DomainListActivity"
             android:exported="false" />
 
         <activity

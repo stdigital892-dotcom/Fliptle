@@ -1,56 +1,53 @@
 package com.fliptle.app
 
 import android.content.Context
-import android.widget.Toast
 
 /**
- * One place for the rule that governs every committed setting (blocked apps,
- * blocked domains, Reels allowance):
+ * The single place a commitment starts. The wizard edits a draft
+ * ([FreezeDraftStore]); [commit] is the only code that copies it into the live
+ * blocking stores and starts (or restarts) the 3-day lock.
  *
- *   • While the 3-day lock is running, changes are REFUSED.
- *   • At a day-3+ review (or before the first cycle), changes are allowed — and
- *     making one immediately starts a fresh 3-day cycle.
- *
- * Screens that edit a committed setting call [canChange] before writing and
- * [onChanged] after, so the behaviour cannot drift between them.
+ *   • While the lock is running, nothing can be changed: [commit] refuses.
+ *   • Before the first cycle, committing starts the lock.
+ *   • At a day-3+ review, committing restarts the lock — but only if the draft
+ *     actually differs from what is running. Changing nothing leaves the current
+ *     cycle going, exactly as the review has always worked.
+ *   • An empty draft can never be committed.
  */
 object Commitment {
 
-    /** True if committed settings may be edited right now. */
-    fun canChange(context: Context): Boolean = !FreezeStore(context).settingsLocked()
+    enum class Result { STARTED, RESTARTED, UNCHANGED, EMPTY, LOCKED }
 
-    /**
-     * Guard for an edit action. Shows the reason and returns false when the
-     * change must be refused.
-     */
-    fun guard(context: Context): Boolean {
-        val store = FreezeStore(context)
-        if (!store.settingsLocked()) return true
-        val msg = if (store.state() == FreezeStore.State.VERIFYING) {
-            context.getString(R.string.commit_locked_verifying)
-        } else {
-            context.getString(R.string.commit_locked, store.dayNumber(), store.cycleDays())
-        }
-        Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
-        return false
+    /** True if blocking choices may be edited right now. */
+    fun canEdit(context: Context): Boolean = !FreezeStore(context).settingsLocked()
+
+    /** Whether the final wizard button should be enabled for the current draft. */
+    fun canCommit(context: Context): Boolean {
+        val freeze = FreezeStore(context)
+        if (freeze.settingsLocked()) return false
+        val draft = FreezeDraftStore(context)
+        draft.ensureInitialized()
+        if (draft.itemCount() < 1) return false
+        return !freeze.active || draft.differsFromLive()
     }
 
-    /**
-     * Record that a committed setting actually changed. At review this starts the
-     * next 3-day cycle; before the first cycle it does nothing (the user starts
-     * their commitment explicitly from the freeze screen).
-     */
-    fun onChanged(context: Context) {
-        // Any committed change is worth backing up (whether or not a cycle restarts).
-        CloudState.backup(context)
-        val store = FreezeStore(context)
-        if (!store.active) return
-        if (store.restartCycle()) {
-            Toast.makeText(
-                context,
-                context.getString(R.string.commit_restarted, store.cycleDays()),
-                Toast.LENGTH_LONG
-            ).show()
-        }
+    fun commit(context: Context): Result {
+        val ctx = context.applicationContext
+        val freeze = FreezeStore(ctx)
+        if (freeze.settingsLocked()) return Result.LOCKED
+
+        val draft = FreezeDraftStore(ctx)
+        draft.ensureInitialized()
+        if (draft.itemCount() < 1) return Result.EMPTY
+
+        val wasActive = freeze.active
+        if (wasActive && !draft.differsFromLive()) return Result.UNCHANGED
+
+        draft.applyToLive()
+        BlockingService.start(ctx)
+        if (wasActive) freeze.restartCycle() else freeze.startCycle()
+        draft.reset()
+        CloudState.backup(ctx)
+        return if (wasActive) Result.RESTARTED else Result.STARTED
     }
 }

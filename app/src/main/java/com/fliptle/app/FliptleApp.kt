@@ -16,6 +16,7 @@ import com.fliptle.app.auth.HeartbeatWorker
 class FliptleApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        FreezeMigration.run(this)
         AdultBlocklist.ensureLoaded(this)
         KeywordBlocklist.ensureLoaded(this)
         BlocklistUpdateWorker.schedule(this)

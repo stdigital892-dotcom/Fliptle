@@ -20,7 +20,6 @@ import com.fliptle.app.BlockOverlay
 import com.fliptle.app.BrowserDetector
 import com.fliptle.app.DomainBlocklist
 import com.fliptle.app.PornBlockStore
-import com.fliptle.app.ReelsAllowance
 import com.fliptle.app.KeywordBlocklist
 import com.fliptle.app.R
 import com.fliptle.app.auth.EntitlementStore
@@ -85,7 +84,7 @@ class UrlBlockAccessibilityService : AccessibilityService() {
         val pkg = event.packageName?.toString() ?: return
 
         // Only browsers (URL/porn blocking) and Instagram/YouTube (surface blocking).
-        // Porn blocking is one-way once enabled; Reels use the allowance below.
+        // Porn blocking is one-way once enabled.
         val isBrowser = BrowserDetector.isBrowser(this, pkg)
         val isSurfaceApp = SurfaceDetector.isSurfaceApp(pkg)
         if (!isBrowser && !isSurfaceApp) return
@@ -120,7 +119,8 @@ class UrlBlockAccessibilityService : AccessibilityService() {
         }
     }
 
-    /** Block Instagram Reels/Stories or YouTube Shorts if that surface is toggled on. */
+    /** Block Instagram Reels/Stories or YouTube Shorts if that surface is toggled on.
+     *  A toggled surface is simply blocked: no session, allowance or cooldown. */
     private fun handleSurface(root: AccessibilityNodeInfo, pkg: String, eventType: Int) {
         val store = SurfaceBlocklist(this)
         // Observe-only diagnosis is a developer tool: unreachable in release builds
@@ -137,10 +137,6 @@ class UrlBlockAccessibilityService : AccessibilityService() {
         // In debug mode we observe only — never block — so surfaces can be
         // diagnosed freely.
         if (debugMode || surface == null || !store.isBlocked(surface)) return
-
-        // Reels allowance (part of the freeze commitment): allow only during an
-        // open session. (Porn never gets here — it has no allowance.)
-        if (ReelsAllowance(this).isOpen()) return
 
         // Back returns to the feed / normal app, so the rest stays usable.
         blockAndLeave(surface.name)

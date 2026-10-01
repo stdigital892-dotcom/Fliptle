@@ -13,9 +13,11 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * The commitment screen: start a 3-day cycle, watch it run, and review it once
- * day 3 arrives. There is no cancel and no timer to shorten — the cycle only ends
- * by being replaced with a new one when the user changes a committed setting.
+ * The commitment screen: one button opens the setup wizard (which is the only
+ * way to choose what to block and start the 3-day lock), and while a cycle runs
+ * this shows its status. There is no cancel and no timer to shorten — the cycle
+ * only ends by being replaced with a new one when the user changes what they
+ * block at the day-3 review. While locked there is nothing to edit.
  */
 class FreezeActivity : AppCompatActivity() {
 
@@ -23,9 +25,8 @@ class FreezeActivity : AppCompatActivity() {
 
     private lateinit var statusText: TextView
     private lateinit var detailText: TextView
-    private lateinit var startButton: Button
+    private lateinit var setupButton: Button
     private lateinit var reviewNotice: TextView
-    private lateinit var coversLockText: TextView
     private lateinit var devStatusText: TextView
 
     private val handler = Handler(Looper.getMainLooper())
@@ -48,28 +49,16 @@ class FreezeActivity : AppCompatActivity() {
 
         statusText = findViewById(R.id.cycleStatusText)
         detailText = findViewById(R.id.cycleDetailText)
-        startButton = findViewById(R.id.startCycleButton)
+        setupButton = findViewById(R.id.setupFreezeButton)
         reviewNotice = findViewById(R.id.reviewNoticeText)
-        coversLockText = findViewById(R.id.coversLockText)
         devStatusText = findViewById(R.id.devStatusText)
 
         // Hidden developer unlock (debug builds only; inert in release).
         DevMode.attachUnlockGesture(findViewById(R.id.freezeTitle))
 
-        startButton.setOnClickListener {
-            store.startCycle()
-            CloudState.backup(this)
-            render()
-        }
-        // The three things the freeze governs — reachable only from here.
-        open(R.id.blockedAppsButton, AppListActivity::class.java)
-        open(R.id.blockedDomainsButton, DomainListActivity::class.java)
-        open(R.id.surfacesButton, SurfaceBlockActivity::class.java)
-    }
-
-    private fun open(viewId: Int, target: Class<*>) {
-        findViewById<android.view.View>(viewId).setOnClickListener {
-            startActivity(Intent(this, target))
+        setupButton.setOnClickListener {
+            // Opens the wizard. Nothing is locked until its final button.
+            startActivity(Intent(this, FreezeWizardActivity::class.java))
         }
     }
 
@@ -91,16 +80,16 @@ class FreezeActivity : AppCompatActivity() {
 
     private fun render() {
         val state = store.state()
-        startButton.visibility = if (state == FreezeStore.State.NONE) View.VISIBLE else View.GONE
+        // The wizard is offered only when settings can be edited: before the first
+        // cycle, and at the day-3 review. While LOCKED / VERIFYING this is status only.
+        setupButton.visibility =
+            if (state == FreezeStore.State.LOCKED || state == FreezeStore.State.VERIFYING) View.GONE
+            else View.VISIBLE
+        setupButton.setText(
+            if (state == FreezeStore.State.REVIEW) R.string.freeze_change_button
+            else R.string.freeze_setup_button
+        )
         reviewNotice.visibility = if (state == FreezeStore.State.REVIEW) View.VISIBLE else View.GONE
-
-        // Caption under the "what this covers" buttons: are edits allowed right now?
-        coversLockText.text = when (state) {
-            FreezeStore.State.NONE -> getString(R.string.commit_not_started)
-            FreezeStore.State.REVIEW -> getString(R.string.commit_review_open, store.dayNumber())
-            FreezeStore.State.VERIFYING -> getString(R.string.commit_locked_verifying)
-            FreezeStore.State.LOCKED -> getString(R.string.commit_locked, store.dayNumber(), store.cycleDays())
-        }
 
         when (state) {
             FreezeStore.State.NONE -> {

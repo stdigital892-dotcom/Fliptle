@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Freeze wizard: one Activity, four steps shown one at a time.
+    a) blocked apps   b) blocked domains   c) Reels / Shorts   d) ready
+  Only the final button starts the lock. Steps a-c save to a draft.
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/wizardProgressText"
+        style="@style/Text.Caption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <ProgressBar
+        android:id="@+id/wizardProgressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="6dp"
+        android:layout_marginTop="6dp"
+        android:max="100"
+        android:progressBackgroundTint="@color/border"
+        android:progressTint="@color/accent" />
+
+    <TextView
+        android:id="@+id/wizardTitle"
+        style="@style/Text.Title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp" />
+
+    <TextView
+        android:id="@+id/wizardBody"
+        style="@style/Text.Body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="12dp"
+        android:layout_weight="1">
+
+        <!-- Step a: apps -->
+        <ListView
+            android:id="@+id/wizardAppList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="@color/border"
+            android:dividerHeight="1dp"
+            android:listSelector="?attr/selectableItemBackground" />
+
+        <!-- Step b: domains -->
+        <LinearLayout
+            android:id="@+id/wizardDomainsStep"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/wizardDomainInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/domain_hint"
+                android:importantForAutofill="no"
+                android:inputType="textUri"
+                android:textColor="@color/ink" />
+
+            <Button
+                android:id="@+id/wizardAddDomainButton"
+                style="@style/Widget.Fliptle.Button.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/add_domain" />
+
+            <ListView
+                android:id="@+id/wizardDomainList"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="8dp"
+                android:layout_weight="1"
+                android:divider="@color/border"
+                android:dividerHeight="1dp" />
+        </LinearLayout>
+
+        <!-- Step c: Reels (incl. Stories) and Shorts -->
+        <ScrollView
+            android:id="@+id/wizardSurfacesStep"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/wizardReelsSwitch"
+                    style="@style/Text.CardTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="56dp"
+                    android:text="@string/wizard_reels_label" />
+
+                <TextView
+                    style="@style/Text.Caption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/wizard_reels_hint" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/wizardShortsSwitch"
+                    style="@style/Text.CardTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:minHeight="56dp"
+                    android:text="@string/wizard_shorts_label" />
+
+                <TextView
+                    style="@style/Text.Caption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:lineSpacingMultiplier="1.4"
+                    android:textStyle="italic"
+                    android:text="@string/surfaces_caveat" />
+
+                <!-- Developer diagnostics (hidden unless DevMode unlocked) -->
+                <LinearLayout
+                    android:id="@+id/wizardDevSection"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <CheckBox
+                        android:id="@+id/debugCheck"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:buttonTint="@color/accent"
+                        android:textColor="@color/ink"
+                        android:text="@string/surfaces_debug_toggle" />
+
+                    <TextView
+                        style="@style/Text.Caption"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/surfaces_debug_hint" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/refreshLogButton"
+                            style="@style/Widget.Fliptle.Button.Outline"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/surfaces_debug_refresh" />
+
+                        <Button
+                            android:id="@+id/clearLogButton"
+                            style="@style/Widget.Fliptle.Button.Outline"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:text="@string/surfaces_debug_clear" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/debugLogText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:fontFamily="monospace"
+                        android:textColor="@color/ink_dim"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- Step d: ready -->
+        <ScrollView
+            android:id="@+id/wizardReadyStep"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_bg"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:id="@+id/wizardSummary"
+                    style="@style/Text.CardTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:lineSpacingMultiplier="1.5" />
+
+                <TextView
+                    android:id="@+id/wizardLockNote"
+                    style="@style/Text.Body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/wizard_ready_lock_note"
+                    android:textColor="@color/ink" />
+
+                <TextView
+                    android:id="@+id/wizardReadyHint"
+                    style="@style/Text.Caption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:textColor="@color/notice_text" />
+            </LinearLayout>
+        </ScrollView>
+    </FrameLayout>
+
+    <Button
+        android:id="@+id/wizardPrimaryButton"
+        style="@style/Widget.Fliptle.Button.Primary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" />
+
+    <Button
+        android:id="@+id/wizardBackButton"
+        style="@style/Widget.Fliptle.Button.Text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="4dp"
+        android:text="@string/ob_back" />
+</LinearLayout>

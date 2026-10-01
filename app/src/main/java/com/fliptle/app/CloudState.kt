@@ -1,6 +1,7 @@
 package com.fliptle.app
 
 import android.content.Context
+import com.fliptle.app.accessibility.SurfaceBlocklist
 import com.fliptle.app.auth.AuthStore
 import com.fliptle.app.auth.FirebaseGate
 import com.google.firebase.auth.FirebaseAuth
@@ -13,7 +14,7 @@ import com.google.firebase.firestore.SetOptions
  *   • porn-blocking day counter (enabled flag + anchor + high-water day),
  *   • freeze status (portable wall anchors + day),
  *   • blocked apps and blocked domains,
- *   • the Reels allowance settings.
+ *   • the Reels (incl. Stories) and Shorts blocking toggles.
  *
  * Signing out never touches local progress — [restore] only ever ADDS to it
  * (union for lists; fill-if-absent for the one-way porn switch and the freeze),
@@ -34,9 +35,11 @@ object CloudState {
         val data = HashMap<String, Any?>()
         data.putAll(PornBlockStore(ctx).backupState())
         data.putAll(FreezeStore(ctx).backupState())
-        data.putAll(ReelsAllowance(ctx).backupState())
         data["blockedApps"] = ArrayList(BlockedAppsStore(ctx).get())
         data["blockedDomains"] = ArrayList(DomainBlocklist(ctx).userDomains())
+        val surfaces = SurfaceBlocklist(ctx)
+        data["blockReels"] = surfaces.reels
+        data["blockShorts"] = surfaces.shorts
         // Once-per-account screens: only ever set to true (never reset).
         if (AuthStore(ctx).uninstallInfoSeen) data["uninstallInfoSeen"] = true
         if (AuthStore(ctx).inboxConfirmShown) data["inboxConfirmShown"] = true
@@ -85,10 +88,13 @@ object CloudState {
             store.set(store.get() + cloud)
         }
         asStringList(s["blockedDomains"])?.let { DomainBlocklist(ctx).addAll(it) }
-        // Reels allowance settings.
-        val session = s["reelsSession"]; val perDay = s["reelsPerDay"]; val cd = s["reelsCooldown"]
-        if (session != null && perDay != null && cd != null) {
-            ReelsAllowance(ctx).restoreSettings(asInt(session, 10), asInt(perDay, 3), asInt(cd, 15))
+        // Reels (incl. Stories) / Shorts blocking: union, so a restore never drops
+        // a block. A backup from before these were stored (a running freeze with
+        // no flags) predates the wizard, when both surfaces were on by default.
+        if (s["freezeActive"] == true) {
+            val surfaces = SurfaceBlocklist(ctx)
+            surfaces.reels = surfaces.reels || (s["blockReels"] as? Boolean ?: true)
+            surfaces.shorts = surfaces.shorts || (s["blockShorts"] as? Boolean ?: true)
         }
         // Once-per-account screens: latch to true (never reset).
         if (s["uninstallInfoSeen"] == true) AuthStore(ctx).uninstallInfoSeen = true

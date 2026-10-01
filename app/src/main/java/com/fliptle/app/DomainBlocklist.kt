@@ -32,6 +32,11 @@ class DomainBlocklist(context: Context) {
         if (set.remove(domain)) prefs.edit().putStringSet(KEY_DOMAINS, set).apply()
     }
 
+    /** Replace the user-added set (used when a commitment starts from the draft). */
+    fun setUserDomains(domains: Set<String>) {
+        prefs.edit().putStringSet(KEY_DOMAINS, HashSet(domains)).apply()
+    }
+
     /** Merge in domains from a cloud backup (union — never drops existing blocks). */
     fun addAll(domains: Collection<String>) {
         val set = userDomains().toMutableSet()
