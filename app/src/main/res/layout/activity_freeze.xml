@@ -11,10 +11,17 @@
         android:padding="24dp">
 
         <TextView
+            style="@style/Text.Eyebrow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/freeze_eyebrow" />
+
+        <TextView
             android:id="@+id/freezeTitle"
             style="@style/Text.Title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
             android:text="@string/freeze_title" />
 
         <TextView
@@ -30,10 +37,11 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="22dp"
             android:textColor="@color/ink"
-            android:fontFamily="sans-serif"
-            android:textStyle="bold"
-            android:textSize="22sp"
-            android:letterSpacing="-0.01" />
+            android:fontFamily="@font/anton_regular"
+            android:textAllCaps="true"
+            android:textSize="30sp"
+            android:letterSpacing="0.01"
+            android:lineSpacingMultiplier="1.0" />
 
         <TextView
             android:id="@+id/cycleDetailText"

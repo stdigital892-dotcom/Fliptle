@@ -11,19 +11,17 @@
         android:padding="24dp">
 
         <TextView
+            style="@style/Text.Title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/typing_title"
-            android:textSize="22sp"
-            android:textStyle="bold" />
+            android:text="@string/typing_title" />
 
         <TextView
+            style="@style/Text.Body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:lineSpacingMultiplier="1.2"
-            android:text="@string/typing_body"
-            android:textSize="15sp" />
+            android:text="@string/typing_body" />
 
         <com.fliptle.app.NoPasteEditText
             android:id="@+id/typingField"
@@ -32,27 +30,28 @@
             android:layout_marginTop="20dp"
             android:hint="@string/typing_hint"
             android:importantForAutofill="no"
+            android:textColor="@color/ink"
             android:inputType="number"
             android:textIsSelectable="false" />
 
         <TextView
             android:id="@+id/progressText"
+            style="@style/Text.CardTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:layout_marginTop="12dp" />
 
         <TextView
             android:id="@+id/errorText"
+            style="@style/Text.Body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:textColor="@color/notice_text"
-            android:textSize="15sp" />
+            android:textColor="@color/notice_text" />
 
         <Button
             android:id="@+id/submitButton"
+            style="@style/Widget.Fliptle.Button.Primary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"

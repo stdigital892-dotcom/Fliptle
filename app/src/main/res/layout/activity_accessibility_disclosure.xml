@@ -11,30 +11,28 @@
         android:padding="24dp">
 
         <TextView
+            style="@style/Text.Title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/a11y_disclosure_title"
-            android:textSize="22sp"
-            android:textStyle="bold" />
+            android:text="@string/a11y_disclosure_title" />
 
         <TextView
+            style="@style/Text.Body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="@string/a11y_disclosure_body"
-            android:textSize="16sp"
-            android:lineSpacingMultiplier="1.2" />
+            android:text="@string/a11y_disclosure_body" />
 
         <TextView
             android:id="@+id/a11yStatusText"
+            style="@style/Text.CardTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:layout_marginTop="20dp" />
 
         <Button
             android:id="@+id/openA11ySettingsButton"
+            style="@style/Widget.Fliptle.Button.Primary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"

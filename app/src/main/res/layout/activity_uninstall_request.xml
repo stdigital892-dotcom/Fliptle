@@ -25,12 +25,10 @@
 
         <TextView
             android:id="@+id/uninstallStatusText"
+            style="@style/Text.CardTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:textColor="@color/ink"
-            android:textStyle="bold"
-            android:textSize="17sp" />
+            android:layout_marginTop="18dp" />
 
         <TextView
             android:id="@+id/uninstallCountdownText"
@@ -73,8 +71,11 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:textColor="@color/ink"
-                android:textStyle="bold"
-                android:textSize="30sp" />
+                android:fontFamily="@font/anton_regular"
+                android:textAllCaps="true"
+                android:letterSpacing="0.01"
+                android:lineSpacingMultiplier="1.0"
+                android:textSize="36sp" />
 
             <EditText
                 android:id="@+id/answerInput"

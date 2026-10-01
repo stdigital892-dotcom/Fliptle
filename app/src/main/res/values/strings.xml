@@ -3,6 +3,7 @@
     <string name="app_name">[APP NAME]</string>
 
     <!-- Freeze: fixed 3-day commitment cycle -->
+    <string name="freeze_eyebrow">Freeze</string>
     <string name="freeze_title">Your commitment</string>
     <string name="freeze_body">A commitment runs in fixed 3-day cycles. While a cycle is running, your blocked apps, blocked domains and Reels allowance are locked — they can\'t be loosened. On day 3 a review opens and you can change anything; changing something starts a fresh 3-day cycle.</string>
     <string name="freeze_start">Start my 3-day commitment</string>
@@ -24,6 +25,7 @@
     <string name="commit_restarted">Change saved. A fresh %1$d-day cycle has started.</string>
 
     <!-- Porn blocking: one-way switch -->
+    <string name="porn_eyebrow">Protection</string>
     <string name="porn_title">Porn blocking</string>
     <string name="porn_off_status">Not enabled yet</string>
     <string name="porn_off_body">Turning this on blocks adult sites across your browsers using an on-device list of 282,000+ domains, plus safe-search enforcement and blocked search keywords.</string>
@@ -225,6 +227,7 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <!-- Setup -->
     <string name="setup_section_blocking">Freeze</string>
     <string name="setup_section_account">Account safety</string>
+    <string name="setup_eyebrow">Settings</string>
     <string name="setup_title">Setup</string>
     <string name="setup_apps">Blocked apps</string>
     <string name="setup_domains">Blocked domains</string>
@@ -232,6 +235,7 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="setup_surfaces">Shorts and Reels</string>
 
     <!-- In-app surface blocking -->
+    <string name="surfaces_eyebrow">Allowance</string>
     <string name="surfaces_title">Shorts and Reels</string>
     <string name="surfaces_body">Block specific distraction surfaces inside apps. Each is independent — the rest of Instagram and YouTube stays usable. Access is governed by the Reels allowance below, which is part of your commitment. Requires the Accessibility service to be on.</string>
     <string name="surface_reels">Block Instagram Reels</string>

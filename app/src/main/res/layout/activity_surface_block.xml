@@ -11,9 +11,16 @@
         android:padding="24dp">
 
         <TextView
+            style="@style/Text.Eyebrow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/surfaces_eyebrow" />
+
+        <TextView
             style="@style/Text.Title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
             android:text="@string/surfaces_title" />
 
         <TextView
@@ -74,12 +81,10 @@
 
             <TextView
                 android:id="@+id/allowanceStatusText"
+                style="@style/Text.CardTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:textColor="@color/ink"
-                android:textStyle="bold"
-                android:textSize="15sp" />
+                android:layout_marginTop="10dp" />
 
             <TextView
                 android:id="@+id/allowanceCountdownText"
