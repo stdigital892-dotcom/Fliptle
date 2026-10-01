@@ -35,6 +35,9 @@ class OnboardingActivity : AppCompatActivity() {
     private lateinit var bodyText: TextView
     private lateinit var statusText: TextView
     private lateinit var actionButton: Button
+    private lateinit var declineButton: Button
+    private lateinit var declineNote: TextView
+    private var a11yDeclined = false
     private lateinit var backButton: Button
     private lateinit var nextButton: Button
     private lateinit var tutorialButton: Button
@@ -55,6 +58,8 @@ class OnboardingActivity : AppCompatActivity() {
         bodyText = findViewById(R.id.stepBody)
         statusText = findViewById(R.id.stepStatus)
         actionButton = findViewById(R.id.actionButton)
+        declineButton = findViewById(R.id.declineButton)
+        declineNote = findViewById(R.id.declineNote)
         backButton = findViewById(R.id.backButton)
         nextButton = findViewById(R.id.nextButton)
         tutorialButton = findViewById(R.id.tutorialButton)
@@ -65,6 +70,11 @@ class OnboardingActivity : AppCompatActivity() {
 
         tutorialButton.setOnClickListener { openTutorial() }
         actionButton.setOnClickListener { onAction() }
+        // "No thanks" keeps the user on this screen and explains what they give up.
+        declineButton.setOnClickListener {
+            a11yDeclined = true
+            declineNote.visibility = View.VISIBLE
+        }
         backButton.setOnClickListener { if (step > firstStep()) { step--; render() } }
         nextButton.setOnClickListener { onNext() }
 
@@ -195,13 +205,18 @@ class OnboardingActivity : AppCompatActivity() {
     private fun render() {
         backButton.visibility = if (step > firstStep()) View.VISIBLE else View.GONE
         actionButton.visibility = View.VISIBLE
+        declineButton.visibility = View.GONE
+        declineNote.visibility = View.GONE
         statusText.visibility = View.VISIBLE
         // The tutorial link — and the atmospheric Welcome illustration — belong on
         // the intro step only. Other steps fall back to the shared window glow.
         tutorialButton.visibility = if (step == STEP_INTRO) View.VISIBLE else View.GONE
         root.setBackgroundResource(if (step == STEP_INTRO) R.drawable.bg_welcome else 0)
         // Numbered step cards only exist on the Accessibility screen.
-        stepsSection.visibility = if (step == STEP_ACCESSIBILITY) View.VISIBLE else View.GONE
+        // The manual how-to cards are for builds NOT installed from Google Play
+        // (sideloaded test builds); Play installs get the disclosure alone.
+        stepsSection.visibility =
+            if (step == STEP_ACCESSIBILITY && !InstallSource.isFromGooglePlay(this)) View.VISIBLE else View.GONE
         nextButton.text = getString(if (step == STEP_LAST) R.string.ob_finish else R.string.ob_next)
         // Compulsory: Next/Finish stays disabled until the step is actually satisfied.
         nextButton.isEnabled = stepSatisfied()
@@ -255,6 +270,8 @@ class OnboardingActivity : AppCompatActivity() {
                 titleText.setText(R.string.ob_a11y_title)
                 bodyText.setText(R.string.ob_a11y_body)
                 actionButton.setText(R.string.ob_a11y_action)
+                declineButton.visibility = View.VISIBLE
+                declineNote.visibility = if (a11yDeclined) View.VISIBLE else View.GONE
                 val name = getString(R.string.app_name)
                 stepText1.text = getString(R.string.ob_a11y_step1, name)
                 stepText2.setText(R.string.ob_a11y_step2)
