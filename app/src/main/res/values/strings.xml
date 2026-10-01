@@ -198,6 +198,8 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="status_not_signed_in">Not signed in — required to continue</string>
 
     <!-- Home -->
+    <string name="home_eyebrow_begin">Begin</string>
+    <string name="home_eyebrow_protected">Protected</string>
     <string name="home_journey_title">Let\'s start this journey</string>
     <string name="home_journey_body">One decision, and the hardest part is behind you.</string>
     <string name="home_journey_start">Start</string>
@@ -209,6 +211,7 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="home_setup_button">Setup</string>
 
     <!-- Protection guard -->
+    <string name="guard_eyebrow">Action required</string>
     <string name="guard_title">Protection is OFF</string>
     <string name="guard_body">This app can\'t protect you right now because a required permission is turned off. Re-enable it below to continue. The app stays locked until protection is restored.</string>
     <string name="guard_enable_accessibility">Enable Accessibility (URL blocking)</string>
@@ -307,6 +310,7 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="uninstall_info_got_it">Got it — let\'s start</string>
 
     <!-- Inbox confirmation screen (shown once after first sign-in) -->
+    <string name="inbox_confirm_eyebrow">One more step</string>
     <string name="inbox_confirm_headline">Your Rescue starts in your inbox.</string>
     <string name="inbox_confirm_headline_named">%1$s, your Rescue starts in your inbox.</string>
     <string name="inbox_confirm_subtext">We\'ve sent a link to %1$s. Open your email and tap the link inside — your protection activates the moment you do.</string>

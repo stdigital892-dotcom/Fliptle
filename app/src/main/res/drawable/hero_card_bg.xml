@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Hero / teaser card background: mirrors fliptle.com's .app-teaser treatment —
+  dark panel ground with a red-tinted gradient wash from the top-left, framed
+  by a hairline border. The site uses:
+    background: linear-gradient(160deg, rgba(255,34,51,.10), rgba(0,0,0,0) 45%), #0a0a10;
+    border: 1px solid rgba(255,255,255,.09); border-radius: 24px;
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Dark base + red wash: a layer-list stacks a tinted gradient over the
+         solid panel; stroke lives on the top shape so the border isn't washed out. -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/panel_deep" />
+            <corners android:radius="18dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="315"
+                android:startColor="#1AFF2233"
+                android:centerColor="#0DFF2233"
+                android:endColor="#00FF2233"
+                android:centerX="0.3"
+                android:centerY="0.3" />
+            <corners android:radius="18dp" />
+            <stroke android:width="1dp" android:color="@color/border" />
+        </shape>
+    </item>
+</layer-list>

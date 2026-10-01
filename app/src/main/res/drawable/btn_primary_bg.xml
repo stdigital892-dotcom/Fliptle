@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Primary-button background usable OUTSIDE the Activity theme (e.g. WindowManager
+  overlays inflated by Services, which don't inherit Theme.HelloApp). Mirrors
+  Widget.Fliptle.Button.Primary visually: accent fill, 14dp radius, deeper red
+  on press. The theme's shadow-glow is per-view (elevation + outlineSpotShadowColor)
+  so can't be baked into the drawable itself.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/accent_press" />
+            <corners android:radius="14dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/accent" />
+            <corners android:radius="14dp" />
+        </shape>
+    </item>
+</selector>

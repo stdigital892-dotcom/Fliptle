@@ -1,27 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  URL-blocked overlay (UrlBlockAccessibilityService). WindowManager overlay, no
+  Activity theme — fonts and colors set explicitly.
+-->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#E6000000"
+    android:background="#E6060608"
     android:gravity="center"
     android:orientation="vertical"
     android:padding="32dp">
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:text="@string/url_blocked_title"
-        android:textColor="#C98A3F"
-        android:textSize="26sp"
-        android:textStyle="bold" />
+        android:textColor="@color/accent"
+        android:fontFamily="@font/anton_regular"
+        android:textAllCaps="true"
+        android:letterSpacing="0.01"
+        android:lineSpacingMultiplier="1.0"
+        android:textSize="40sp" />
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
         android:text="@string/url_blocked_subtitle"
-        android:textColor="#DDDDDD"
+        android:textColor="#D7D7DE"
+        android:fontFamily="@font/inter_light"
+        android:lineSpacingMultiplier="1.5"
         android:textSize="16sp" />
 
 </LinearLayout>

@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Home screen. Design pulled from fliptle.com's header + .app-teaser block:
+  Anton wordmark top-left with a red dot, hero streak card framed like .app-teaser,
+  Anton numeric counter in accent red mirroring .count-num. The two sections
+  (startSection / statusSection) are toggled by HomeActivity depending on
+  whether the user has started their protection journey — no logic change here,
+  only styling.
+-->
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -9,19 +17,23 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="22dp">
 
-        <!-- Wordmark slot — left blank until a name is chosen (still tap target for dev unlock). -->
+        <!-- Wordmark slot — the brand lives here. The id/listener behavior
+             (hidden tap target for dev unlock) is unchanged; only the type
+             treatment is upgraded to the site's Anton pill-style brand. -->
         <TextView
             android:id="@+id/homeTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minWidth="64dp"
-            android:minHeight="20dp"
+            android:minWidth="80dp"
+            android:minHeight="24dp"
             android:text=""
-            android:textColor="@color/accent_ico"
-            android:textSize="15sp"
-            android:textStyle="bold" />
+            android:textColor="@color/ink"
+            android:fontFamily="@font/anton_regular"
+            android:textAllCaps="true"
+            android:letterSpacing="0.06"
+            android:textSize="22sp" />
 
         <!-- First launch: single action -->
         <LinearLayout
@@ -32,14 +44,21 @@
             android:visibility="gone">
 
             <TextView
+                style="@style/Text.Eyebrow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="48dp"
+                android:text="@string/home_eyebrow_begin" />
+
+            <TextView
                 style="@style/Text.Display"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="56dp"
+                android:layout_marginTop="12dp"
                 android:text="@string/home_journey_title" />
 
             <TextView
-                style="@style/Text.Body"
+                style="@style/Text.Lead"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
@@ -54,7 +73,7 @@
                 android:text="@string/home_journey_start" />
         </LinearLayout>
 
-        <!-- Returning: status + two actions -->
+        <!-- Returning: hero streak card + two actions -->
         <LinearLayout
             android:id="@+id/statusSection"
             android:layout_width="match_parent"
@@ -62,31 +81,48 @@
             android:orientation="vertical"
             android:visibility="gone">
 
-            <TextView
-                android:id="@+id/pornDayText"
+            <!-- Hero streak card — mirrors fliptle.com's .app-teaser treatment -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="48dp"
-                android:textColor="@color/ink"
-                android:fontFamily="sans-serif"
-                android:textStyle="bold"
-                android:textSize="40sp"
-                android:letterSpacing="-0.02"
-                android:lineSpacingMultiplier="1.0" />
+                android:layout_marginTop="36dp"
+                android:background="@drawable/hero_card_bg"
+                android:orientation="vertical"
+                android:padding="24dp">
 
-            <TextView
-                android:id="@+id/freezeStatusText"
-                style="@style/Text.Caption"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp" />
+                <TextView
+                    style="@style/Text.Eyebrow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/home_eyebrow_protected" />
+
+                <!-- Big day counter: Anton, accent-red, matches .count-num -->
+                <TextView
+                    android:id="@+id/pornDayText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textColor="@color/accent"
+                    android:fontFamily="@font/anton_regular"
+                    android:textAllCaps="true"
+                    android:textSize="56sp"
+                    android:letterSpacing="0.01"
+                    android:lineSpacingMultiplier="0.95" />
+
+                <TextView
+                    android:id="@+id/freezeStatusText"
+                    style="@style/Text.Caption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp" />
+            </LinearLayout>
 
             <Button
                 android:id="@+id/setupButton"
                 style="@style/Widget.Fliptle.Button.Secondary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="40dp"
+                android:layout_marginTop="24dp"
                 android:text="@string/home_setup_button" />
 
             <Button

@@ -11,6 +11,7 @@
     <color name="graphite">#060608</color>       <!-- app background (CSS --bg) -->
     <color name="bg_deep">#0B0B10</color>         <!-- deeper band gradient stop (CSS --bg2) -->
     <color name="surface">#0F0F13</color>         <!-- cards, solid approximation of rgba(255,255,255,.04) over bg -->
+    <color name="panel_deep">#0A0A10</color>      <!-- app-teaser dark panel (CSS: #0a0a10 under red wash) -->
     <color name="elevated">#16161B</color>        <!-- secondary buttons / chips / pressed -->
     <color name="border">#1F1F26</color>          <!-- hairlines (approx CSS --line rgba(255,255,255,.09)) -->
 

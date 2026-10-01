@@ -1,26 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  App-blocked overlay (BlockingService). Inflated via WindowManager from a
+  Service — carries no Activity theme — so fonts, colors and button bg must be
+  set explicitly rather than inherited from Theme.HelloApp.
+-->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F2000000"
+    android:background="#F2060608"
     android:gravity="center"
     android:orientation="vertical"
     android:padding="32dp">
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:text="@string/blocked_overlay_title"
-        android:textColor="#C98A3F"
-        android:textSize="28sp"
-        android:textStyle="bold" />
+        android:textColor="@color/accent"
+        android:fontFamily="@font/anton_regular"
+        android:textAllCaps="true"
+        android:letterSpacing="0.01"
+        android:lineSpacingMultiplier="1.0"
+        android:textSize="44sp" />
 
     <Button
         android:id="@+id/returnHomeButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:text="@string/return_home" />
+        android:layout_marginTop="36dp"
+        android:background="@drawable/btn_primary_bg"
+        android:fontFamily="@font/inter_extrabold"
+        android:letterSpacing="0.01"
+        android:minHeight="56dp"
+        android:paddingLeft="36dp"
+        android:paddingRight="36dp"
+        android:paddingTop="18dp"
+        android:paddingBottom="18dp"
+        android:text="@string/return_home"
+        android:textAllCaps="false"
+        android:textColor="@color/on_accent"
+        android:textSize="18sp" />
 
 </LinearLayout>
