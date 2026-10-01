@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Contact — RESCUE</title>
-<meta name="description" content="Get in touch with the Rescue team." />
+<title>Delete Account — RESCUE</title>
+<meta name="description" content="How to delete your Rescue account and data." />
 <meta name="theme-color" content="#060608" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -48,42 +48,29 @@ header{
 .brand span{color:var(--accent)}
 .back-link{font-size:.82rem;color:var(--muted);font-weight:500}
 
-/* ---- HERO ---- */
-.hero{
-  padding:76px 0 60px;text-align:center;
-  background:radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255,34,51,.18), transparent 60%), var(--bg);
+/* ---- LEGAL HERO ---- */
+.legal-hero{
+  padding:64px 0 40px;text-align:left;
+  background:radial-gradient(ellipse 70% 60% at 15% -10%, rgba(255,34,51,.16), transparent 60%), var(--bg);
 }
-.hero h1{font-size:clamp(2.4rem,8vw,3.6rem);margin-bottom:16px}
-.hero p{color:#d0d0da;font-size:clamp(1rem,2.4vw,1.15rem);font-weight:300;max-width:480px;margin:0 auto}
+.legal-hero h1{font-size:clamp(2rem,6vw,3rem);margin-bottom:10px}
 
-/* ---- CONTACT CARD ---- */
-.contact-wrap{max-width:520px;margin:0 auto;padding:0 20px 90px}
-.contact-card{
-  background:var(--panel);border:1px solid var(--line);border-radius:20px;
-  padding:36px 32px;text-align:center;
+/* ---- LEGAL CONTENT ---- */
+.legal{max-width:760px;margin:0 auto;padding:0 20px 80px}
+.legal h2{font-size:1.35rem;font-weight:800;letter-spacing:-.01em;margin:42px 0 14px;color:#fff;scroll-margin-top:80px}
+.legal h2:first-of-type{margin-top:0}
+.legal p{color:#c5c5d0;font-size:.96rem;line-height:1.75;margin-bottom:14px}
+.legal ul,.legal ol{margin:0 0 16px 1.35em;color:#c5c5d0;font-size:.96rem;line-height:1.75}
+.legal li{margin-bottom:10px}
+.legal a.inline{color:#ff6a6a;text-decoration:underline;text-decoration-color:rgba(255,34,51,.4)}
+.legal a.inline:hover{text-decoration-color:#ff6a6a}
+.legal strong{color:#fff;font-weight:700}
+.legal .warn{
+  background:rgba(255,34,51,.07);border:1px solid rgba(255,34,51,.28);border-left:3px solid var(--accent);
+  border-radius:10px;padding:4px 18px;margin:0 0 20px;
 }
-.contact-icon{font-size:2.2rem;margin-bottom:16px}
-.email-btn{
-  display:inline-block;background:var(--accent);color:#fff;
-  font-family:'Inter',sans-serif;font-weight:800;font-size:1.1rem;
-  padding:17px 40px;border-radius:14px;margin:8px 0 20px;
-  box-shadow:0 10px 34px rgba(255,34,51,.45);transition:transform .25s,box-shadow .25s;
-}
-.email-btn:hover{transform:translateY(-3px);box-shadow:0 16px 46px rgba(255,34,51,.6)}
-.contact-note{color:var(--muted);font-size:.92rem;line-height:1.7;max-width:400px;margin:0 auto}
-.contact-note strong{color:#e7e7ee}
-
-.what-for{max-width:520px;margin:36px auto 0;text-align:left}
-.what-for p.label{
-  font-size:.72rem;letter-spacing:.24em;text-transform:uppercase;font-weight:700;
-  color:var(--accent);margin-bottom:14px;text-align:center;
-}
-.what-for ul{list-style:none;display:flex;flex-direction:column;gap:10px}
-.what-for li{
-  display:flex;gap:10px;align-items:flex-start;color:#c5c5d0;font-size:.92rem;
-  background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 16px;
-}
-.what-for li::before{content:'✓';color:var(--accent);font-weight:800;flex:0 0 auto}
+.legal .warn ul{margin-left:1.35em}
+.legal .warn li:last-child{margin-bottom:0}
 
 /* ---- FOOTER ---- */
 footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line);color:var(--muted);font-size:.8rem}
@@ -103,31 +90,40 @@ footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line)
 </header>
 
 <!-- ======= HERO ======= -->
-<section class="hero">
+<section class="legal-hero">
   <div class="wrap">
-    <h1 class="display">Get in touch.</h1>
-    <p>One inbox, one small team. If you email us, a real person reads it.</p>
+    <span class="eyebrow">Legal</span>
+    <h1 class="display">Delete your Rescue account</h1>
   </div>
 </section>
 
-<!-- ======= CONTACT ======= -->
-<div class="contact-wrap">
-  <div class="contact-card">
-    <div class="contact-icon">✉️</div>
-    <a href="mailto:sales@fliptle.com" class="email-btn">sales@fliptle.com</a>
-    <p class="contact-note">Rescue is a small, independently-run app. Response times may vary, but <strong>every email is read</strong> — billing questions, bug reports, feature requests, or just to say hi.</p>
-  </div>
+<!-- ======= CONTENT ======= -->
+<div class="legal">
 
-  <div class="what-for">
-    <p class="label">Email us about</p>
+  <h2 id="in-the-app">In the app</h2>
+  <ol>
+    <li>Open Rescue and go to Account.</li>
+    <li>Tap Delete my account and confirm.</li>
+    <li>Your account and data are deleted 72 hours later. Until then you can tap Cancel deletion in the same place.</li>
+  </ol>
+
+  <h2 id="by-email">By email</h2>
+  <p>Email <a href="mailto:sales@fliptle.com" class="inline">sales@fliptle.com</a> from the address you signed up with, and we will start the same process.</p>
+
+  <h2 id="what-is-deleted">What is deleted</h2>
+  <p>Your account and sign-in, your settings and progress, your plan selection and subscription record, your protection and install records, and your waitlist entry for that email.</p>
+
+  <h2 id="what-is-kept">What is kept</h2>
+  <p>Payment records may be kept as the law requires. Razorpay also keeps its own records.</p>
+
+  <h2 id="important">Important</h2>
+  <div class="warn">
     <ul>
-      <li>Billing, subscriptions, or a refund question</li>
-      <li>Privacy — accessing, correcting, or deleting your data</li>
-      <li>A bug, a crash, or something that feels broken</li>
-      <li>Feature ideas — including the upcoming accountability partner feature</li>
-      <li>Anything else — we'd genuinely like to hear it</li>
+      <li>Payments are not refundable.</li>
+      <li>Deleting your account does not remove Rescue from your phone. Protection that is already on stays active until you uninstall the app from Android settings.</li>
     </ul>
   </div>
+
 </div>
 
 <!-- ======= FOOTER ======= -->
