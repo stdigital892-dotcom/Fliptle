@@ -56,3 +56,11 @@ jobs:
           name: app-debug
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      # Verify the RELEASE variant compiles on every push. No signing secrets:
+      # with RELEASE_KEYSTORE_PATH unset, app/build.gradle simply produces an
+      # unsigned release APK. This runs after the debug APK is uploaded, so the
+      # debug build and its artifact are unaffected; a release failure only turns
+      # the run red. Nothing here is uploaded or published.
+      - name: Compile release variant (unsigned, no secrets)
+        run: ./gradlew assembleRelease --stacktrace
