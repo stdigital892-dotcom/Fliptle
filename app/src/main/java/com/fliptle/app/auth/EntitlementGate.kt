@@ -2,6 +2,7 @@ package com.fliptle.app.auth
 
 import android.content.Context
 import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.FirebaseFunctionsException
 
@@ -56,10 +57,18 @@ object EntitlementGate {
         }
         val functions = FirebaseFunctions.getInstance(REGION)
         val store = EntitlementStore(context.applicationContext)
+        // Remember who asked. If the account changes while the request is in
+        // flight, its answer belongs to the previous account and must not be
+        // written into the store the new account reads.
+        val uidAtCall = FirebaseAuth.getInstance().currentUser?.uid
 
         functions.getHttpsCallable("getEntitlement")
             .call() // no args — server reads email from auth token
             .addOnSuccessListener { httpsResult ->
+                if (FirebaseAuth.getInstance().currentUser?.uid != uidAtCall) {
+                    onResult(Result.TransientError("Account changed during check"))
+                    return@addOnSuccessListener
+                }
                 val data = httpsResult.data as? Map<*, *>
                 if (data == null) {
                     Log.w(TAG, "getEntitlement: unexpected non-map response")

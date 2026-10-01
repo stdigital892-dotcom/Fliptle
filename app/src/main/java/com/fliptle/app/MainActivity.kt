@@ -42,63 +42,34 @@ class MainActivity : AppCompatActivity() {
         // pick up any change.
         EntitlementGate.check(this) { /* result already persisted to store */ }
 
-        // Steps that use a simple class reference (no extra data).
+        // ---- Routing chain: the first gate that fails decides the screen ----
+        //   1. Not signed in, onboarding not done -> Intro, then Sign-in
+        //   2. Not signed in, onboarding done      -> Sign-in
+        //   3. Signed in but the paywall is not cleared (inbox-confirm not seen,
+        //      or not ENTITLED; also the renewal screen for an expired plan)
+        //                                           -> InboxConfirmActivity
+        //   4. Onboarding not done                 -> permission steps (Usage first)
+        //   5. A permission was revoked later      -> ProtectionGuardActivity
+        //   6. Uninstall-info not seen yet         -> UninstallInfoActivity
+        //   7. Everything clear                    -> Home
+        // The paywall (3) sits BEFORE every permission step (4, 5), so a user
+        // without a plan is never asked for a permission. A failed network check
+        // never writes to the entitlement store, so it can't flip a verified
+        // user out of ENTITLED; only an explicit server answer does.
+        val onboarded = OnboardingState(this).complete
         val destination = when {
-            !OnboardingState(this).complete -> OnboardingActivity::class.java
-            // Skip the permissions nag for a DENIED user — re-enabling
-            // accessibility/overlay accomplishes nothing while the paywall
-            // gate has enforcement paused, so send them to the renewal
-            // screen (below) instead of asking them to fix a permission for
-            // a service that's deliberately not acting on anything right
-            // now. DENIED can only be set for a currently-signed-in user
-            // (EntitlementStore is cleared on sign-out), so this can't skip
-            // a genuine sign-in requirement.
-            !entitlementDenies && !Permissions.allEnforcementGranted(this) ->
-                ProtectionGuardActivity::class.java
+            !AuthGate.signedIn(this) && !onboarded -> OnboardingActivity::class.java
             AuthGate.required(this) -> com.fliptle.app.auth.SignInActivity::class.java
-            else -> null
+            !PaywallGate.open(this) -> {
+                routeToInboxConfirm()
+                return
+            }
+            !onboarded -> OnboardingActivity::class.java
+            !Permissions.allEnforcementGranted(this) -> ProtectionGuardActivity::class.java
+            !store.uninstallInfoSeen -> UninstallInfoActivity::class.java
+            else -> HomeActivity::class.java
         }
-        if (destination != null) {
-            startActivity(Intent(this, destination))
-            finish()
-            return
-        }
-
-        // Inbox-confirm screen: shown once per account and needs the email extra.
-        // Catches already-signed-in users who haven't seen it yet (e.g. testers
-        // who installed before this feature shipped, or reinstalls where the local
-        // flag was cleared but the Firestore flag hasn't been restored yet).
-        if (!store.inboxConfirmShown) {
-            routeToInboxConfirm()
-            return
-        }
-
-        // ---- Entitlement gate ----
-        // Only ENTITLED lets the user into Home. DENIED sends them back to
-        // InboxConfirmActivity, which now doubles as the renewal screen (its
-        // Continue button stays hidden until entitlement flips green from
-        // getEntitlement's poll). UNKNOWN means we've never had a successful
-        // server response on this device: safer to also route through the
-        // confirm screen, which will poll and update the store, than to let
-        // an unverified user reach Home and (potentially) enable protection
-        // features. This is only reached AFTER inboxConfirmShown, so the
-        // familiar "check your email → confirm" flow is the fallback.
-        if (entitlement.state != EntitlementStore.State.ENTITLED) {
-            routeToInboxConfirm()
-            return
-        }
-
-        // Shown exactly once, right after onboarding AND the entitlement gate
-        // both clear — the moment the user is about to reach Home for the
-        // first time — rather than blocking the path to first use earlier in
-        // onboarding. Still unskippable when it appears.
-        if (!store.uninstallInfoSeen) {
-            startActivity(Intent(this, UninstallInfoActivity::class.java))
-            finish()
-            return
-        }
-
-        startActivity(Intent(this, HomeActivity::class.java))
+        startActivity(Intent(this, destination))
         finish()
     }
 

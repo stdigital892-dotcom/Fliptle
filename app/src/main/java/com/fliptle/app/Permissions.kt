@@ -7,9 +7,6 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.text.TextUtils
 import com.fliptle.app.accessibility.UrlBlockAccessibilityService
-import com.fliptle.app.auth.EntitlementStore
-import com.fliptle.app.auth.InboxConfirmActivity
-import com.google.firebase.auth.FirebaseAuth
 
 /** Central status checks for the permissions the app's features rely on. */
 object Permissions {
@@ -44,16 +41,10 @@ object Permissions {
      * DENIED user.
      */
     fun gate(activity: Activity): Boolean {
+        // The paywall comes first: a user who has not cleared it must never be
+        // asked for a permission, so it goes to the inbox/renewal screen instead.
+        if (!PaywallGate.gate(activity)) return false
         if (allEnforcementGranted(activity)) return true
-        if (EntitlementStore(activity).state == EntitlementStore.State.DENIED) {
-            val email = FirebaseAuth.getInstance().currentUser?.email ?: ""
-            activity.startActivity(
-                Intent(activity, InboxConfirmActivity::class.java)
-                    .putExtra(InboxConfirmActivity.EXTRA_EMAIL, email)
-            )
-            activity.finish()
-            return false
-        }
         activity.startActivity(Intent(activity, ProtectionGuardActivity::class.java))
         activity.finish()
         return false

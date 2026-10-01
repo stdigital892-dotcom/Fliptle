@@ -22,6 +22,10 @@ import com.google.firebase.auth.FirebaseAuth
  */
 object AuthGate {
 
+    /** True when a Firebase user is actually signed in (false if Firebase is not configured). */
+    fun signedIn(context: Context): Boolean =
+        FirebaseGate.isAvailable(context) && FirebaseAuth.getInstance().currentUser != null
+
     /** True when the user must sign in before continuing. */
     fun required(context: Context): Boolean {
         if (!FirebaseGate.isAvailable(context)) return false // cannot sign in at all

@@ -197,15 +197,15 @@ class SignInActivity : AppCompatActivity() {
     // ---- Shared ----
 
     private fun onSignedIn(method: String) {
+        // FIRST, before anything else: never let a stale entitlement cache from
+        // whichever account was previously signed in on this device leak into a
+        // fresh sign-in. EntitlementStore is a single unscoped local cache, not
+        // keyed by UID/email. Clearing here forces the gate to start from
+        // UNKNOWN and wait for a real getEntitlement response before
+        // InboxConfirmActivity can ever show "Continue" for this account.
+        EntitlementStore(this).clear()
         val user = auth?.currentUser ?: return
         showProfileStep()
-        // Never let a stale entitlement cache from whichever account was
-        // previously signed in on this device leak into a fresh sign-in —
-        // EntitlementStore is a single unscoped local cache, not keyed by
-        // UID/email. Clearing here forces InboxConfirmActivity to start from
-        // UNKNOWN and wait for a real getEntitlement response before it can
-        // ever show "Continue" for this account.
-        EntitlementStore(this).clear()
         // Re-sync this account's progress from the cloud (restores after a reinstall
         // or a previous sign-out; a no-op for a brand-new account).
         CloudState.restore(this) {}
@@ -369,36 +369,17 @@ class SignInActivity : AppCompatActivity() {
     }
 
     /**
-     * Continue after the profile step. If first-run onboarding hasn't finished
-     * yet, this screen was reached mid-onboarding (from OnboardingActivity's
-     * sign-in step) — just finish() and let OnboardingActivity, sitting paused
-     * underneath in the back stack, resume its own step sequence. Using the
-     * CLEAR_TASK routing below in that case would wipe OnboardingActivity out
-     * of the back stack entirely, forcing it to restart from Intro later.
-     * Otherwise (a returning user signing in on an already-onboarded device),
-     * route through inbox-confirm (shown once per account) or straight to
-     * MainActivity.
+     * Continue after the profile step: always hand off to MainActivity, which
+     * routes through the gate chain (inbox-confirm / paywall before any
+     * permission step). Starting it with CLEAR_TASK also drops any stale
+     * onboarding screen from the back stack; onboarding resumes later at the
+     * permission steps once the user is entitled.
      */
     private fun proceed() {
-        if (!OnboardingState(this).complete) {
-            finish()
-            return
-        }
-        if (!AuthStore(this).inboxConfirmShown) {
-            startActivity(
-                Intent(this, InboxConfirmActivity::class.java)
-                    .putExtra(InboxConfirmActivity.EXTRA_EMAIL, auth?.currentUser?.email ?: "")
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            )
-            finish()
-            return
-        }
-        if (isTaskRoot) {
-            startActivity(
-                Intent(this, MainActivity::class.java)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            )
-        }
+        startActivity(
+            Intent(this, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        )
         finish()
     }
 

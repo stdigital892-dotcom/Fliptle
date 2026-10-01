@@ -65,8 +65,12 @@ class OnboardingActivity : AppCompatActivity() {
 
         tutorialButton.setOnClickListener { openTutorial() }
         actionButton.setOnClickListener { onAction() }
-        backButton.setOnClickListener { if (step > STEP_INTRO) { step--; render() } }
+        backButton.setOnClickListener { if (step > firstStep()) { step--; render() } }
         nextButton.setOnClickListener { onNext() }
+
+        // A signed-in user who has not cleared the paywall never sees a
+        // permission step: MainActivity holds them on the inbox screen.
+        if (routeIfUnpaid()) return
 
         // If onboarding was already completed but a permission is now missing,
         // resume directly at the first missing permission step.
@@ -77,12 +81,28 @@ class OnboardingActivity : AppCompatActivity() {
                 return
             }
             step = missing
+        } else {
+            step = firstStep()
         }
         render()
     }
 
+    /** Signed in means Intro and Sign-in are behind us (and the paywall was
+     *  cleared to get here), so the flow begins at the first permission step. */
+    private fun firstStep(): Int = if (AuthGate.signedIn(this)) STEP_USAGE else STEP_INTRO
+
+    /** True (and leaves) if the user is signed in but has not cleared the paywall. */
+    private fun routeIfUnpaid(): Boolean {
+        if (!AuthGate.signedIn(this) || PaywallGate.open(this)) return false
+        routeThroughMain()
+        return true
+    }
+
     override fun onResume() {
         super.onResume()
+        // Covers system-Back landing here from the profile screen before the
+        // paywall is cleared.
+        if (routeIfUnpaid()) return
         render() // refresh permission status after returning from a settings screen
     }
 
@@ -173,7 +193,7 @@ class OnboardingActivity : AppCompatActivity() {
     }
 
     private fun render() {
-        backButton.visibility = if (step > STEP_INTRO) View.VISIBLE else View.GONE
+        backButton.visibility = if (step > firstStep()) View.VISIBLE else View.GONE
         actionButton.visibility = View.VISIBLE
         statusText.visibility = View.VISIBLE
         // The tutorial link — and the atmospheric Welcome illustration — belong on

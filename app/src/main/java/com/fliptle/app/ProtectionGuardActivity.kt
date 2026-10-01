@@ -22,6 +22,9 @@ class ProtectionGuardActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // BlockingService can launch this directly; it must never appear for a
+        // user who has not cleared the paywall.
+        if (!PaywallGate.gate(this)) return
         setContentView(R.layout.activity_protection_guard)
 
         findViewById<Button>(R.id.enableAccessibilityButton).setOnClickListener {
@@ -55,6 +58,7 @@ class ProtectionGuardActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        if (!PaywallGate.gate(this)) return
         // Protection fully restored — hand off to MainActivity's routing chain
         // rather than jumping straight to Home; a user whose entitlement
         // lapsed while permissions were being re-granted still has to clear

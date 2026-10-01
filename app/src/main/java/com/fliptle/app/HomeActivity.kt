@@ -44,28 +44,13 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Compulsory permissions: if any is missing, bounce to the guard.
+        // Paywall first, then compulsory permissions (both inside Permissions.gate):
+        // a user without a plan goes to the inbox/renewal screen, an entitled user
+        // with a missing permission goes to the guard.
         if (!Permissions.gate(this)) return
         // Sign-in is mandatory; an unauthenticated user is sent to sign in.
         if (!AuthGate.gate(this)) return
-        // Paywall backstop: a user who hasn't seen the inbox-confirm screen or
-        // isn't ENTITLED must not reach Home even if some other path lands here
-        // directly (bypassing MainActivity's routing). Fail safe — route back
-        // through MainActivity, which will send them to InboxConfirmActivity
-        // (shown the "Take me to my email" + polling-paywall flow) and refuse
-        // to come back here until entitlement.state == ENTITLED.
         val authStore = com.fliptle.app.auth.AuthStore(this)
-        val entitlement = com.fliptle.app.auth.EntitlementStore(this)
-        if (!authStore.inboxConfirmShown ||
-            entitlement.state != com.fliptle.app.auth.EntitlementStore.State.ENTITLED
-        ) {
-            startActivity(
-                Intent(this, MainActivity::class.java)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            )
-            finish()
-            return
-        }
         // Unskippable once-per-account uninstall-process explainer.
         if (!authStore.uninstallInfoSeen) {
             startActivity(android.content.Intent(this, UninstallInfoActivity::class.java))
@@ -110,22 +95,6 @@ class HomeActivity : AppCompatActivity() {
         // Re-check on every return; a revoked permission blocks the main flow.
         if (!Permissions.gate(this)) return
         if (!AuthGate.gate(this)) return
-        // Mirror the paywall backstop in onCreate — a user whose entitlement
-        // flipped to DENIED (or was never ENTITLED) while they were away is
-        // sent back through MainActivity's gate chain and lands on
-        // InboxConfirmActivity, which polls getEntitlement every 5s.
-        val authStore = com.fliptle.app.auth.AuthStore(this)
-        val entitlement = com.fliptle.app.auth.EntitlementStore(this)
-        if (!authStore.inboxConfirmShown ||
-            entitlement.state != com.fliptle.app.auth.EntitlementStore.State.ENTITLED
-        ) {
-            startActivity(
-                Intent(this, MainActivity::class.java)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            )
-            finish()
-            return
-        }
         com.fliptle.app.auth.Heartbeat.beat(this)
         handler.post(tick)
     }
