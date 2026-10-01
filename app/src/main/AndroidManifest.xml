@@ -63,10 +63,6 @@
             android:exported="false" />
 
         <activity
-            android:name=".accessibility.AccessibilityDisclosureActivity"
-            android:exported="false" />
-
-        <activity
             android:name=".BlocklistStatusActivity"
             android:exported="false" />
 

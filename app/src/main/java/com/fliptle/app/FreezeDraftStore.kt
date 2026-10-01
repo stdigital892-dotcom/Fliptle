@@ -14,9 +14,7 @@ import com.fliptle.app.accessibility.SurfaceBlocklist
  * returning user starts from their current choices. After a commit it is reset,
  * so the next wizard run seeds from the (now-live) values again.
  *
- * Only user-chosen domains are held here. The built-in test domains are always
- * enforced but are not a user choice, so they never count toward the "at least
- * one item" rule.
+ * Only user-chosen domains are held here (there are no built-in domains).
  */
 class FreezeDraftStore(context: Context) {
 

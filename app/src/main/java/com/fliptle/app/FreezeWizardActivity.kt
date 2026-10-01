@@ -117,13 +117,8 @@ class FreezeWizardActivity : AppCompatActivity() {
         domainAdapter = DomainAdapter()
         domainList.adapter = domainAdapter
         domainList.setOnItemClickListener { _, _, position, _ ->
-            val domain = domainRows[position]
-            if (DomainBlocklist(this).isBuiltIn(domain)) {
-                Toast.makeText(this, R.string.builtin_not_removable, Toast.LENGTH_SHORT).show()
-            } else {
-                userDomains.remove(domain)
-                refreshDomains()
-            }
+            userDomains.remove(domainRows[position])
+            refreshDomains()
         }
         findViewById<Button>(R.id.wizardAddDomainButton).setOnClickListener { addDomain() }
 
@@ -307,7 +302,7 @@ class FreezeWizardActivity : AppCompatActivity() {
     }
 
     private fun refreshDomains() {
-        domainRows = (DomainBlocklist.DEFAULT + userDomains).distinct().sorted()
+        domainRows = userDomains.sorted()
         domainAdapter.notifyDataSetChanged()
     }
 
@@ -320,10 +315,7 @@ class FreezeWizardActivity : AppCompatActivity() {
             val view = convertView ?: inflater.inflate(R.layout.item_domain_row, parent, false)
             val domain = domainRows[position]
             view.findViewById<TextView>(R.id.domainName).text = domain
-            view.findViewById<TextView>(R.id.domainHint).setText(
-                if (DomainBlocklist.DEFAULT.contains(domain)) R.string.wizard_domain_builtin
-                else R.string.wizard_domain_tap_remove
-            )
+            view.findViewById<TextView>(R.id.domainHint).setText(R.string.wizard_domain_tap_remove)
             return view
         }
     }

@@ -3,9 +3,9 @@ package com.fliptle.app
 import android.content.Context
 
 /**
- * The set of domains to block via DNS. Combines a small hardcoded test list with
- * user-added domains stored in SharedPreferences. A host matches if it equals a
- * blocked domain or is a subdomain of one (e.g. "www.example.com" -> "example.com").
+ * The set of domains the user chose to block, stored in SharedPreferences. A host
+ * matches if it equals a blocked domain or is a subdomain of one (e.g.
+ * "www.example.com" -> "example.com"). There are no built-in domains.
  */
 class DomainBlocklist(context: Context) {
 
@@ -15,10 +15,8 @@ class DomainBlocklist(context: Context) {
     fun userDomains(): Set<String> =
         HashSet(prefs.getStringSet(KEY_DOMAINS, emptySet()) ?: emptySet())
 
-    /** All active domains: built-in test list plus user-added. */
-    fun allDomains(): List<String> = (DEFAULT + userDomains()).distinct()
-
-    fun isBuiltIn(domain: String): Boolean = DEFAULT.contains(domain)
+    /** All active domains: the ones the user chose. */
+    fun allDomains(): List<String> = userDomains().toList()
 
     fun add(input: String) {
         val domain = normalize(input)
@@ -63,9 +61,5 @@ class DomainBlocklist(context: Context) {
 
     companion object {
         private const val KEY_DOMAINS = "domains"
-
-        // Small hardcoded test list. example.com is ideal for testing because it
-        // is a real, stable site that is easy to confirm as "blocked".
-        val DEFAULT: List<String> = listOf("example.com", "neverssl.com")
     }
 }

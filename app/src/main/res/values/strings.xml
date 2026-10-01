@@ -51,7 +51,6 @@
     <string name="domain_hint">Enter a domain, e.g. example.com</string>
     <string name="add_domain">Add Domain</string>
     <string name="enter_domain">Enter a domain first.</string>
-    <string name="builtin_not_removable">Built-in test domain — cannot be removed.</string>
 
     <string name="url_blocked_title">Blocked</string>
     <string name="url_blocked_subtitle">This page is blocked.</string>
@@ -60,11 +59,6 @@
     <string name="website_blocked_home">Go to home screen</string>
     <string name="a11y_service_label">Focus URL Blocking</string>
     <string name="a11y_service_description">Rescue reads the web address in browsers, and watches Instagram and YouTube for the Reels, Stories and Shorts players, only to block what you chose to block. Each is checked on your phone against your block list. Rescue does not record or upload the pages you visit, what is on your screen, or which apps you use. You can turn this off any time here, but Rescue can\'t protect you without it.</string>
-    <string name="a11y_disclosure_title">Website URL Blocking</string>
-    <string name="a11y_disclosure_body">This feature uses Android\'s Accessibility service to read the URL shown in your browser\'s address bar.\n\nWhat it does with that text:\n• Compares the current URL against your local blocklist.\n• If it matches, it navigates the browser away from the page and shows a brief \"Blocked\" notice.\n• For Google, Bing, and DuckDuckGo searches it enforces safe-search, and blocks searches containing banned keywords.\n• In Instagram and YouTube it detects specific surfaces you\'ve chosen to block (Instagram Reels and Stories, YouTube Shorts) and navigates away — the rest of those apps stays usable.\n\nImportant guarantees:\n• It reads the address bar of browser apps to block adult sites (always) and configured distraction surfaces.\n• It does NOT log, store, or transmit your browsing history — matching happens entirely on-device.\n• This is a separate, optional module. You can turn it off any time in Accessibility settings without affecting the rest of the app.</string>
-    <string name="a11y_open_settings">Open Accessibility Settings</string>
-    <string name="a11y_status_on">Status: ENABLED</string>
-    <string name="a11y_status_off">Status: not enabled — tap below to turn it on.</string>
 
     <string name="content_blocklist">Content Blocklist</string>
     <string name="blocklist_total">Total merged (unique): %1$d domains</string>
@@ -295,7 +289,6 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="wizard_apps_body">Choose the apps to block for the next 3 days. Nothing is locked until the last step.</string>
     <string name="wizard_domains_title">Block domains</string>
     <string name="wizard_domains_body">Add the websites to block. Tap one to remove it.</string>
-    <string name="wizard_domain_builtin">built-in</string>
     <string name="wizard_domain_tap_remove">tap to remove</string>
     <string name="wizard_surfaces_title">Shorts and Reels</string>
     <string name="wizard_surfaces_body">Block the full-screen Reels and Shorts players. The rest of Instagram and YouTube stays usable. Needs the Accessibility service to be on.</string>
