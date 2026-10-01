@@ -104,4 +104,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-config'
     implementation 'com.google.firebase:firebase-functions'
     implementation 'com.google.android.gms:play-services-auth:21.2.0'
+
+    // Local JVM unit tests (pure logic only, no Android framework)
+    testImplementation 'junit:junit:4.13.2'
 }

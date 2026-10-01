@@ -86,6 +86,17 @@ object EntitlementGate {
                 if (entitled) {
                     store.recordEntitled(reason, expiresAtMs, nowMs)
                     onResult(Result.Entitled(reason, expiresAtMs))
+                } else if (PendingDeletion.isDueFor(context, uidAtCall, nowMs)) {
+                    // This account's scheduled deletion has come due, so "not
+                    // entitled" is a side effect of its data being removed, not
+                    // a lapsed plan. Recording DENIED here would pause blocking.
+                    // Drop back to UNKNOWN instead: enforcement keeps running
+                    // (only an explicit DENIED suspends it), and a stale ENTITLED
+                    // can't keep the app's gate open. Applies ONLY to a deletion
+                    // that is due for the signed-in account; every other
+                    // "not entitled" (none, expired) is recorded exactly as before.
+                    store.clear()
+                    onResult(Result.TransientError("Account deletion is due"))
                 } else {
                     store.recordDenied(reason, nowMs)
                     onResult(Result.Denied(reason))

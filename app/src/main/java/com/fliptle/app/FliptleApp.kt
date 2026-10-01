@@ -23,6 +23,7 @@ class FliptleApp : Application() {
         HeartbeatWorker.schedule(this)
         EntitlementWorker.schedule(this)
         Heartbeat.beat(this) // check in on process start
+        com.fliptle.app.auth.AccountDeletionWatcher.start(this)
 
         if (FirebaseGate.isAvailable(this)) {
             try {

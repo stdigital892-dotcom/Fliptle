@@ -214,13 +214,17 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="auth_sign_out">Sign out</string>
     <string name="auth_sign_out_note">Your progress (porn-blocking streak, freeze, blocked apps and domains) is saved to your account and to this device. Signing out keeps all of it — signing back in re-syncs it from the cloud.</string>
     <string name="auth_delete_account">Delete my account</string>
-    <string name="delete_account_title">Delete your account?</string>
-    <string name="delete_account_warning">This is permanent and cannot be undone. Your account, subscription record, and everything tied to it will be permanently deleted. This does not remove the app or its on-device blocking from this phone — only your account and cloud data.</string>
-    <string name="delete_account_confirm">Delete permanently</string>
-    <string name="delete_account_cancel">Cancel</string>
-    <string name="delete_account_working">Deleting your account…</string>
-    <string name="delete_account_failed">Could not delete your account. Please try again.</string>
-    <string name="delete_account_failed_detail">Could not delete your account: %1$s</string>
+    <string name="deletion_confirm_title">Delete your account?</string>
+    <string name="deletion_confirm_body">Your account will be deleted in 72 hours. You can cancel any time before then.\n\nPayments are non-refundable.\n\nBlocking stays active on this phone until you uninstall the app from Android settings.</string>
+    <string name="deletion_confirm_yes">Schedule deletion</string>
+    <string name="deletion_confirm_no">Not now</string>
+    <string name="deletion_requesting">Scheduling…</string>
+    <string name="deletion_scheduled_toast">Deletion scheduled. You can cancel any time before it happens.</string>
+    <string name="deletion_request_failed">Could not schedule deletion: %1$s</string>
+    <string name="deletion_banner">Deletion scheduled for %1$s</string>
+    <string name="deletion_cancel_button">Cancel deletion</string>
+    <string name="deletion_cancelled">Deletion cancelled.</string>
+    <string name="deletion_cancel_failed">Could not cancel deletion: %1$s</string>
     <!-- Setup: combined Freeze section subtitle -->
     <string name="setup_freeze_caption">Blocked apps, blocked domains and in-app surfaces are all governed together by the 3-day freeze cycle.</string>
     <!-- Sign out warning -->

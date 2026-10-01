@@ -394,45 +394,63 @@ then redeploy so the function picks it up.
 
 ---
 
-## 7. Account deletion
+## 7. Account deletion (72-hour delay)
 
-`deleteAccount` (`onCall` v2, region `asia-south2`) is a self-service,
-permanent account-deletion endpoint, triggered from the "Delete my account"
-button in the Android app's Account screen (`SignInActivity`'s signed-in
-view, via `DeleteAccount.kt`).
+Deleting an account is scheduled, not instant. Three functions in
+`functions/index.js` (region `asia-south2`), with their logic in
+`functions/deletion.js`:
+
+| Function | Type | What it does |
+|---|---|---|
+| `requestAccountDeletion` | `onCall` | Writes `installs/{uid}.deletionScheduledFor` (server time + 72h). Deletes nothing. A repeat request keeps the existing time. |
+| `cancelAccountDeletion` | `onCall` | Clears the field. Refused once the time has passed. |
+| `executeScheduledDeletions` | `onSchedule`, every 1 hours | Deletes every account whose time has passed. |
 
 **Who it can delete:** only the caller's own account. `uid` and `email` come
-exclusively from `request.auth` (the caller's ID token) — never from any
-client-supplied field — so there is no request shape that lets a signed-in
-user delete a different account.
+exclusively from `request.auth` (the ID token), never from a request field.
 
-**What it deletes, in order:**
-1. `installs/{uid}` — recursively (`db.recursiveDelete`), because this
-   document has an `events` subcollection (install/reinstall history from
-   `InstallTracker`); a plain `delete()` would leave those orphaned. This is
-   also where the parent/accountability-partner contact phone number lives
-   today (`installs/{uid}.parentPhone`) — there is no separate partner-data
-   collection yet. **When one is built, delete it here too**, scoped by this
-   same uid/email, never a client-supplied identifier.
-2. `appSignups/{email}`, `planSelections/{email}`, `subscriptions/{email}` —
-   plain deletes; none have subcollections today. `delete()` on a doc that
-   doesn't exist is a safe no-op.
-3. The Firebase Auth user itself (`admin.auth().deleteUser(uid)`) — always
-   last, after data cleanup succeeds. If Firestore cleanup fails, the Auth
-   account is left intact so the user can retry from the app rather than
-   ending up with a deleted account and orphaned data.
+**What execution deletes, in this order (each step is safe to repeat):**
+1. Partner placeholders (`notifyPartnerOfDeletion`, `deletePartnerData`) - no-ops
+   today. **When the partner feature ships, `notifyPartnerOfDeletion` must send
+   the partner a "link ending" notice at request time.**
+2. `appSignups/{email}`, `planSelections/{email}`, `subscriptions/{email}`, and
+   the website `waitlist` docs where `email` equals the account email.
+3. `typing_gate/{uid}` and its subcollections.
+4. The Firebase Auth user (a missing user counts as already deleted).
+5. `installs/{uid}` and its subcollections, **last**: this document is what the
+   hourly job searches for, so it must survive until everything else is gone. If
+   any step fails, it survives and the next hourly run finishes the job.
 
-**Client-side, on success:** `DeleteAccount.kt` clears every local trace of
-the account — `EntitlementStore` (same as sign-out) plus a full
-`AuthStore.resetForAccountDeletion()` (phone, `uninstallInfoSeen`,
-`inboxConfirmShown` — everything sign-out deliberately leaves alone, because
-Firebase Auth never reuses a UID: even a fresh sign-up with the identical
-email afterward is a brand-new account and must go through the full
-first-time flow again) — then signs out of Firebase/Google and restarts
-through the launcher, which lands on the sign-in screen.
+The email comes from the Auth record, or from `installs.email` if the Auth user
+is already gone from an earlier attempt.
 
-No new secrets required — this function only uses the Admin SDK, which
-already has full access via the deployed service account.
+**Resurrection sweep:** a phone that is still signed in can hold a valid ID
+token for up to an hour and may re-create `installs/{uid}` (heartbeat or backup).
+After a deletion the job leaves a PII-free note in `deletionSweeps/{uid}` and
+deletes `installs/{uid}` again on later runs, removing the note after 2 hours.
+
+**On the phone:** the app caches the scheduled time with its uid
+(`PendingDeletion`). `EntitlementGate` uses it so that the "not entitled"
+answer an account gets once its data is removed is not recorded as DENIED (which
+would pause blocking); it drops the cache to UNKNOWN instead. This applies only
+to a deletion that is already due for the signed-in account. Once the account
+is gone the Firebase SDK signs the device out; `AccountDeletionWatcher` then
+does the sign-out cleanup plus `AuthStore.resetForAccountDeletion()`. Porn
+blocking, a running freeze, blocked apps and domains keep enforcing.
+
+**Cost:** one more Cloud Scheduler job (the second, after
+`flagStaleProtection`; 3 are free per billing account), about 720 invocations and
+720 Firestore reads a month.
+
+**Deploy:** `firebase deploy --only functions:requestAccountDeletion,functions:cancelAccountDeletion,functions:executeScheduledDeletions`
+
+**Remove the old instant function** (replaced by this flow):
+`firebase functions:delete deleteAccount --region asia-south2`
+
+**Firestore rules:** clients should not be able to write `deletionScheduledFor`
+directly; only these functions should.
+
+**Tests:** `cd functions && npm test` (server logic, with in-memory fakes).
 
 ---
 

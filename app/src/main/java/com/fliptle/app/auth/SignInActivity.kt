@@ -60,6 +60,9 @@ class SignInActivity : AppCompatActivity() {
     private lateinit var accountSection: LinearLayout
     private lateinit var accountEmailText: TextView
     private lateinit var accountDetailText: TextView
+    private lateinit var deletionBanner: TextView
+    private lateinit var cancelDeletionButton: Button
+    private lateinit var deleteAccountButton: Button
     private lateinit var authProgressSection: LinearLayout
     private lateinit var authProgressText: TextView
     private lateinit var authProgressBar: ProgressBar
@@ -100,6 +103,9 @@ class SignInActivity : AppCompatActivity() {
         accountSection = findViewById(R.id.accountSection)
         accountEmailText = findViewById(R.id.accountEmailText)
         accountDetailText = findViewById(R.id.accountDetailText)
+        deletionBanner = findViewById(R.id.deletionBanner)
+        cancelDeletionButton = findViewById(R.id.cancelDeletionButton)
+        deleteAccountButton = findViewById(R.id.deleteAccountButton)
         authProgressSection = findViewById(R.id.authProgressSection)
         authProgressText = findViewById(R.id.authProgressText)
         authProgressBar = findViewById(R.id.authProgressBar)
@@ -129,7 +135,8 @@ class SignInActivity : AppCompatActivity() {
         findViewById<Button>(R.id.emailSignInButton).setOnClickListener { signInEmail() }
         findViewById<Button>(R.id.continueProfileButton).setOnClickListener { continueProfile() }
         findViewById<Button>(R.id.signOutButton).setOnClickListener { signOut() }
-        findViewById<Button>(R.id.deleteAccountButton).setOnClickListener { DeleteAccount.confirm(this) }
+        deleteAccountButton.setOnClickListener { PendingDeletion.confirm(this) { refreshDeletionBanner() } }
+        cancelDeletionButton.setOnClickListener { PendingDeletion.cancel(this) { refreshDeletionBanner() } }
 
         // Already authenticated -> this is the Account screen, not a sign-in prompt.
         if (auth?.currentUser != null) showAccountState()
@@ -259,6 +266,33 @@ class SignInActivity : AppCompatActivity() {
             getString(R.string.auth_verified)
         } else {
             getString(R.string.auth_unverified)
+        }
+        refreshDeletionBanner()
+    }
+
+    /**
+     * Show the scheduled-deletion banner and Cancel button when the server says a
+     * deletion is scheduled (so it also appears after sign-out and sign-in), and
+     * the Delete button otherwise. A failed read leaves the screen as it was.
+     */
+    private fun refreshDeletionBanner() {
+        val uid = auth?.currentUser?.uid ?: return
+        renderDeletionBanner(PendingDeletion.cachedFor(this, uid))
+        PendingDeletion.fetch(this, uid) { ms, ok ->
+            if (ok) runOnUiThread { renderDeletionBanner(ms) }
+        }
+    }
+
+    private fun renderDeletionBanner(scheduledForMs: Long?) {
+        val scheduled = scheduledForMs != null
+        deletionBanner.visibility = if (scheduled) View.VISIBLE else View.GONE
+        cancelDeletionButton.visibility = if (scheduled) View.VISIBLE else View.GONE
+        deleteAccountButton.visibility = if (scheduled) View.GONE else View.VISIBLE
+        if (scheduledForMs != null) {
+            val whenText = java.text.DateFormat
+                .getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT)
+                .format(java.util.Date(scheduledForMs))
+            deletionBanner.text = getString(R.string.deletion_banner, whenText)
         }
     }
 

@@ -482,78 +482,135 @@ exports.getSubscription = onCall(
 );
 
 // ============================================================================
-// deleteAccount — permanent, self-service account deletion.
+// Account deletion, with a 72-hour delay.
 //
-// Auth REQUIRED. uid and email come ONLY from the caller's ID token
-// (request.auth), never from any client payload — this function has no
-// concept of a "target user" other than whoever is calling it, so there is
-// no code path by which a signed-in caller could delete someone else's
-// account even if they tried to pass a different id.
+//   requestAccountDeletion  — schedules it (writes deletionScheduledFor on
+//                             installs/{uid}); deletes nothing.
+//   cancelAccountDeletion   — clears it, any time before it is due.
+//   executeScheduledDeletions (hourly) — deletes accounts whose time has come.
 //
-// Order matters: Firestore data is deleted FIRST, the Auth identity LAST.
-// If the Firestore step throws, the Auth account still exists and the
-// client can tell the user to retry — better than an account that's gone
-// while its data lingers. If the Auth deletion step itself fails after data
-// cleanup already succeeded, that's logged for manual follow-up; it can't
-// be fully avoided without a cross-system transaction, which Firestore and
-// Firebase Auth don't offer.
+// The two callables read uid and email ONLY from the caller's ID token
+// (request.auth); there is no request field that names another account.
+// The logic lives in deletion.js (dependencies injected, unit-tested).
 // ============================================================================
-exports.deleteAccount = onCall(
+const deletion = require("./deletion");
+
+const deletionPartnerHooks = {
+  notifyPartnerOfDeletion: deletion.notifyPartnerOfDeletion,
+  deletePartnerData: deletion.deletePartnerData,
+};
+
+function requireSignedInWithEmail(request) {
+  if (!request.auth || !request.auth.token || !request.auth.token.email) {
+    throw new HttpsError("unauthenticated", "Sign in required.");
+  }
+  const email = String(request.auth.token.email).trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) {
+    throw new HttpsError("failed-precondition", "Auth token has no valid email.");
+  }
+  return { uid: request.auth.uid, email };
+}
+
+exports.requestAccountDeletion = onCall(
   { region: RAZORPAY_REGION },
   async (request) => {
-    if (!request.auth || !request.auth.token || !request.auth.token.email) {
-      throw new HttpsError("unauthenticated", "Sign in required.");
-    }
-    const uid = request.auth.uid;
-    const email = String(request.auth.token.email).trim().toLowerCase();
-    if (!EMAIL_RE.test(email)) {
-      throw new HttpsError("failed-precondition", "Auth token has no valid email.");
-    }
-
+    const { uid } = requireSignedInWithEmail(request);
     const db = admin.firestore();
+    const ref = db.doc("installs/" + uid);
+    const nowMs = admin.firestore.Timestamp.now().toMillis();
 
-    try {
-      // installs/{uid} has an `events` subcollection (see InstallTracker) — a
-      // plain delete() would leave it orphaned, so this recursively removes
-      // the doc and everything under it. This is also where the parent/
-      // accountability-partner contact phone lives today (there is no
-      // separate partner-data collection yet); when one exists, delete it
-      // here too, scoped by this same uid/email — never a client-supplied id.
-      await db.recursiveDelete(db.doc("installs/" + uid));
-
-      // Plain deletes: none of these have subcollections today. delete() on
-      // a doc that doesn't exist is a safe no-op, so no existence checks
-      // are needed before any of these.
-      await Promise.all([
-        db.doc("appSignups/" + email).delete(),
-        db.doc("planSelections/" + email).delete(),
-        db.doc("subscriptions/" + email).delete(),
-      ]);
-    } catch (e) {
-      logger.error("deleteAccount: Firestore cleanup failed", {
-        uid,
-        email,
-        message: e && e.message,
-      });
-      throw new HttpsError("internal", "Could not delete account data. Please try again.");
-    }
-
-    try {
-      await admin.auth().deleteUser(uid);
-    } catch (e) {
-      logger.error("deleteAccount: Auth user deletion failed after data was removed", {
-        uid,
-        email,
-        message: e && e.message,
-      });
-      throw new HttpsError(
-        "internal",
-        "Account data was deleted but the sign-in credential could not be removed. Please contact support."
+    // One transaction so two quick requests can't schedule twice. A request
+    // that finds a deletion already scheduled returns that time unchanged.
+    const scheduledForMs = await db.runTransaction(async (txn) => {
+      const snap = await txn.get(ref);
+      const existing = deletion.toMs((snap.data() || {}).deletionScheduledFor);
+      if (existing != null) return existing;
+      const when = deletion.computeScheduledForMs(nowMs);
+      txn.set(
+        ref,
+        {
+          deletionScheduledFor: admin.firestore.Timestamp.fromMillis(when),
+          deletionRequestedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
       );
+      return when;
+    });
+
+    try {
+      await deletion.notifyPartnerOfDeletion(uid);
+    } catch (e) {
+      logger.warn("requestAccountDeletion: partner notice failed", { uid, message: e && e.message });
     }
 
-    logger.info("Account deleted", { uid, email });
-    return { deleted: true };
+    logger.info("Account deletion scheduled", { uid, scheduledForMs });
+    return { scheduledForMs };
+  }
+);
+
+exports.cancelAccountDeletion = onCall(
+  { region: RAZORPAY_REGION },
+  async (request) => {
+    const { uid } = requireSignedInWithEmail(request);
+    const db = admin.firestore();
+    const ref = db.doc("installs/" + uid);
+    const nowMs = admin.firestore.Timestamp.now().toMillis();
+
+    await db.runTransaction(async (txn) => {
+      const snap = await txn.get(ref);
+      const scheduled = deletion.toMs((snap.data() || {}).deletionScheduledFor);
+      if (scheduled == null) return; // nothing scheduled: already cancelled
+      if (deletion.isDue(scheduled, nowMs)) {
+        throw new HttpsError("failed-precondition", "Deletion is already due and can no longer be cancelled.");
+      }
+      txn.update(ref, {
+        deletionScheduledFor: admin.firestore.FieldValue.delete(),
+        deletionRequestedAt: admin.firestore.FieldValue.delete(),
+      });
+    });
+
+    logger.info("Account deletion cancelled", { uid });
+    return { cancelled: true };
+  }
+);
+
+// Hourly: ~720 invocations a month (free tier: 2M). The query returns only
+// accounts that are due, so reads stay near one per run. A failure on one
+// account is logged and retried next hour; it never blocks the others.
+exports.executeScheduledDeletions = onSchedule(
+  { schedule: "every 1 hours", region: RAZORPAY_REGION, timeoutSeconds: 300 },
+  async () => {
+    const db = admin.firestore();
+    const deps = {
+      db,
+      auth: admin.auth(),
+      logger,
+      partner: deletionPartnerHooks,
+    };
+    const nowMs = admin.firestore.Timestamp.now().toMillis();
+
+    const due = await db
+      .collection("installs")
+      .where("deletionScheduledFor", "<=", admin.firestore.Timestamp.fromMillis(nowMs))
+      .limit(50)
+      .get();
+
+    for (const doc of due.docs) {
+      try {
+        await deletion.executeDeletion(deps, doc.id, nowMs);
+      } catch (e) {
+        logger.error("executeScheduledDeletions: failed, will retry next run", {
+          uid: doc.id,
+          message: e && e.message,
+        });
+      }
+    }
+
+    try {
+      await deletion.sweepResurrected(deps, nowMs);
+    } catch (e) {
+      logger.error("executeScheduledDeletions: sweep failed", { message: e && e.message });
+    }
   }
 );
 
