@@ -73,7 +73,7 @@ class OnboardingActivity : AppCompatActivity() {
         if (OnboardingState(this).complete) {
             val missing = firstMissingPermissionStep()
             if (missing < 0) {
-                goHome()
+                routeThroughMain()
                 return
             }
             step = missing
@@ -119,7 +119,7 @@ class OnboardingActivity : AppCompatActivity() {
             // Finishing requires every enforcement permission to be granted.
             if (Permissions.allEnforcementGranted(this)) {
                 OnboardingState(this).complete = true
-                goHome()
+                routeThroughMain()
             } else {
                 step = firstMissingPermissionStep().let { if (it < 0) STEP_LAST else it }
                 render()
@@ -127,8 +127,16 @@ class OnboardingActivity : AppCompatActivity() {
         }
     }
 
-    private fun goHome() {
-        startActivity(Intent(this, HomeActivity::class.java))
+    /** Hand off to [MainActivity]'s routing chain rather than jumping to Home
+     *  directly. MainActivity enforces the full gate stack —
+     *    uninstall-info -> inbox-confirm -> entitlement -> Home —
+     *  which an onboarding-finishes-with-startActivity(HomeActivity) shortcut
+     *  silently skipped, letting unpaid users straight into Home. */
+    private fun routeThroughMain() {
+        startActivity(
+            Intent(this, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        )
         finish()
     }
 

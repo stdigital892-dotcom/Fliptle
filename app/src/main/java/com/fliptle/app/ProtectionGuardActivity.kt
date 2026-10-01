@@ -55,9 +55,16 @@ class ProtectionGuardActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Protection fully restored -> leave the guard and return to Home.
+        // Protection fully restored — hand off to MainActivity's routing chain
+        // rather than jumping straight to Home; a user whose entitlement
+        // lapsed while permissions were being re-granted still has to clear
+        // the inbox-confirm / paywall gate before any protection surface
+        // appears.
         if (Permissions.allEnforcementGranted(this)) {
-            startActivity(Intent(this, HomeActivity::class.java))
+            startActivity(
+                Intent(this, MainActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            )
             finish()
             return
         }
