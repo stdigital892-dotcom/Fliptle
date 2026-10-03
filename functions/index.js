@@ -943,3 +943,37 @@ exports.flagStaleProtection = onSchedule(
     });
   }
 );
+
+// ============================================================================
+// whatsappWebhook: WhatsApp Cloud API webhook (Meta calls this).
+//   GET  Meta's verification handshake (WHATSAPP_VERIFY_TOKEN)
+//   POST signed events (X-Hub-Signature-256, WHATSAPP_APP_SECRET): STOP /
+//        STOP ALL / UNSUBSCRIBE opt-outs and sent/delivered/read/failed status
+// Logic is in whatsapp.js (dependencies injected, unit-tested); numbers are
+// canonicalised by phone.js. Setup: WHATSAPP_SETUP.md.
+//
+//   firebase functions:secrets:set WHATSAPP_VERIFY_TOKEN
+//   firebase functions:secrets:set WHATSAPP_APP_SECRET
+//   firebase deploy --only functions:whatsappWebhook
+// ============================================================================
+const whatsapp = require("./whatsapp");
+const WHATSAPP_VERIFY_TOKEN = defineSecret("WHATSAPP_VERIFY_TOKEN");
+const WHATSAPP_APP_SECRET = defineSecret("WHATSAPP_APP_SECRET");
+
+exports.whatsappWebhook = onRequest(
+  {
+    region: RAZORPAY_REGION, // asia-south2, same as the other functions
+    secrets: [WHATSAPP_VERIFY_TOKEN, WHATSAPP_APP_SECRET],
+    invoker: "public", // Meta must be able to reach it; the signature is the gate
+    cors: false,
+    timeoutSeconds: 30,
+  },
+  (req, res) =>
+    whatsapp.handleRequest(req, res, {
+      db: admin.firestore(),
+      verifyToken: () => WHATSAPP_VERIFY_TOKEN.value(),
+      appSecret: () => WHATSAPP_APP_SECRET.value(),
+      serverTimestamp: () => admin.firestore.FieldValue.serverTimestamp(),
+      logger,
+    })
+);

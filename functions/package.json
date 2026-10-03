@@ -12,6 +12,7 @@
     "resend": "^4.0.1"
   },
   "scripts": {
-    "test": "node --test test/deletion.test.js"
+    "test": "node --test test/deletion.test.js",
+    "test:whatsapp": "node --test test/phone.test.js test/whatsapp.test.js"
   }
 }
