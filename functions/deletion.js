@@ -2,6 +2,10 @@
 
 // Account deletion with a 72-hour delay.
 //
+// Request: every request starts a fresh 72 hours and revokes all refresh tokens.
+// Cancel: the client calls it on every fresh sign-in. Both are refused once the
+// scheduled time has passed.
+//
 // This module holds the logic with its dependencies injected (db, auth, logger,
 // partner hooks) so it can be unit-tested with fakes: see test/deletion.test.js.
 // index.js wires in the real Admin SDK.
@@ -30,6 +34,99 @@ function isDue(scheduledForMs, nowMs) {
 function normalizeEmail(value) {
   const e = String(value || "").trim().toLowerCase();
   return EMAIL_RE.test(e) ? e : null;
+}
+
+// ---- Request and cancel ----------------------------------------------------
+
+/** A failure the caller should see. index.js turns it into an HttpsError with the same code and message. */
+class DeletionError extends Error {
+  constructor(code, message) {
+    super(message);
+    this.name = "DeletionError";
+    this.code = code;
+  }
+}
+
+const MSG_REQUEST_DUE =
+  "Your account's deletion time has already passed, so the request can no longer be changed. It is being deleted.";
+const MSG_CANCEL_DUE =
+  "Your account's deletion time has already passed, so it can no longer be cancelled. It is being deleted.";
+const MSG_REVOKE_FAILED =
+  "Deletion is scheduled, but we could not sign out your other devices. Please try again.";
+
+/**
+ * Schedule deletion exactly DELETION_DELAY_MS from nowMs, then revoke every
+ * refresh token so other devices are signed out.
+ *
+ * EVERY request starts a fresh full delay. An existing scheduled time is never
+ * kept, so nothing from an earlier request can shorten (or lengthen) this one.
+ * The one exception is a deletion that is already due: the hourly job may be
+ * deleting it, cancel is refused in that state, so a request is refused too
+ * rather than rescuing a half-deleted account.
+ *
+ * deps.fv = { timestampFromMs, serverTimestamp }. The time is computed here from
+ * the server clock; the caller cannot supply one.
+ *
+ * Revocation runs after the write. If it fails the schedule stays in place and
+ * the caller gets an error; retrying is safe (it simply restarts the delay).
+ */
+async function requestDeletion(deps, uid, nowMs) {
+  const { db, auth, fv, partner } = deps;
+  const ref = db.doc("installs/" + uid);
+
+  const scheduledForMs = await db.runTransaction(async (txn) => {
+    const snap = await txn.get(ref);
+    const existing = toMs((snap.data() || {}).deletionScheduledFor);
+    if (existing != null && isDue(existing, nowMs)) {
+      throw new DeletionError("failed-precondition", MSG_REQUEST_DUE);
+    }
+    const when = computeScheduledForMs(nowMs);
+    txn.set(
+      ref,
+      {
+        deletionScheduledFor: fv.timestampFromMs(when),
+        deletionRequestedAt: fv.serverTimestamp(),
+      },
+      { merge: true }
+    );
+    return when;
+  });
+
+  try {
+    await auth.revokeRefreshTokens(uid);
+  } catch (e) {
+    deps.logger.error("requestDeletion: revokeRefreshTokens failed", { uid, code: e && e.code });
+    throw new DeletionError("internal", MSG_REVOKE_FAILED);
+  }
+
+  try {
+    await partner.notifyPartnerOfDeletion(uid);
+  } catch (e) {
+    deps.logger.warn("requestDeletion: partner notice failed", { uid, message: e && e.message });
+  }
+  return { scheduledForMs };
+}
+
+/**
+ * Clear a scheduled deletion. Nothing scheduled counts as already cancelled.
+ * Refused once the time has passed. deps.fv = { deleteField }.
+ */
+async function cancelDeletion(deps, uid, nowMs) {
+  const { db, fv } = deps;
+  const ref = db.doc("installs/" + uid);
+  await db.runTransaction(async (txn) => {
+    const snap = await txn.get(ref);
+    const scheduled = toMs((snap.data() || {}).deletionScheduledFor);
+    if (scheduled == null) return;
+    if (isDue(scheduled, nowMs)) {
+      throw new DeletionError("failed-precondition", MSG_CANCEL_DUE);
+    }
+    txn.update(ref, {
+      deletionScheduledFor: fv.deleteField(),
+      deletionRequestedAt: fv.deleteField(),
+    });
+  });
+  return { cancelled: true };
 }
 
 // ---- Partner hooks (placeholders) -----------------------------------------
@@ -156,6 +253,9 @@ module.exports = {
   DELETION_DELAY_MS,
   SWEEP_WINDOW_MS,
   computeScheduledForMs,
+  DeletionError,
+  requestDeletion,
+  cancelDeletion,
   toMs,
   isDue,
   normalizeEmail,

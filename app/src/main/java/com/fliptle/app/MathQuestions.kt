@@ -9,7 +9,10 @@ object MathQuestions {
 
     const val PER_DAY = 10
 
-    fun generateSet(): List<MathQuestion> = List(PER_DAY) { generate() }
+    fun generateSet(): List<MathQuestion> = generateSet(PER_DAY)
+
+    /** Same questions, any count (the account-deletion gate sets its own). */
+    fun generateSet(count: Int): List<MathQuestion> = List(count) { generate() }
 
     private fun generate(): MathQuestion = when (Random.nextInt(3)) {
         0 -> {

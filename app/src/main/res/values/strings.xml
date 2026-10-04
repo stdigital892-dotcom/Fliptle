@@ -212,7 +212,7 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="auth_sign_out_note">Your progress (porn-blocking streak, freeze, blocked apps and domains) is saved to your account and to this device. Signing out keeps all of it — signing back in re-syncs it from the cloud.</string>
     <string name="auth_delete_account">Delete my account</string>
     <string name="deletion_confirm_title">Delete your account?</string>
-    <string name="deletion_confirm_body">Your account will be deleted in 72 hours. You can cancel any time before then.\n\nPayments are non-refundable.\n\nBlocking stays active on this phone until you uninstall the app from Android settings.</string>
+    <string name="deletion_confirm_body">Your account will be deleted in 72 hours, and you will be signed out on every device. Sign in again before then to cancel.\n\nPayments are non-refundable.\n\nBlocking stays active on this phone until you uninstall the app from Android settings.</string>
     <string name="deletion_confirm_yes">Schedule deletion</string>
     <string name="deletion_confirm_no">Not now</string>
     <string name="deletion_requesting">Scheduling…</string>
@@ -222,6 +222,50 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="deletion_cancel_button">Cancel deletion</string>
     <string name="deletion_cancelled">Deletion cancelled.</string>
     <string name="deletion_cancel_failed">Could not cancel deletion: %1$s</string>
+
+    <!-- ================= Account deletion process =================
+         Everything the deletion gate says lives here. The numbers in these
+         sentences (days, questions, the typing range) are filled in from
+         DeletionConfig.kt, so change them there, not here. -->
+    <string name="account_delete_title">Delete my account</string>
+    <string name="account_delete_body">To delete your account, complete BOTH gates each day for %1$d days in a row: (1) %2$d arithmetic questions, then (2) type the numbers 1 to %3$d with no spaces. Both are required for the day to count. Only one day unlocks every 24 hours; changing the phone clock or rebooting cannot skip days.\n\nAfter the last day you can request deletion. It takes effect 72 hours later, and you can cancel by signing in again before then.</string>
+    <string name="account_delete_status">Progress: %1$d of %2$d days complete</string>
+    <string name="account_delete_ready">All days complete. You can now request deletion of your account.</string>
+    <string name="account_delete_request_button">Request deletion</string>
+    <string name="account_delete_locked">Next set unlocks in %1$s</string>
+    <string name="account_delete_verifying">Reboot detected — verifying real time from the network before unlocking…</string>
+    <string name="account_delete_start_day">Start day %1$d (%2$d questions)</string>
+    <string name="account_delete_cancel">Cancel request</string>
+    <string name="account_delete_cancelled">Deletion request cancelled.</string>
+    <string name="account_delete_reset_toast">A day was missed — progress has reset to day 1.</string>
+    <string name="account_delete_debug_days">Debug: 2-minute \"days\" (for testing)</string>
+
+    <!-- The two gates -->
+    <string name="account_delete_math_hint">Your answer</string>
+    <string name="account_delete_math_submit">Submit answer</string>
+    <string name="account_delete_math_progress">Question %1$d of %2$d</string>
+    <string name="account_delete_math_enter_number">Enter a number.</string>
+    <string name="account_delete_math_wrong">Not quite — try again.</string>
+    <string name="account_delete_day_done">Day %1$d complete!</string>
+    <string name="account_delete_typing_prompt">Second gate: type the numbers 1 to %1$d in order, no spaces (paste is blocked).</string>
+    <string name="account_delete_typing_hint">Start typing: 1 2 3 …</string>
+    <string name="account_delete_typing_progress">Typed %1$d / %2$d characters</string>
+    <string name="account_delete_typing_error_paste">Paste / bulk input is not allowed — type each digit by hand.</string>
+    <string name="account_delete_typing_error_wrong">That doesn\'t match the sequence — check the last digit.</string>
+
+    <!-- After the request succeeds, and on the sign-in screen after sign-out -->
+    <string name="account_delete_scheduled_title">Deletion scheduled</string>
+    <string name="account_delete_scheduled_body">Your account will be deleted on %1$s. Sign in again before then to cancel.</string>
+    <string name="account_delete_ok">OK</string>
+
+    <!-- Signing in again is the cancellation -->
+    <string name="deletion_signin_checking">Checking your account…</string>
+    <string name="deletion_signin_cancelled_title">Deletion cancelled</string>
+    <string name="deletion_signin_cancelled">Deletion cancelled. Welcome back.</string>
+    <string name="deletion_signin_due">Your account\'s deletion time has passed, so it can no longer be cancelled. It is being deleted.</string>
+    <string name="deletion_signin_cancel_failed">Couldn\'t cancel the deletion. Check your connection and try again.</string>
+    <string name="deletion_signin_read_failed">Couldn\'t check your account. Check your connection and try again.</string>
+    <string name="deletion_signin_retry">Retry</string>
     <!-- Setup: combined Freeze section subtitle -->
     <string name="setup_freeze_caption">Blocked apps, blocked domains and in-app surfaces are all governed together by the 3-day freeze cycle.</string>
     <!-- Sign out warning -->

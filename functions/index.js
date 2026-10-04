@@ -483,9 +483,11 @@ exports.getSubscription = onCall(
 // ============================================================================
 // Account deletion, with a 72-hour delay.
 //
-//   requestAccountDeletion  — schedules it (writes deletionScheduledFor on
-//                             installs/{uid}); deletes nothing.
-//   cancelAccountDeletion   — clears it, any time before it is due.
+//   requestAccountDeletion  — schedules it (always a fresh 72 hours; writes
+//                             deletionScheduledFor on installs/{uid}) and revokes
+//                             the user's refresh tokens; deletes nothing.
+//   cancelAccountDeletion   — clears it, any time before it is due. The app calls
+//                             it on every fresh sign-in. Both refuse once due.
 //   executeScheduledDeletions (hourly) — deletes accounts whose time has come.
 //
 // The two callables read uid and email ONLY from the caller's ID token
@@ -510,40 +512,42 @@ function requireSignedInWithEmail(request) {
   return { uid: request.auth.uid, email };
 }
 
+// Real Admin SDK values for the injected field helpers (see deletion.js).
+const deletionFieldValues = {
+  timestampFromMs: (ms) => admin.firestore.Timestamp.fromMillis(ms),
+  serverTimestamp: () => admin.firestore.FieldValue.serverTimestamp(),
+  deleteField: () => admin.firestore.FieldValue.delete(),
+};
+
+function deletionCallDeps() {
+  return {
+    db: admin.firestore(),
+    auth: admin.auth(),
+    logger,
+    partner: deletionPartnerHooks,
+    fv: deletionFieldValues,
+  };
+}
+
+// A DeletionError carries a code and a message meant for the user.
+function deletionHttpsError(e) {
+  if (e instanceof deletion.DeletionError) return new HttpsError(e.code, e.message);
+  return e;
+}
+
 exports.requestAccountDeletion = onCall(
   { region: RAZORPAY_REGION },
   async (request) => {
     const { uid } = requireSignedInWithEmail(request);
-    const db = admin.firestore();
-    const ref = db.doc("installs/" + uid);
     const nowMs = admin.firestore.Timestamp.now().toMillis();
-
-    // One transaction so two quick requests can't schedule twice. A request
-    // that finds a deletion already scheduled returns that time unchanged.
-    const scheduledForMs = await db.runTransaction(async (txn) => {
-      const snap = await txn.get(ref);
-      const existing = deletion.toMs((snap.data() || {}).deletionScheduledFor);
-      if (existing != null) return existing;
-      const when = deletion.computeScheduledForMs(nowMs);
-      txn.set(
-        ref,
-        {
-          deletionScheduledFor: admin.firestore.Timestamp.fromMillis(when),
-          deletionRequestedAt: admin.firestore.FieldValue.serverTimestamp(),
-        },
-        { merge: true }
-      );
-      return when;
-    });
-
     try {
-      await deletion.notifyPartnerOfDeletion(uid);
+      // Always a fresh 72 hours, then every refresh token is revoked.
+      const { scheduledForMs } = await deletion.requestDeletion(deletionCallDeps(), uid, nowMs);
+      logger.info("Account deletion scheduled", { uid, scheduledForMs });
+      return { scheduledForMs };
     } catch (e) {
-      logger.warn("requestAccountDeletion: partner notice failed", { uid, message: e && e.message });
+      throw deletionHttpsError(e);
     }
-
-    logger.info("Account deletion scheduled", { uid, scheduledForMs });
-    return { scheduledForMs };
   }
 );
 
@@ -551,25 +555,14 @@ exports.cancelAccountDeletion = onCall(
   { region: RAZORPAY_REGION },
   async (request) => {
     const { uid } = requireSignedInWithEmail(request);
-    const db = admin.firestore();
-    const ref = db.doc("installs/" + uid);
     const nowMs = admin.firestore.Timestamp.now().toMillis();
-
-    await db.runTransaction(async (txn) => {
-      const snap = await txn.get(ref);
-      const scheduled = deletion.toMs((snap.data() || {}).deletionScheduledFor);
-      if (scheduled == null) return; // nothing scheduled: already cancelled
-      if (deletion.isDue(scheduled, nowMs)) {
-        throw new HttpsError("failed-precondition", "Deletion is already due and can no longer be cancelled.");
-      }
-      txn.update(ref, {
-        deletionScheduledFor: admin.firestore.FieldValue.delete(),
-        deletionRequestedAt: admin.firestore.FieldValue.delete(),
-      });
-    });
-
-    logger.info("Account deletion cancelled", { uid });
-    return { cancelled: true };
+    try {
+      const result = await deletion.cancelDeletion(deletionCallDeps(), uid, nowMs);
+      logger.info("Account deletion cancelled", { uid });
+      return result;
+    } catch (e) {
+      throw deletionHttpsError(e);
+    }
   }
 );
 

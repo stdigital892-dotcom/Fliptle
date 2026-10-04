@@ -33,8 +33,31 @@ function makeEnv({ docs = {}, users = {}, failOnce = {} } = {}) {
       return [...ids].map((id) => ({ path: path + "/" + id }));
     },
   });
+  const DELETE = Symbol("delete-field");
+  const applyFields = (path, data, merge) => {
+    const next = merge ? { ...(store.get(path) || {}) } : {};
+    for (const [k, v] of Object.entries(data)) {
+      if (v === DELETE) delete next[k]; else next[k] = v;
+    }
+    store.set(path, next);
+  };
   const db = {
     doc: ref,
+    async runTransaction(fn) {
+      // Writes are buffered and applied only if the callback returns, like Firestore.
+      const writes = [];
+      const txn = {
+        async get(r) { return r.get(); },
+        set(r, data, opts) { writes.push(() => applyFields(r.path, data, !!(opts && opts.merge))); },
+        update(r, data) {
+          if (!store.has(r.path)) throw new Error("update of a missing doc");
+          writes.push(() => applyFields(r.path, data, true));
+        },
+      };
+      const result = await fn(txn);
+      writes.forEach((w) => w());
+      return result;
+    },
     async recursiveDelete(col) {
       for (const k of [...store.keys()]) if (k.startsWith(col.path + "/")) store.delete(k);
       log.push("recursiveDelete:" + col.path);
@@ -63,6 +86,15 @@ function makeEnv({ docs = {}, users = {}, failOnce = {} } = {}) {
       log.push("deleteUser:" + uid);
       authUsers.delete(uid);
     },
+    async revokeRefreshTokens(uid) {
+      maybeFail("revoke", uid);
+      log.push("revoke:" + uid);
+    },
+  };
+  const fv = {
+    timestampFromMs: (ms) => ms, // toMs() reads plain numbers
+    serverTimestamp: () => "SERVER_TS",
+    deleteField: () => DELETE,
   };
   const partnerCalls = [];
   const partner = {
@@ -70,7 +102,7 @@ function makeEnv({ docs = {}, users = {}, failOnce = {} } = {}) {
     async deletePartnerData(uid, email) { partnerCalls.push("data:" + uid + ":" + email); },
   };
   const logger = { info() {}, warn() {}, error() {} };
-  return { deps: { db, auth, logger, partner }, store, log, authUsers, partnerCalls };
+  return { deps: { db, auth, logger, partner, fv }, store, log, authUsers, partnerCalls };
 }
 
 const NOW = 1_000_000 * H;
@@ -114,6 +146,120 @@ test("toMs reads numbers and Timestamp-like values", () => {
   assert.equal(d.toMs(5), 5);
   assert.equal(d.toMs({ toMillis: () => 7 }), 7);
   assert.equal(d.toMs(null), null);
+});
+
+// ---- request and cancel ----------------------------------------------------
+const reqEnv = (docs = {}, extra = {}) =>
+  makeEnv({ docs: { "installs/u1": { email: "a@x.com", ...docs }, ...(extra.docs || {}) },
+    users: { u1: { email: "a@x.com" } }, failOnce: extra.failOnce });
+
+test("request schedules exactly now + 72h and records the request time", async () => {
+  const env = reqEnv();
+  const r = await d.requestDeletion(env.deps, "u1", NOW);
+  assert.deepEqual(r, { scheduledForMs: NOW + 72 * H });
+  const doc = env.store.get("installs/u1");
+  assert.equal(doc.deletionScheduledFor, NOW + 72 * H);
+  assert.equal(doc.deletionRequestedAt, "SERVER_TS");
+  assert.equal(doc.email, "a@x.com", "merge: other fields are kept");
+});
+
+test("every request starts a full new 72h: an earlier schedule never shortens it", async () => {
+  // earlier request, 70h ago: only 2h would be left if it were kept
+  const env = reqEnv({ deletionScheduledFor: NOW + 2 * H });
+  const r = await d.requestDeletion(env.deps, "u1", NOW);
+  assert.equal(r.scheduledForMs, NOW + 72 * H);
+  assert.equal(env.store.get("installs/u1").deletionScheduledFor, NOW + 72 * H);
+  // and a second request later restarts the clock again
+  const later = await d.requestDeletion(env.deps, "u1", NOW + 10 * H);
+  assert.equal(later.scheduledForMs, NOW + 82 * H);
+});
+
+test("request refuses once the scheduled time has passed, with a clear message", async () => {
+  for (const at of [NOW - 1000, NOW]) { // past and exactly now are both due
+    const env = reqEnv({ deletionScheduledFor: at });
+    await assert.rejects(d.requestDeletion(env.deps, "u1", NOW), (e) => {
+      assert.ok(e instanceof d.DeletionError);
+      assert.equal(e.code, "failed-precondition");
+      assert.match(e.message, /can no longer be changed/);
+      return true;
+    });
+    assert.equal(env.store.get("installs/u1").deletionScheduledFor, at, "unchanged");
+    assert.equal(env.log.includes("revoke:u1"), false, "no sign-out for a refused request");
+  }
+});
+
+test("request revokes the refresh tokens of that user only, after the write", async () => {
+  const env = reqEnv();
+  await d.requestDeletion(env.deps, "u1", NOW);
+  assert.deepEqual(env.log.filter((x) => x.startsWith("revoke:")), ["revoke:u1"]);
+  assert.ok(env.store.get("installs/u1").deletionScheduledFor, "schedule written before revoke");
+});
+
+test("request: a failed revoke is reported, the schedule stays, and a retry works", async () => {
+  const env = reqEnv({}, { failOnce: { "revoke:u1": 1 } });
+  await assert.rejects(d.requestDeletion(env.deps, "u1", NOW), (e) => {
+    assert.ok(e instanceof d.DeletionError);
+    assert.equal(e.code, "internal");
+    assert.match(e.message, /sign out your other devices/);
+    return true;
+  });
+  assert.equal(env.store.get("installs/u1").deletionScheduledFor, NOW + 72 * H);
+  const r = await d.requestDeletion(env.deps, "u1", NOW + H);
+  assert.equal(r.scheduledForMs, NOW + 73 * H, "retry restarts the 72h");
+  assert.deepEqual(env.log.filter((x) => x.startsWith("revoke:")), ["revoke:u1"]);
+});
+
+test("request never touches another account's document", async () => {
+  const env = reqEnv({}, { docs: { "installs/u2": { email: "b@x.com", deletionScheduledFor: NOW + H } } });
+  await d.requestDeletion(env.deps, "u1", NOW);
+  assert.equal(env.store.get("installs/u2").deletionScheduledFor, NOW + H);
+  assert.equal(env.log.includes("revoke:u2"), false);
+});
+
+test("request still calls the partner placeholder, which does nothing", async () => {
+  const env = reqEnv();
+  await d.requestDeletion(env.deps, "u1", NOW);
+  assert.deepEqual(env.partnerCalls, ["notify:u1"]);
+  assert.equal(await d.notifyPartnerOfDeletion("u1"), undefined);
+});
+
+test("cancel clears both fields before the time, and a repeat is harmless", async () => {
+  const env = reqEnv({ deletionScheduledFor: NOW + 5 * H, deletionRequestedAt: "x" });
+  assert.deepEqual(await d.cancelDeletion(env.deps, "u1", NOW), { cancelled: true });
+  const doc = env.store.get("installs/u1");
+  assert.equal("deletionScheduledFor" in doc, false);
+  assert.equal("deletionRequestedAt" in doc, false);
+  assert.equal(doc.email, "a@x.com");
+  assert.deepEqual(await d.cancelDeletion(env.deps, "u1", NOW), { cancelled: true });
+});
+
+test("cancel refuses once the scheduled time has passed, with a clear message", async () => {
+  for (const at of [NOW - 1000, NOW]) {
+    const env = reqEnv({ deletionScheduledFor: at });
+    await assert.rejects(d.cancelDeletion(env.deps, "u1", NOW), (e) => {
+      assert.ok(e instanceof d.DeletionError);
+      assert.equal(e.code, "failed-precondition");
+      assert.match(e.message, /can no longer be cancelled/);
+      return true;
+    });
+    assert.equal(env.store.get("installs/u1").deletionScheduledFor, at, "unchanged");
+  }
+});
+
+test("cancel with nothing scheduled, or no document, does not fail or create anything", async () => {
+  assert.deepEqual(await d.cancelDeletion(reqEnv().deps, "u1", NOW), { cancelled: true });
+  const none = makeEnv({});
+  assert.deepEqual(await d.cancelDeletion(none.deps, "u1", NOW), { cancelled: true });
+  assert.equal(none.store.has("installs/u1"), false);
+});
+
+test("cancel after a request restores the account, and a new request starts fresh again", async () => {
+  const env = reqEnv();
+  await d.requestDeletion(env.deps, "u1", NOW);
+  await d.cancelDeletion(env.deps, "u1", NOW + H);
+  assert.equal("deletionScheduledFor" in env.store.get("installs/u1"), false);
+  const again = await d.requestDeletion(env.deps, "u1", NOW + 2 * H);
+  assert.equal(again.scheduledForMs, NOW + 74 * H);
 });
 
 // ---- execution -------------------------------------------------------------

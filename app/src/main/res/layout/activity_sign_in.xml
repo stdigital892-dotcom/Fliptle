@@ -101,6 +101,19 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <!-- Shown after deletion was scheduled and this phone signed out:
+                 "Your account will be deleted on ... Sign in again before then to cancel." -->
+            <TextView
+                android:id="@+id/deletionNoticeText"
+                style="@style/Text.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:background="@drawable/notice_bg"
+                android:padding="14dp"
+                android:textColor="@color/notice_text"
+                android:visibility="gone" />
+
             <Button
                 android:id="@+id/googleSignInButton"
                 style="@style/Widget.Fliptle.Button.Primary"
@@ -167,6 +180,43 @@
                 android:layout_marginTop="16dp"
                 android:gravity="center"
                 android:lineSpacingMultiplier="1.4" />
+        </LinearLayout>
+
+        <!-- Deletion check after a fresh sign-in: "Checking your account..." while it
+             runs; if the check or the cancel fails, the message plus Retry (and Sign
+             out as a way out). The user stays here until it succeeds. -->
+        <LinearLayout
+            android:id="@+id/deletionCheckSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/deletionCheckText"
+                style="@style/Text.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <Button
+                android:id="@+id/deletionCheckRetryButton"
+                style="@style/Widget.Fliptle.Button.Primary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/deletion_signin_retry"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/deletionCheckSignOutButton"
+                style="@style/Widget.Fliptle.Button.Text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"
+                android:text="@string/auth_sign_out"
+                android:visibility="gone" />
         </LinearLayout>
 
         <!-- Onboarding progress indicator — visible only while OnboardingState

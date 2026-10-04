@@ -29,7 +29,8 @@ object SignOut {
             .show()
     }
 
-    private fun perform(activity: Activity) {
+    /** The sign-out itself, without the confirmation dialog. Also used when account deletion has just been scheduled. */
+    fun perform(activity: Activity) {
         // Clear auth only. Deliberately does NOT stop BlockingService, the
         // accessibility service, the browser receiver, or the heartbeat, and does
         // NOT clear any feature prefs — blocking is unaffected by auth state.

@@ -402,8 +402,8 @@ Deleting an account is scheduled, not instant. Three functions in
 
 | Function | Type | What it does |
 |---|---|---|
-| `requestAccountDeletion` | `onCall` | Writes `installs/{uid}.deletionScheduledFor` (server time + 72h). Deletes nothing. A repeat request keeps the existing time. |
-| `cancelAccountDeletion` | `onCall` | Clears the field. Refused once the time has passed. |
+| `requestAccountDeletion` | `onCall` | Writes `installs/{uid}.deletionScheduledFor` = server time + 72h, then revokes every refresh token of that user (other devices are signed out the next time their app refreshes its token, up to about an hour). **Every request starts a fresh 72 hours**; an earlier schedule never shortens it. Refused (`failed-precondition`) once the existing time has passed. Deletes nothing. |
+| `cancelAccountDeletion` | `onCall` | Clears the field. Refused (`failed-precondition`) once the time has passed. The app calls it on every fresh sign-in. |
 | `executeScheduledDeletions` | `onSchedule`, every 1 hours | Deletes every account whose time has passed. |
 
 **Who it can delete:** only the caller's own account. `uid` and `email` come
@@ -429,13 +429,24 @@ token for up to an hour and may re-create `installs/{uid}` (heartbeat or backup)
 After a deletion the job leaves a PII-free note in `deletionSweeps/{uid}` and
 deletes `installs/{uid}` again on later runs, removing the note after 2 hours.
 
+**The flow in the app:**
+1. Account → "Delete my account" opens the deletion process (`AccountDeletionActivity`): the same frame as the uninstall request (daily math gate, then typing gate, one day per 24h, a missed day resets). The number of days, questions per day and the typing range are constants in `DeletionConfig.kt`; all wording is in `strings.xml` (`account_delete_*`).
+2. After the last day, "Request deletion" asks the server. On success the app shows "Your account will be deleted on [date]. Sign in again before then to cancel." and signs out through the ordinary sign-out. Blocking and a running freeze keep enforcing.
+3. **Signing in again is the cancellation.** After every fresh sign-in the app reads `installs/{uid}` from the server; if the time is in the future it calls `cancelAccountDeletion` and shows a dialog ("Deletion cancelled. Welcome back.") with an OK button that must be tapped; then the normal routing and entitlement checks run. If the time has already passed it says so (it can no longer be cancelled). If the read or the cancel fails, the user stays on the sign-in screen with Retry, also after a relaunch. Nothing is cancelled at app start or on a token refresh, so a second phone that still holds a valid token cannot cancel by accident.
+4. Starting "Delete my account" again after a cancellation begins from day 1, with a fresh 72 hours at the request.
+
 **On the phone:** the app caches the scheduled time with its uid
 (`PendingDeletion`). `EntitlementGate` uses it so that the "not entitled"
 answer an account gets once its data is removed is not recorded as DENIED (which
 would pause blocking); it drops the cache to UNKNOWN instead. This applies only
 to a deletion that is already due for the signed-in account. Once the account
 is gone the Firebase SDK signs the device out; `AccountDeletionWatcher` then
-does the sign-out cleanup plus `AuthStore.resetForAccountDeletion()`. Porn
+does the sign-out cleanup plus `AuthStore.resetForAccountDeletion()`. Before it
+does, it re-reads `installs/{uid}` from the server and skips the cleanup if the
+deletion is no longer scheduled or no longer due. Firestore only lets a signed-in
+owner read that document, so a signed-out phone is normally refused; then nothing
+is cleaned yet and the cleanup happens at the next sign-in as a *different*
+account (the same account is checked against the server instead). Porn
 blocking, a running freeze, blocked apps and domains keep enforcing.
 
 **Cost:** one more Cloud Scheduler job (the second, after
@@ -447,8 +458,12 @@ blocking, a running freeze, blocked apps and domains keep enforcing.
 **Remove the old instant function** (replaced by this flow):
 `firebase functions:delete deleteAccount --region asia-south2`
 
-**Firestore rules:** clients should not be able to write `deletionScheduledFor`
-directly; only these functions should.
+**Firestore rules:** clients should not be able to write `deletionScheduledFor` or
+`deletionRequestedAt` directly; only these functions should. The app never does
+(a unit test fails if any client source writes them). **Note:** the rules
+documented in `FIREBASE_SETUP.md` (`allow read, write` on `installs/{uid}` for the
+owner) would still *allow* a modified client to write them. Tighten that if you
+want the server to be the only writer.
 
 **Tests:** `cd functions && npm test` (server logic, with in-memory fakes).
 

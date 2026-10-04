@@ -26,10 +26,14 @@ object AuthGate {
     fun signedIn(context: Context): Boolean =
         FirebaseGate.isAvailable(context) && FirebaseAuth.getInstance().currentUser != null
 
-    /** True when the user must sign in before continuing. */
+    /** True when the user must sign in (or finish signing in) before continuing. */
     fun required(context: Context): Boolean {
         if (!FirebaseGate.isAvailable(context)) return false // cannot sign in at all
-        return FirebaseAuth.getInstance().currentUser == null
+        val user = FirebaseAuth.getInstance().currentUser ?: return true
+        // A fresh sign-in whose deletion check has not finished (a failed cancel,
+        // waiting for Retry) keeps the user on the sign-in screen, even after a
+        // relaunch. The marker only ever comes from a real sign-in on this phone.
+        return com.fliptle.app.auth.PendingDeletion.signInCheckPending(context, user.uid)
     }
 
     /**

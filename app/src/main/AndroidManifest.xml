@@ -79,6 +79,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".AccountDeletionActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".PornBlockActivity"
             android:exported="false" />
 

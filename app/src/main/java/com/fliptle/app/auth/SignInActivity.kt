@@ -11,7 +11,9 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.fliptle.app.AccountDeletionActivity
 import com.fliptle.app.CloudState
 import com.fliptle.app.MainActivity
 import com.fliptle.app.OnboardingProgress
@@ -63,6 +65,11 @@ class SignInActivity : AppCompatActivity() {
     private lateinit var deletionBanner: TextView
     private lateinit var cancelDeletionButton: Button
     private lateinit var deleteAccountButton: Button
+    private lateinit var deletionNoticeText: TextView
+    private lateinit var deletionCheckSection: LinearLayout
+    private lateinit var deletionCheckText: TextView
+    private lateinit var deletionCheckRetryButton: Button
+    private lateinit var deletionCheckSignOutButton: Button
     private lateinit var authProgressSection: LinearLayout
     private lateinit var authProgressText: TextView
     private lateinit var authProgressBar: ProgressBar
@@ -106,6 +113,11 @@ class SignInActivity : AppCompatActivity() {
         deletionBanner = findViewById(R.id.deletionBanner)
         cancelDeletionButton = findViewById(R.id.cancelDeletionButton)
         deleteAccountButton = findViewById(R.id.deleteAccountButton)
+        deletionNoticeText = findViewById(R.id.deletionNoticeText)
+        deletionCheckSection = findViewById(R.id.deletionCheckSection)
+        deletionCheckText = findViewById(R.id.deletionCheckText)
+        deletionCheckRetryButton = findViewById(R.id.deletionCheckRetryButton)
+        deletionCheckSignOutButton = findViewById(R.id.deletionCheckSignOutButton)
         authProgressSection = findViewById(R.id.authProgressSection)
         authProgressText = findViewById(R.id.authProgressText)
         authProgressBar = findViewById(R.id.authProgressBar)
@@ -135,11 +147,31 @@ class SignInActivity : AppCompatActivity() {
         findViewById<Button>(R.id.emailSignInButton).setOnClickListener { signInEmail() }
         findViewById<Button>(R.id.continueProfileButton).setOnClickListener { continueProfile() }
         findViewById<Button>(R.id.signOutButton).setOnClickListener { signOut() }
-        deleteAccountButton.setOnClickListener { PendingDeletion.confirm(this) { refreshDeletionBanner() } }
+        // "Delete my account" starts the full process (days of gates) every time.
+        deleteAccountButton.setOnClickListener {
+            startActivity(Intent(this, AccountDeletionActivity::class.java))
+        }
         cancelDeletionButton.setOnClickListener { PendingDeletion.cancel(this) { refreshDeletionBanner() } }
+        deletionCheckRetryButton.setOnClickListener {
+            runDeletionCheck(PendingDeletion.signInCheckMethod(this))
+        }
+        deletionCheckSignOutButton.setOnClickListener { signOut() }
 
-        // Already authenticated -> this is the Account screen, not a sign-in prompt.
-        if (auth?.currentUser != null) showAccountState()
+        val current = auth?.currentUser
+        when {
+            // A fresh sign-in whose deletion check did not finish: carry on with it.
+            current != null && PendingDeletion.signInCheckPending(this, current.uid) ->
+                runDeletionCheck(PendingDeletion.signInCheckMethod(this))
+            // Already authenticated -> this is the Account screen, not a sign-in prompt.
+            current != null -> showAccountState()
+            else -> showDeletionNotice()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Signed out: keep the "will be deleted on ..." notice current.
+        if (auth != null && auth?.currentUser == null) showDeletionNotice()
     }
 
     // ---- Google ----
@@ -212,6 +244,85 @@ class SignInActivity : AppCompatActivity() {
         // InboxConfirmActivity can ever show "Continue" for this account.
         EntitlementStore(this).clear()
         val user = auth?.currentUser ?: return
+        // A deletion that came due for ANOTHER account on this phone must not leave
+        // its local data behind for this one.
+        AccountDeletionWatcher.cleanupForOtherAccount(this, user.uid)
+        PendingDeletion.clearNotice(this)
+        // Signing in IS the cancellation of a scheduled deletion. The marker keeps
+        // the user here until the check is over, even across a relaunch. It is set
+        // only by a real sign-in on this phone; nothing cancels at app start.
+        PendingDeletion.markSignInCheck(this, user.uid, method)
+        runDeletionCheck(method)
+    }
+
+    /**
+     * Read the account's deletion state from the server and act on it:
+     *   none        -> carry on;
+     *   in the future -> cancel it, tell the user in a dialog (OK required), carry on;
+     *   already due -> say it can no longer be cancelled (OK required), carry on;
+     * and if the read or the cancel fails, stay here with Retry. Entitlement is not
+     * touched: the normal routing and paywall checks still decide what opens.
+     */
+    private fun runDeletionCheck(method: String) {
+        val user = auth?.currentUser ?: return
+        showDeletionCheck(getString(R.string.deletion_signin_checking), retry = false)
+        PendingDeletion.fetchFresh(this, user.uid) { scheduledMs, ok ->
+            runOnUiThread {
+                if (!ok) {
+                    showDeletionCheck(getString(R.string.deletion_signin_read_failed), retry = true)
+                    return@runOnUiThread
+                }
+                when (DeletionFlowRules.signInCheck(scheduledMs, System.currentTimeMillis())) {
+                    DeletionFlowRules.SignInCheck.PROCEED -> completeSignIn(method)
+                    DeletionFlowRules.SignInCheck.DUE ->
+                        showDeletionDialog(null, R.string.deletion_signin_due) { completeSignIn(method) }
+                    DeletionFlowRules.SignInCheck.CANCEL ->
+                        PendingDeletion.cancelOnSignIn(this) { result ->
+                            runOnUiThread {
+                                when (result) {
+                                    PendingDeletion.CancelResult.CANCELLED ->
+                                        showDeletionDialog(
+                                            R.string.deletion_signin_cancelled_title,
+                                            R.string.deletion_signin_cancelled
+                                        ) { completeSignIn(method) }
+                                    PendingDeletion.CancelResult.DUE ->
+                                        showDeletionDialog(null, R.string.deletion_signin_due) { completeSignIn(method) }
+                                    PendingDeletion.CancelResult.FAILED ->
+                                        showDeletionCheck(getString(R.string.deletion_signin_cancel_failed), retry = true)
+                                }
+                            }
+                        }
+                }
+            }
+        }
+    }
+
+    /** One OK button that must be tapped; nothing continues until it is. */
+    private fun showDeletionDialog(titleRes: Int?, messageRes: Int, onOk: () -> Unit) {
+        AlertDialog.Builder(this)
+            .apply { if (titleRes != null) setTitle(titleRes) }
+            .setMessage(messageRes)
+            .setCancelable(false)
+            .setPositiveButton(R.string.account_delete_ok) { _, _ -> onOk() }
+            .show()
+    }
+
+    private fun showDeletionCheck(message: String, retry: Boolean) {
+        signInControls.visibility = View.GONE
+        accountSection.visibility = View.GONE
+        profileSection.visibility = View.GONE
+        authProgressSection.visibility = View.GONE
+        deletionCheckSection.visibility = View.VISIBLE
+        deletionCheckText.text = message
+        deletionCheckRetryButton.visibility = if (retry) View.VISIBLE else View.GONE
+        deletionCheckSignOutButton.visibility = if (retry) View.VISIBLE else View.GONE
+    }
+
+    /** The deletion check is over: the rest of the sign-in carries on exactly as before. */
+    private fun completeSignIn(method: String) {
+        val user = auth?.currentUser ?: return
+        PendingDeletion.clearSignInCheck(this)
+        deletionCheckSection.visibility = View.GONE
         showProfileStep()
         // Re-sync this account's progress from the cloud (restores after a reinstall
         // or a previous sign-out; a no-op for a brand-new account).
@@ -249,6 +360,21 @@ class SignInActivity : AppCompatActivity() {
                 status("${getString(R.string.auth_signed_in, user.email ?: user.uid)}\n$verified\n$msg")
             }
         }
+    }
+
+    /** After deletion was scheduled and this phone signed out: when it will happen and how to cancel. */
+    private fun showDeletionNotice() {
+        val ms = PendingDeletion.noticeMs(this)
+        if (ms == null || ms <= System.currentTimeMillis()) {
+            if (ms != null) PendingDeletion.clearNotice(this)
+            deletionNoticeText.visibility = View.GONE
+            return
+        }
+        val whenText = java.text.DateFormat
+            .getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT)
+            .format(java.util.Date(ms))
+        deletionNoticeText.text = getString(R.string.account_delete_scheduled_body, whenText)
+        deletionNoticeText.visibility = View.VISIBLE
     }
 
     /** Account view for an already-authenticated user: email + sign out. */
