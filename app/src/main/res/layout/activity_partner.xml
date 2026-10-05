@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Accountability partner screen (one card, same frame as the other Setup
+  entries). Save stays disabled until BOTH the 10-digit mobile is valid AND
+  the "I have told my partner" box is ticked. The copy uses "adult content",
+  never "porn".
+-->
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            style="@style/Text.Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/partner_title" />
+
+        <TextView
+            style="@style/Text.Body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/partner_body" />
+
+        <!-- Current state (hidden until we know) -->
+        <TextView
+            android:id="@+id/partnerStatusText"
+            style="@style/Text.Body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:background="@drawable/notice_bg"
+            android:padding="14dp"
+            android:visibility="gone" />
+
+        <!-- Form card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/card_bg"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                style="@style/Text.CardTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/partner_phone_label" />
+
+            <EditText
+                android:id="@+id/partnerPhoneInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/partner_phone_hint"
+                android:importantForAutofill="no"
+                android:inputType="phone"
+                android:maxLength="20"
+                android:textColor="@color/ink" />
+
+            <TextView
+                android:id="@+id/partnerPhoneError"
+                style="@style/Text.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="@color/notice_text"
+                android:visibility="gone" />
+
+            <TextView
+                style="@style/Text.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/partner_phone_help" />
+
+            <!-- Confirmation checkbox: Save stays disabled until this is ticked. -->
+            <CheckBox
+                android:id="@+id/partnerConfirmCheck"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:buttonTint="@color/accent"
+                android:lineSpacingMultiplier="1.4"
+                android:text="@string/partner_confirm_label"
+                android:textColor="@color/ink" />
+
+            <TextView
+                style="@style/Text.CardTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/partner_note_label" />
+
+            <EditText
+                android:id="@+id/partnerNoteInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="top|start"
+                android:hint="@string/partner_note_hint"
+                android:importantForAutofill="no"
+                android:inputType="textMultiLine|textCapSentences"
+                android:maxLength="200"
+                android:maxLines="3"
+                android:minLines="2"
+                android:textColor="@color/ink" />
+
+            <TextView
+                android:id="@+id/partnerNoteCounter"
+                style="@style/Text.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:gravity="end" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/savePartnerButton"
+            style="@style/Widget.Fliptle.Button.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="@string/partner_save"
+            android:enabled="false" />
+
+        <Button
+            android:id="@+id/removePartnerButton"
+            style="@style/Widget.Fliptle.Button.Text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/partner_remove"
+            android:visibility="gone" />
+
+    </LinearLayout>
+</ScrollView>

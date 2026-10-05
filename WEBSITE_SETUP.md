@@ -469,6 +469,59 @@ want the server to be the only writer.
 
 ---
 
+## 7a. Accountability partner (opt-in, WhatsApp)
+
+The user chooses ONE partner from the Setup → "Your accountability partner"
+screen. We store only a 10-digit Indian mobile (normalised to `91` + 10 digits
+by `functions/phone.js` and its Kotlin twin `PartnerPhone.kt`) and the user's
+own short note (max 200 chars). We do NOT ask for the partner's name.
+
+**Three functions in `functions/index.js` (region `asia-south2`):**
+
+| Function | Type | What it does |
+|---|---|---|
+| `savePartner` | `onCall` | Writes `partnerContacts/{uid}` (number + note + confirmation time) and `partnerLinks/{uid}` (status: `saved`, last-4 digits). The uid is the caller's. Rejects a bad number (`invalid-argument`) or an unticked confirmation box (`failed-precondition`). |
+| `removePartner` | `onCall` | Deletes `partnerContacts/{uid}` and sets `partnerLinks/{uid}.status = "none"`. |
+| `sendPartnerAlerts` | `onSchedule`, every 1 hours | Sends one WhatsApp alert per unexpected-disappearance EVENT. See the sender rules below. |
+
+**Sender gates (`functions/partner-sender.js`):** all must be true.
+1. `installs/{uid}.protectionActive` is set (true or false — at least one heartbeat was recorded) and `lastHeartbeatMs` is **strictly older than** `STALE_HOURS` (default 48).
+2. The exit process is NOT completed. Field used: `installs/{uid}.uninstall_approved`. True → skipped.
+3. `installs/{uid}.deletionScheduledFor` is not set.
+4. `partnerContacts/{uid}` exists with `status: "active"`.
+5. `isOptedOut(partnerPhone)` from `functions/whatsapp.js` returns false. **This check is mandatory**. The sender module never names `whatsappOptOuts` itself; it goes through the shared helper.
+6. No alert already sent for THIS event (eventId = `lastHeartbeatMs`), and no alert sent to this user within `COOLDOWN_DAYS` (default 7).
+7. Not between 22:00 and 08:00 IST (Asia/Kolkata). Quiet-hour runs log a skip and send nothing.
+
+**Template:** exactly 7 body parameters, all text, in this order: user first name, user first name again, the note (fallback "No note was left."), days with protection on, longest stretch in days, "Not completed", date removed in IST (e.g. "4 Oct 2026"). Every value is sanitised: no newlines/tabs, no runs of 4+ spaces, trimmed, never empty, note capped at 200 chars.
+
+**Days with protection / longest stretch:** adult-content blocking has no reset path (`PornBlockStore` is one-way), so `dayCount()` IS the longest stretch. The heartbeat now writes it as `installs/{uid}.pornDays`, and the sender uses the same value for parameters {{4}} and {{5}}.
+
+**On send success:** `whatsappAlerts/{wamid}` is written with `{ uid, eventId, kind: "initial", sentAt, status: "sent" }` using **merge**, so a webhook status update that lands before the sender's own write is kept. `installs/{uid}` gets `lastPartnerAlertAt` and `lastPartnerAlertEventId`.
+
+**On send failure:** one retry; if it still fails, a counter under `installs/{uid}.partnerAlertFailuresByEvent[eventId]` is incremented. The event stays eligible for the next hourly run until that counter reaches 3.
+
+**Safety switches** (`functions.config().partner`):
+- `alerts_dry_run` (default `true`) — runs every check, writes `whatsappAlerts/dry_{uid}_{eventId}` with `status: "dry_run"`, sends NOTHING.
+- `alerts_allowed_uids` — comma-separated allowlist; when set, only those uids are processed.
+
+**Follow-ups** (24h / 72h) are intentionally NOT built. See the `TODO(partner-followups)` marker in `functions/partner-sender.js`.
+
+**On account deletion:** both `partnerContacts/{uid}` and `partnerLinks/{uid}` are removed as part of the existing `executeScheduledDeletions` job (`functions/deletion.js`). The STOP record in `whatsappOptOuts` is NEVER deleted; a partner who replied STOP continues to be opted out across every account.
+
+**Firestore rules (operator must add):**
+```
+match /partnerContacts/{uid} { allow read, write: if false; }
+match /partnerLinks/{uid} {
+  allow read: if request.auth != null && request.auth.uid == uid;
+  allow write: if false;
+}
+```
+
+**Tests:** `cd functions && npm run test:partner` (25 tests) and `npm run test:all` (77 tests across deletion, phone, whatsapp, partner).
+
+---
+
 ## 8. OEM battery-killer hardening + server-side stale-protection flag
 
 Three of the four layers are entirely client-side (Android):

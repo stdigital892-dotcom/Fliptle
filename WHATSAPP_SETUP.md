@@ -159,6 +159,52 @@ any guessing. The Kotlin check should be tested against the table above.
 The current profile-step parent-phone field does **not** meet this requirement. If
 it will be used as a WhatsApp target it needs the same change.
 
+## Partner alerts
+
+The partner-alert sender is wired into this webhook. It lives in
+`functions/partner-sender.js` and sends ONE WhatsApp template message to the
+user's chosen accountability partner if Rescue goes dark on the user's phone
+before they finish the exit (uninstall) process. Everything about the sender is
+documented in `WEBSITE_SETUP.md`.
+
+Two Firestore collections exist for this feature, both server-only:
+
+- `partnerContacts/{uid}` — the number and the user's own note. **Rules must
+  deny every client read and write**: `allow read, write: if false;`.
+- `partnerLinks/{uid}` — a one-field status for the Partner screen to show
+  "saved" / "none" / "stopped" and the last-4 digits. **Rules must allow the
+  owner to READ it and deny every client write**: `allow read: if
+  request.auth.uid == uid; allow write: if false;`.
+
+The webhook extends the STOP flow by one extra step: after a STOP is recorded
+in `whatsappOptOuts`, every `partnerContacts` document whose `partnerPhone`
+matches that normalised number has its `partnerLinks` row flipped to
+`status: "stopped"`. The sender's `isOptedOut` check still consults
+`whatsappOptOuts` directly before every send; `partnerLinks` is only for the
+client-visible side.
+
+Deploy, secrets and params (v2 `defineString`/`defineBoolean` — set them in
+`functions/.env.<project>` **or** interactively on `firebase deploy`):
+
+```
+firebase functions:secrets:set WHATSAPP_ACCESS_TOKEN
+# functions/.env.rescue-prod   (name matches your Firebase project)
+WHATSAPP_PHONE_NUMBER_ID=<meta phone id, digits only>
+WHATSAPP_TEMPLATE_NAME=partner_alert_v2
+WHATSAPP_TEMPLATE_LANG=en_US
+PARTNER_ALERTS_DRY_RUN=true
+PARTNER_ALERTS_ALLOWED_UIDS=
+PARTNER_ALERTS_STALE_HOURS=48
+PARTNER_ALERTS_COOLDOWN_DAYS=7
+
+firebase deploy --only functions:savePartner,functions:removePartner,functions:sendPartnerAlerts
+```
+
+Keep `PARTNER_ALERTS_DRY_RUN=true` on the first deploy. In dry mode the run
+logs show every eligible user and write a `dry_<uid>_<eventId>` doc to
+`whatsappAlerts`, but no WhatsApp request is made. Flip to `false` and
+re-deploy once the counts and template parameters look right.
+
 ## Firestore rules
 
 Clients must never read or write these collections. The Admin SDK ignores rules,

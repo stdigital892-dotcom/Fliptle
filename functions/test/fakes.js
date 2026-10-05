@@ -35,13 +35,27 @@ function makeFirestore(initial = {}) {
       const list = () => [...store.keys()]
         .filter((k) => k.startsWith(name + "/") && k.split("/").length === 2)
         .map((k) => ({ ref: ref(k), data: () => store.get(k), id: k.split("/")[1] }));
-      return {
-        async get() { return { docs: list() }; },
+      const q = (docs) => ({
+        async get() { return { docs }; },
         where(field, op, val) {
-          if (op !== "==") throw new Error("fake supports == only");
-          return { async get() { return { docs: list().filter((x) => x.data()[field] === val) }; } };
+          return q(docs.filter((x) => {
+            const v = x.data()[field];
+            if (op === "==") return v === val;
+            if (op === "<") return v < val;
+            if (op === "<=") return v <= val;
+            if (op === ">") return v > val;
+            if (op === ">=") return v >= val;
+            throw new Error("fake does not support op " + op);
+          }));
         },
-      };
+        orderBy(field, dir) {
+          const asc = (a, b) => (a.data()[field] < b.data()[field] ? -1 : a.data()[field] > b.data()[field] ? 1 : 0);
+          const sorted = [...docs].sort(dir === "desc" ? (a, b) => -asc(a, b) : asc);
+          return q(sorted);
+        },
+        limit(n) { return q(docs.slice(0, n)); },
+      });
+      return q(list());
     },
     async runTransaction(fn) {
       if (state.failTransactions > 0) {
@@ -54,10 +68,19 @@ function makeFirestore(initial = {}) {
       const pending = [];
       const txn = {
         get: (r) => r.get(),
-        set: (r, data, opts) => { pending.push([r, data, opts]); },
+        set: (r, data, opts) => { pending.push(["set", r, data, opts]); },
+        update: (r, data) => { pending.push(["update", r, data]); },
+        delete: (r) => { pending.push(["delete", r]); },
       };
       const result = await fn(txn);
-      for (const [r, data, opts] of pending) await r.set(data, opts);
+      for (const op of pending) {
+        if (op[0] === "set") await op[1].set(op[2], op[3]);
+        else if (op[0] === "update") {
+          const cur = store.get(op[1].path) || {};
+          await op[1].set({ ...cur, ...op[2] }, { merge: true });
+        }
+        else if (op[0] === "delete") await op[1].delete();
+      }
       return result;
     },
   };

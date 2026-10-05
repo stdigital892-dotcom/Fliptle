@@ -146,6 +146,20 @@ async function processPayload(deps, body) {
           if (key) {
             await recordOptOut(deps, key);
             summary.optOuts++;
+            // Mirror the stop onto any user who had this number as their partner.
+            // The whatsappOptOuts write above is the source of truth; this is
+            // only the client-visible side (partnerLinks). Called after the
+            // opt-out is recorded so the sender's isOptedOut check already
+            // honours it, even if the hook below fails.
+            if (deps.onOptOut) {
+              try {
+                await deps.onOptOut(deps, m.from);
+              } catch (e) {
+                deps.logger.error("whatsappWebhook: onOptOut hook failed", {
+                  code: e && e.code, name: e && e.name,
+                });
+              }
+            }
           }
         }
       }

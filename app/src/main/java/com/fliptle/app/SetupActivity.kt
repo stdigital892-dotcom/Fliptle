@@ -27,6 +27,7 @@ class SetupActivity : AppCompatActivity() {
         setContentView(R.layout.activity_setup)
 
         open(R.id.scheduleButton, FreezeActivity::class.java)
+        open(R.id.partnerButton, PartnerActivity::class.java)
         open(R.id.uninstallButton, UninstallRequestActivity::class.java)
     }
 

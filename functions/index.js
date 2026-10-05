@@ -3,7 +3,7 @@
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const { defineSecret } = require("firebase-functions/params");
+const { defineSecret, defineString, defineBoolean, defineInt } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
 const { Resend } = require("resend");
@@ -953,6 +953,9 @@ const whatsapp = require("./whatsapp");
 const WHATSAPP_VERIFY_TOKEN = defineSecret("WHATSAPP_VERIFY_TOKEN");
 const WHATSAPP_APP_SECRET = defineSecret("WHATSAPP_APP_SECRET");
 
+const partner = require("./partner");
+const partnerSender = require("./partner-sender");
+
 exports.whatsappWebhook = onRequest(
   {
     region: RAZORPAY_REGION, // asia-south2, same as the other functions
@@ -968,5 +971,154 @@ exports.whatsappWebhook = onRequest(
       appSecret: () => WHATSAPP_APP_SECRET.value(),
       serverTimestamp: () => admin.firestore.FieldValue.serverTimestamp(),
       logger,
+      fv: partnerFieldValues,
+      // After a STOP is recorded, mirror it onto any user whose partnerContacts
+      // number matches. The sender's isOptedOut check still consults the
+      // authoritative whatsappOptOuts record; this only updates the client-visible
+      // partnerLinks row so the Partner screen can show "Your partner asked not
+      // to receive messages".
+      onOptOut: (hookDeps, fromNumber) =>
+        partner.markLinkStoppedFor(
+          { db: hookDeps.db, logger: hookDeps.logger, fv: partnerFieldValues },
+          fromNumber
+        ),
     })
+);
+
+// ============================================================================
+// Partner (accountability partner): callables + hourly sender.
+//
+// Collections:
+//   partnerContacts/{uid}  server-only. Never read/written by clients.
+//   partnerLinks/{uid}     client may READ their own row; writes server-only.
+//
+// Deploy:
+//   firebase functions:config:set \
+//     partner.whatsapp_phone_number_id=... \
+//     partner.whatsapp_template_name=partner_alert_v2 \
+//     partner.whatsapp_template_lang=en_US \
+//     partner.alerts_dry_run=true \
+//     partner.alerts_allowed_uids=
+//   firebase functions:secrets:set WHATSAPP_ACCESS_TOKEN
+//   firebase deploy --only functions:savePartner,functions:removePartner,functions:sendPartnerAlerts
+//
+// Firestore rules the operator must add (not in this repo):
+//   match /partnerContacts/{uid} { allow read, write: if false; }
+//   match /partnerLinks/{uid}    { allow read: if request.auth.uid == uid;
+//                                   allow write: if false; }
+// ============================================================================
+
+const WHATSAPP_ACCESS_TOKEN = defineSecret("WHATSAPP_ACCESS_TOKEN");
+
+// Shared helpers for partner.js / partner-sender.js.
+const partnerFieldValues = {
+  timestampFromMs: (ms) => admin.firestore.Timestamp.fromMillis(ms),
+  serverTimestamp: () => admin.firestore.FieldValue.serverTimestamp(),
+  deleteField: () => admin.firestore.FieldValue.delete(),
+};
+
+function partnerCallDeps() {
+  return { db: admin.firestore(), logger, fv: partnerFieldValues };
+}
+
+function partnerHttpsError(e) {
+  if (e instanceof partner.PartnerError) return new HttpsError(e.code, e.message);
+  return e;
+}
+
+exports.savePartner = onCall(
+  { region: RAZORPAY_REGION },
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
+    const uid = request.auth.uid;
+    const nowMs = Date.now();
+    try {
+      const result = await partner.savePartner(partnerCallDeps(), uid, {
+        partnerPhone: request.data && request.data.partnerPhone,
+        note: request.data && request.data.note,
+        userConfirmed: !!(request.data && request.data.userConfirmed),
+      }, nowMs);
+      logger.info("savePartner: ok", { uid });
+      return result;
+    } catch (e) {
+      throw partnerHttpsError(e);
+    }
+  }
+);
+
+exports.removePartner = onCall(
+  { region: RAZORPAY_REGION },
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
+    const uid = request.auth.uid;
+    try {
+      const result = await partner.removePartner(partnerCallDeps(), uid);
+      logger.info("removePartner: ok", { uid });
+      return result;
+    } catch (e) {
+      throw partnerHttpsError(e);
+    }
+  }
+);
+
+// Operator-tunable params. Firebase prompts for these on deploy; a .env.<project>
+// file in functions/ supplies them non-interactively. Defaults keep this
+// dormant: DRY RUN is on by default so a bad deploy sends nothing.
+const PARTNER_WHATSAPP_PHONE_NUMBER_ID =
+  defineString("WHATSAPP_PHONE_NUMBER_ID", { default: "" });
+const PARTNER_WHATSAPP_TEMPLATE_NAME =
+  defineString("WHATSAPP_TEMPLATE_NAME", { default: "partner_alert_v2" });
+const PARTNER_WHATSAPP_TEMPLATE_LANG =
+  defineString("WHATSAPP_TEMPLATE_LANG", { default: "en_US" });
+const PARTNER_ALERTS_DRY_RUN = defineBoolean("PARTNER_ALERTS_DRY_RUN", { default: true });
+const PARTNER_ALERTS_ALLOWED_UIDS =
+  defineString("PARTNER_ALERTS_ALLOWED_UIDS", { default: "" });
+const PARTNER_ALERTS_STALE_HOURS =
+  defineInt("PARTNER_ALERTS_STALE_HOURS", { default: partnerSender.STALE_HOURS_DEFAULT });
+const PARTNER_ALERTS_COOLDOWN_DAYS =
+  defineInt("PARTNER_ALERTS_COOLDOWN_DAYS", { default: partnerSender.COOLDOWN_DAYS_DEFAULT });
+
+function partnerConfig() {
+  const list = String(PARTNER_ALERTS_ALLOWED_UIDS.value() || "")
+    .split(",").map((s) => s.trim()).filter(Boolean);
+  return {
+    phoneNumberId: String(PARTNER_WHATSAPP_PHONE_NUMBER_ID.value() || ""),
+    templateName: String(PARTNER_WHATSAPP_TEMPLATE_NAME.value() || "partner_alert_v2"),
+    templateLang: String(PARTNER_WHATSAPP_TEMPLATE_LANG.value() || "en_US"),
+    accessToken: WHATSAPP_ACCESS_TOKEN.value(),
+    staleHours: Number(PARTNER_ALERTS_STALE_HOURS.value()) || partnerSender.STALE_HOURS_DEFAULT,
+    cooldownDays: Number(PARTNER_ALERTS_COOLDOWN_DAYS.value()) || partnerSender.COOLDOWN_DAYS_DEFAULT,
+    dryRun: PARTNER_ALERTS_DRY_RUN.value() !== false,
+    allowedUids: new Set(list),
+  };
+}
+
+exports.sendPartnerAlerts = onSchedule(
+  {
+    schedule: "every 1 hours",
+    region: RAZORPAY_REGION,
+    secrets: [WHATSAPP_ACCESS_TOKEN],
+    timeoutSeconds: 540,
+  },
+  async () => {
+    const cfg = partnerConfig();
+    if (!cfg.phoneNumberId) {
+      logger.warn("sendPartnerAlerts: no whatsapp_phone_number_id configured; skipping run");
+      return;
+    }
+    if (!cfg.accessToken) {
+      logger.warn("sendPartnerAlerts: no WHATSAPP_ACCESS_TOKEN secret; skipping run");
+      return;
+    }
+    const deps = {
+      db: admin.firestore(),
+      logger,
+      fv: partnerFieldValues,
+      fetch: globalThis.fetch, // Node 20
+      // Shared opt-out check from whatsapp.js. NEVER swap for a local copy:
+      // bypassing this would send alerts to numbers that have replied STOP.
+      isOptedOut: whatsapp.isOptedOut,
+    };
+    await partnerSender.runOnce(deps, Date.now(), cfg);
+  }
 );

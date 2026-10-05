@@ -56,11 +56,17 @@ object Heartbeat {
         if (!FirebaseGate.isAvailable(context)) return
         val user = FirebaseAuth.getInstance().currentUser ?: return
         val protectionActive = Permissions.allEnforcementGranted(context)
+        // Passive read for the partner-alert template: adult-content blocking has
+        // no reset path, so dayCount() is both "days with protection on" and
+        // "longest stretch" at once. The sender uses it as both {{4}} and {{5}}.
+        // Reading this doesn't change any blocking state.
+        val pornDays = com.fliptle.app.PornBlockStore(context).dayCount()
         val data = mutableMapOf<String, Any?>(
             "lastHeartbeatAt" to FieldValue.serverTimestamp(),
             "lastHeartbeatMs" to System.currentTimeMillis(),
             "email" to user.email,
-            "protectionActive" to protectionActive
+            "protectionActive" to protectionActive,
+            "pornDays" to pornDays
         )
         // Only clear a previously-set staleness flag once protection is
         // confirmed back on — if protection is still off, leave whatever flag

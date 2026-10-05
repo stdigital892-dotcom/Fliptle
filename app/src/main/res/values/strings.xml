@@ -112,6 +112,44 @@
     <string name="typing_done_local">Correct! (Sign in to record this on the server.)</string>
     <string name="typing_server_rejected">Server rejected the entry: %1$s</string>
 
+
+    <!-- ================= Accountability partner =================
+         Everything the partner screen says lives here. The feature only
+         messages the partner if Rescue is removed before the exit process
+         finishes. Copy uses "adult content", never "porn". -->
+    <string name="setup_partner">Your accountability partner</string>
+    <string name="setup_partner_sub">One trusted person, told only if Rescue is removed.</string>
+    <string name="partner_title">Your accountability partner</string>
+    <string name="partner_body">Choose ONE person you trust. If Rescue is removed from this phone before you finish the exit process, they will be messaged on WhatsApp with the date, how many days adult-content blocking was on, and your note. They will not be messaged while Rescue is working normally.
+
+Your partner will only be messaged if Rescue is removed before you finish the exit process. They can reply STOP at any time.</string>
+
+    <string name="partner_phone_label">Partner's mobile number</string>
+    <string name="partner_phone_hint">10 digits, starting 6-9</string>
+    <string name="partner_phone_help">We don't ask for the partner's name. The number is the only thing we store.</string>
+    <string name="partner_phone_invalid">Enter a 10-digit Indian mobile starting 6-9.</string>
+
+    <string name="partner_confirm_label">I have told my partner, and they are okay receiving these messages.</string>
+
+    <string name="partner_note_label">A short note to your partner (optional)</string>
+    <string name="partner_note_hint">Something that will remind them to check on you.</string>
+    <string name="partner_note_counter">%1$d / %2$d</string>
+
+    <string name="partner_save">Save partner</string>
+    <string name="partner_remove">Remove partner</string>
+    <string name="partner_saving">Saving…</string>
+    <string name="partner_removing">Removing…</string>
+    <string name="partner_saved_toast">Partner saved.</string>
+    <string name="partner_removed_toast">Partner removed.</string>
+    <string name="partner_save_failed">Could not save your partner: %1$s</string>
+    <string name="partner_remove_failed">Could not remove your partner: %1$s</string>
+
+    <!-- Current status shown above the form -->
+    <string name="partner_status_none">No partner saved yet.</string>
+    <string name="partner_status_saved">A partner is saved (ending in %1$s).</string>
+    <string name="partner_status_stopped">Your partner asked not to receive messages.</string>
+    <string name="partner_status_checking">Checking…</string>
+
     <!-- Uninstall request (math gate) -->
     <string name="setup_uninstall">Request to uninstall the app</string>
     <string name="uninstall_title">Request to uninstall</string>

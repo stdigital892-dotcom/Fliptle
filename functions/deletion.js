@@ -214,6 +214,12 @@ async function executeDeletion(deps, uid, nowMs) {
 
   await deleteDocTree(db, db.doc("typing_gate/" + uid));
 
+  // Partner contact + the client-visible link row. The server-only STOP record
+  // (owned by the webhook; see its module) is NEVER deleted — a user who
+  // replied STOP continues to be opted out even after their account is gone.
+  await deleteDocTree(db, db.doc("partnerContacts/" + uid));
+  await deleteDocTree(db, db.doc("partnerLinks/" + uid));
+
   try {
     await auth.deleteUser(uid);
   } catch (e) {
