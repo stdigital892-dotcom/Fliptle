@@ -120,13 +120,11 @@
     <string name="setup_partner">Your accountability partner</string>
     <string name="setup_partner_sub">One trusted person, told only if Rescue is removed.</string>
     <string name="partner_title">Your accountability partner</string>
-    <string name="partner_body">Choose ONE person you trust. If Rescue is removed from this phone before you finish the exit process, they will be messaged on WhatsApp with the date, how many days adult-content blocking was on, and your note. They will not be messaged while Rescue is working normally.
+    <string name="partner_body">Choose ONE person you trust. If Rescue is removed from this phone before you finish the exit process, they will be messaged on WhatsApp with the date, how many days adult-content blocking was on, and your note. They will not be messaged while Rescue is working normally.\n\nYour partner will only be messaged if Rescue is removed before you finish the exit process. They can reply STOP at any time.</string>
 
-Your partner will only be messaged if Rescue is removed before you finish the exit process. They can reply STOP at any time.</string>
-
-    <string name="partner_phone_label">Partner's mobile number</string>
+    <string name="partner_phone_label">Partner\'s mobile number</string>
     <string name="partner_phone_hint">10 digits, starting 6-9</string>
-    <string name="partner_phone_help">We don't ask for the partner's name. The number is the only thing we store.</string>
+    <string name="partner_phone_help">We don\'t ask for the partner\'s name. The number is the only thing we store.</string>
     <string name="partner_phone_invalid">Enter a 10-digit Indian mobile starting 6-9.</string>
 
     <string name="partner_confirm_label">I have told my partner, and they are okay receiving these messages.</string>
