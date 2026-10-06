@@ -15,6 +15,7 @@
     "test": "node --test test/deletion.test.js",
     "test:whatsapp": "node --test test/phone.test.js test/whatsapp.test.js",
     "test:partner": "node --test test/partner.test.js",
-    "test:all": "node --test test/deletion.test.js test/phone.test.js test/whatsapp.test.js test/partner.test.js"
+    "test:subscription": "node --test test/subscription.test.js",
+    "test:all": "node --test test/deletion.test.js test/phone.test.js test/whatsapp.test.js test/partner.test.js test/subscription.test.js"
   }
 }

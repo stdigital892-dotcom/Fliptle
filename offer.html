@@ -263,16 +263,16 @@ footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line)
       <div class="plan-card" data-card="monthly">
         <span class="plan-badge">Flexible</span>
         <div class="plan-name">Monthly</div>
-        <div class="plan-price">₹99 <span class="period">/ month</span></div>
-        <p class="plan-note">One-time payment. No recurring charge.</p>
+        <div class="plan-price">₹99 <span class="period">/ 30 days</span></div>
+        <p class="plan-note">Pay for 30 days of access. Renew anytime — no auto-renewal or auto-debit.</p>
         <button class="plan-cta" type="button" data-plan="monthly">Choose this plan</button>
       </div>
 
       <div class="plan-card highlight" data-card="annual">
         <span class="plan-badge">Save ₹389 · 33% off</span>
         <div class="plan-name">Annual</div>
-        <div class="plan-price">₹799 <span class="period">/ year</span></div>
-        <p class="plan-note">One-time payment — works out to ₹66/month.</p>
+        <div class="plan-price">₹799 <span class="period">/ 365 days</span></div>
+        <p class="plan-note">Pay for 365 days of access — works out to ₹66/month. No auto-renewal.</p>
         <button class="plan-cta" type="button" data-plan="annual">Choose this plan</button>
       </div>
     </div>
@@ -425,7 +425,7 @@ footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line)
     });
   }
 
-  const PLAN_LABELS = { trial: 'Free Trial (14 days)', monthly: 'Monthly (₹99/mo)', annual: 'Annual (₹799/yr)' };
+  const PLAN_LABELS = { trial: 'Free Trial (14 days)', monthly: 'Monthly (₹99 — 30 days)', annual: 'Annual (₹799 — 365 days)' };
   const PAID = { monthly: true, annual: true };
 
   // Load Razorpay Checkout on demand — no request for people who bounce or
@@ -521,7 +521,7 @@ footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line)
         amount: order.amount,
         currency: order.currency,
         name: 'RESCUE',
-        description: order.planName + ' subscription',
+        description: order.planName + ' access',
         prefill: { email: userEmail },
         theme: { color: '#FF2233' },
         handler: async function (resp) {
@@ -576,8 +576,8 @@ footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line)
           const result = await payWithRazorpay(email, planId);
           markSelected(planId);
           confirmBox.querySelector('#confirmBody').textContent =
-            "You're subscribed to " + (result.planName || PLAN_LABELS[planId]) +
-            ". Open the Fliptle app to continue.";
+            "Your " + (result.planName || PLAN_LABELS[planId]) +
+            " access is active. Open the Fliptle app to continue.";
         } else {
           await window.OfferDB.choosePlan(email, planId, source);
           markSelected(planId);
@@ -602,7 +602,7 @@ footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line)
             "Payment received" +
             (err.paymentId ? " (ref " + err.paymentId + ")" : "") +
             ". We're activating your " + PLAN_LABELS[planId] +
-            " subscription — check your email in a moment, or open the Fliptle app to continue.";
+            " access — check your email in a moment, or open the Fliptle app to continue.";
           confirmBox.hidden = false;
           confirmBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } else if (PAID[planId]) {

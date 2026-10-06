@@ -31,8 +31,17 @@ const RAZORPAY_WEBHOOK_SECRET = defineSecret("RAZORPAY_WEBHOOK_SECRET");
 // gets to say what a plan costs — that's the whole point of server-side order
 // creation + HMAC verification.
 const PAID_PLANS = {
-  monthly: { name: "Monthly", amountPaise: 9900,  currency: "INR" }, // ₹99
-  annual:  { name: "Annual",  amountPaise: 79900, currency: "INR" }, // ₹799
+  monthly: { name: "Monthly", amountPaise: 9900,  currency: "INR" }, // ₹99 / 30 days
+  annual:  { name: "Annual",  amountPaise: 79900, currency: "INR" }, // ₹799 / 365 days
+};
+
+// Prepaid-period subscription logic shared by verifyPayment and
+// razorpayWebhook, so a payment is applied identically and exactly once no
+// matter which path processes it first. See subscription.js.
+const subscription = require("./subscription");
+const paymentFieldValues = {
+  timestampFromMs: (ms) => admin.firestore.Timestamp.fromMillis(ms),
+  serverTimestamp: () => admin.firestore.FieldValue.serverTimestamp(),
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -284,9 +293,13 @@ exports.sendAppWelcomeEmail = onDocumentCreated(
 //   5. Client forwards those + {email, plan} to verifyPayment.
 //   6. Server recomputes HMAC-SHA256(orderId + "|" + paymentId, KEY_SECRET)
 //      as hex and compares it with the signature in constant time.
-//   7. If it matches, the Admin SDK writes subscriptions/{email}
-//      (this bypasses the Firestore rule that denies all client access to
-//      subscriptions/*). If not, the whole request is refused — no write.
+//   7. If it matches, subscription.applyPayment() (Admin SDK, bypassing the
+//      Firestore rule that denies all client access to subscriptions/*)
+//      extends expiresAt by the plan's prepaid period — 30 days for Monthly,
+//      365 for Annual — from whichever is later: now, or the existing
+//      expiresAt if it hasn't lapsed. razorpayWebhook calls the same helper,
+//      so the two paths can never disagree. If the signature doesn't match,
+//      the whole request is refused — no write.
 // ============================================================================
 
 exports.createOrder = onCall(
@@ -405,23 +418,32 @@ exports.verifyPayment = onCall(
     }
 
     // Admin SDK bypasses Firestore rules — `subscriptions` stays fully locked
-    // down (`allow read, write: if false`) to the client.
-    await admin.firestore().doc("subscriptions/" + email).set({
-      email,
+    // down (`allow read, write: if false`) to the client. Shared with
+    // razorpayWebhook so the two paths can never disagree on expiresAt.
+    const result = await subscription.applyPayment(
+      { db: admin.firestore(), fv: paymentFieldValues },
+      {
+        email,
+        planId,
+        planName: plan.name,
+        amountRupees: plan.amountPaise / 100,  // rupees, matches WEBSITE_SETUP.md schema
+        currency: plan.currency,
+        paymentId,
+        orderId,
+        source: "website",
+        nowMs: admin.firestore.Timestamp.now().toMillis(),
+      }
+    );
+
+    logger.info("Subscription activated", {
+      email, plan: planId, paymentId, applied: result.applied,
+    });
+    return {
+      status: "active",
       plan: planId,
       planName: plan.name,
-      amount: plan.amountPaise / 100,  // rupees, matches WEBSITE_SETUP.md schema
-      currency: plan.currency,
-      status: "active",
-      razorpayPaymentId: paymentId,
-      razorpayOrderId: orderId,
-      startedAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      source: "website",
-    }, { merge: true });
-
-    logger.info("Subscription activated", { email, plan: planId, paymentId });
-    return { status: "active", plan: planId, planName: plan.name };
+      expiresAt: result.expiresAtMs,
+    };
   }
 );
 
@@ -613,8 +635,10 @@ exports.executeScheduledDeletions = onSchedule(
 // so a signed-in attacker can't check someone else's entitlement.
 //
 // Precedence (first match wins):
-//   1. subscriptions/{email} status="active" and (no expiry OR within
-//      expiry + 3-day grace) → "paid"
+//   1. subscriptions/{email} status="active" and now <= expiresAt + 3-day
+//      grace → "paid". A doc with no expiresAt at all (a payment recorded
+//      before prepaid periods existed) is treated as expired, not granted
+//      indefinite access — see subscription.js.
 //   2. planSelections/{email} selectedPlan="trial" → "trial" (14 days from
 //      trialStartedAt, set on the server the FIRST time we see this doc and
 //      NEVER overwritten thereafter; 3-day grace after the 14-day mark)
@@ -667,18 +691,13 @@ exports.getEntitlement = onCall(
     const subSnap = await db.doc("subscriptions/" + email).get();
     const sub = subSnap.exists ? (subSnap.data() || {}) : null;
     if (sub && sub.status === "active") {
-      const expTs = sub.expiresAt;
-      if (!expTs) {
-        // No expiry recorded — grandfather existing paid docs (verifyPayment
-        // doesn't yet write expiresAt; when it does, this branch stops being
-        // reached for those docs).
-        return { entitled: true, reason: "paid", expiresAt: null };
+      const paid = subscription.isPaidActive(sub, nowMs, GRACE_MS);
+      if (paid.entitled) {
+        return { entitled: true, reason: "paid", expiresAt: paid.expiresAtMs };
       }
-      const expMs = expTs.toMillis ? expTs.toMillis() : Number(expTs);
-      if (nowMs <= expMs + GRACE_MS) {
-        return { entitled: true, reason: "paid", expiresAt: expMs };
-      }
-      // Past expiry + grace — fall through; user is "expired"
+      // Either past expiry + grace, or no expiresAt at all — a payment
+      // recorded before this field existed. Both fall through and are
+      // treated as "expired" below; neither grants indefinite access.
     }
 
     // ---- 2. Trial (14 days from server-stamped trialStartedAt) ----
@@ -809,45 +828,42 @@ exports.razorpayWebhook = onRequest(
     }
 
     const plan = PAID_PLANS[planId];
-    const db = admin.firestore();
-    const ref = db.collection("subscriptions").doc(email);
-
-    try {
-      await db.runTransaction(async (tx) => {
-        const snap = await tx.get(ref);
-        const existing = snap.exists ? snap.data() : null;
-
-        // Idempotency: skip if this exact payment was already recorded, whether
-        // by verifyPayment (the app's own client-triggered call) or by Razorpay
-        // retrying this same webhook (it retries on any non-2xx response).
-        if (existing && existing.razorpayPaymentId === payment.id && existing.status === "active") {
-          logger.info("Razorpay webhook: payment already recorded, skipping", {
-            paymentId: payment.id,
-            email,
-          });
-          return;
-        }
-
-        tx.set(
-          ref,
-          {
-            email,
-            plan: planId || (existing && existing.plan) || null,
-            planName: (plan && plan.name) || (existing && existing.planName) || null,
-            amount: typeof payment.amount === "number" ? payment.amount / 100 : null,
-            currency: payment.currency || "INR",
-            status: "active",
-            razorpayPaymentId: payment.id,
-            razorpayOrderId: payment.order_id || null,
-            startedAt: (existing && existing.startedAt) || admin.firestore.FieldValue.serverTimestamp(),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            source: (existing && existing.source) || "webhook",
-          },
-          { merge: true }
-        );
+    if (!plan) {
+      // Can't compute a prepaid period without a known plan. Previously this
+      // wrote a subscription doc with a null plan; now that entitlement is
+      // expiry-based, that would be unsafe (no period to extend). Reject
+      // instead, same as createOrder/verifyPayment do for an unknown plan.
+      logger.error("Razorpay webhook: payment.captured with unknown/missing plan", {
+        paymentId: payment.id,
+        planId,
       });
+      res.status(400).send("Unknown or missing plan");
+      return;
+    }
 
-      logger.info("Razorpay webhook: subscription confirmed", { email, paymentId: payment.id });
+    // Shared with verifyPayment so the two paths can never disagree on
+    // expiresAt — see subscription.js. Idempotent: if verifyPayment already
+    // applied this exact payment id, this call still refreshes the doc's
+    // other fields but does not extend expiresAt a second time.
+    try {
+      const result = await subscription.applyPayment(
+        { db: admin.firestore(), fv: paymentFieldValues },
+        {
+          email,
+          planId,
+          planName: plan.name,
+          amountRupees: typeof payment.amount === "number" ? payment.amount / 100 : plan.amountPaise / 100,
+          currency: payment.currency || plan.currency || "INR",
+          paymentId: payment.id,
+          orderId: payment.order_id || null,
+          source: "webhook",
+          nowMs: admin.firestore.Timestamp.now().toMillis(),
+        }
+      );
+
+      logger.info("Razorpay webhook: subscription confirmed", {
+        email, paymentId: payment.id, applied: result.applied,
+      });
       res.status(200).send("ok");
     } catch (e) {
       logger.error("Razorpay webhook: Firestore write failed", { email, message: e && e.message });
