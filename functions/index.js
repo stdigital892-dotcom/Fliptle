@@ -313,6 +313,10 @@ exports.createOrder = onCall(
     const email = String(data.email || "").trim().toLowerCase();
     const planId = String(data.plan || "").toLowerCase();
 
+    // Both are validated BEFORE any order is created, and both are then
+    // always sent in notes below — there is no path to a Razorpay order
+    // from this function with a missing/invalid email or plan. razorpayWebhook
+    // relies on that invariant to resolve notes.plan/notes.email safely.
     if (!EMAIL_RE.test(email)) {
       throw new HttpsError("invalid-argument", "A valid email is required.");
     }
@@ -760,116 +764,28 @@ exports.getEntitlement = onCall(
 // Razorpay still calls this webhook directly from its own servers, so
 // subscriptions/{email} gets written regardless of what the client does next.
 //
-// Email/plan correlation: createOrder (above) already passes
-// notes: { email, plan: planId } to the Razorpay Orders API, and Razorpay
-// echoes those notes back onto the payment entity — that's what this reads.
+// Email/plan correlation: createOrder (above) always sets notes: { email,
+// plan: planId } before an order can exist (both are validated first; see
+// createOrder), and Razorpay echoes those notes back onto the payment
+// entity — that's what this reads.
+//
+// Logic lives in razorpay-webhook.js (dependencies injected, unit-tested),
+// the same pattern whatsapp.js uses for the WhatsApp webhook.
 // ============================================================================
+const rzpWebhook = require("./razorpay-webhook");
+
 exports.razorpayWebhook = onRequest(
   { secrets: [RAZORPAY_WEBHOOK_SECRET], region: RAZORPAY_REGION },
-  async (req, res) => {
-    if (req.method !== "POST") {
-      res.status(405).send("Method not allowed");
-      return;
-    }
-
-    const signature = req.get("x-razorpay-signature");
-    if (!signature) {
-      logger.warn("Razorpay webhook: missing X-Razorpay-Signature header");
-      res.status(400).send("Missing signature");
-      return;
-    }
-
-    // req.rawBody is the exact bytes Firebase received, before JSON parsing —
-    // required because Razorpay signs the raw payload, and a parsed-then-
-    // re-serialized body is not guaranteed to match it byte-for-byte.
-    const expected = crypto
-      .createHmac("sha256", RAZORPAY_WEBHOOK_SECRET.value())
-      .update(req.rawBody)
-      .digest("hex");
-
-    const expectedBuf = Buffer.from(expected, "utf8");
-    const gotBuf = Buffer.from(signature, "utf8");
-    const validSignature =
-      expectedBuf.length === gotBuf.length && crypto.timingSafeEqual(expectedBuf, gotBuf);
-
-    if (!validSignature) {
-      logger.error("Razorpay webhook: signature verification failed — rejecting");
-      res.status(400).send("Invalid signature");
-      return;
-    }
-
-    const event = req.body || {};
-
-    // Acknowledge every other event type so Razorpay doesn't keep retrying it.
-    if (event.event !== "payment.captured") {
-      res.status(200).send("ignored");
-      return;
-    }
-
-    const payment = event.payload && event.payload.payment && event.payload.payment.entity;
-    if (!payment || !payment.id) {
-      logger.error("Razorpay webhook: payment.captured with no payment entity", {
-        event: event.event,
-      });
-      res.status(400).send("Malformed payload");
-      return;
-    }
-
-    const notes = payment.notes || {};
-    const email = String(notes.email || payment.email || "").trim().toLowerCase();
-    const planId = String(notes.plan || "").trim().toLowerCase();
-
-    if (!EMAIL_RE.test(email)) {
-      logger.error("Razorpay webhook: payment.captured with no resolvable email", {
-        paymentId: payment.id,
-      });
-      res.status(400).send("No email on payment");
-      return;
-    }
-
-    const plan = PAID_PLANS[planId];
-    if (!plan) {
-      // Can't compute a prepaid period without a known plan. Previously this
-      // wrote a subscription doc with a null plan; now that entitlement is
-      // expiry-based, that would be unsafe (no period to extend). Reject
-      // instead, same as createOrder/verifyPayment do for an unknown plan.
-      logger.error("Razorpay webhook: payment.captured with unknown/missing plan", {
-        paymentId: payment.id,
-        planId,
-      });
-      res.status(400).send("Unknown or missing plan");
-      return;
-    }
-
-    // Shared with verifyPayment so the two paths can never disagree on
-    // expiresAt — see subscription.js. Idempotent: if verifyPayment already
-    // applied this exact payment id, this call still refreshes the doc's
-    // other fields but does not extend expiresAt a second time.
-    try {
-      const result = await subscription.applyPayment(
-        { db: admin.firestore(), fv: paymentFieldValues },
-        {
-          email,
-          planId,
-          planName: plan.name,
-          amountRupees: typeof payment.amount === "number" ? payment.amount / 100 : plan.amountPaise / 100,
-          currency: payment.currency || plan.currency || "INR",
-          paymentId: payment.id,
-          orderId: payment.order_id || null,
-          source: "webhook",
-          nowMs: admin.firestore.Timestamp.now().toMillis(),
-        }
-      );
-
-      logger.info("Razorpay webhook: subscription confirmed", {
-        email, paymentId: payment.id, applied: result.applied,
-      });
-      res.status(200).send("ok");
-    } catch (e) {
-      logger.error("Razorpay webhook: Firestore write failed", { email, message: e && e.message });
-      res.status(500).send("internal error");
-    }
-  }
+  (req, res) =>
+    rzpWebhook.handleRequest(req, res, {
+      db: admin.firestore(),
+      fv: paymentFieldValues,
+      logger,
+      webhookSecret: () => RAZORPAY_WEBHOOK_SECRET.value(),
+      paidPlans: PAID_PLANS,
+      emailRe: EMAIL_RE,
+      nowMs: admin.firestore.Timestamp.now().toMillis(),
+    })
 );
 
 // ============================================================================
