@@ -142,7 +142,10 @@ class SignInActivity : AppCompatActivity() {
         }
         auth = FirebaseAuth.getInstance()
 
-        findViewById<Button>(R.id.googleSignInButton).setOnClickListener { startGoogleSignIn() }
+        // googleSignInButton is an ImageButton (Google's branded PNG), not a Button;
+        // setOnClickListener is on View so the cast is widened. The id and click
+        // handler (startGoogleSignIn) are unchanged.
+        findViewById<View>(R.id.googleSignInButton).setOnClickListener { startGoogleSignIn() }
         findViewById<Button>(R.id.emailSignUpButton).setOnClickListener { signUpEmail() }
         findViewById<Button>(R.id.emailSignInButton).setOnClickListener { signInEmail() }
         findViewById<Button>(R.id.continueProfileButton).setOnClickListener { continueProfile() }
@@ -556,10 +559,13 @@ class SignInActivity : AppCompatActivity() {
     }
 
     private fun disableAll() {
+        // googleSignInButton is an ImageButton; the other three are still Buttons.
+        // isEnabled is on View, so a widened cast disables all four uniformly and
+        // flips the Google button's state-list drawable to its dimmed variant.
         for (id in intArrayOf(
             R.id.googleSignInButton, R.id.emailSignUpButton,
             R.id.emailSignInButton, R.id.continueProfileButton
-        )) findViewById<Button>(id).isEnabled = false
+        )) findViewById<View>(id).isEnabled = false
     }
 
     private fun status(message: String) {

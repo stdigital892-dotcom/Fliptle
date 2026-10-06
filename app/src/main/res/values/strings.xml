@@ -74,6 +74,8 @@
     <string name="firebase_not_configured">Firebase is not configured. Add google-services.json to enable sign-in. The app\'s protection features work without it.</string>
 
     <!-- Sign-in (Google + email/password) -->
+    <!-- Accessibility label for the branded Google button image. Must stay literally "Sign in with Google" per Google's branding guidelines. -->
+    <string name="auth_google_cd">Sign in with Google</string>
     <string name="auth_google">Sign in with Google (one tap)</string>
     <string name="auth_or_email">Or use email &amp; password</string>
     <string name="auth_email_hint_field">Email address</string>

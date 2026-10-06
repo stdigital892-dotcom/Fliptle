@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The "Sign in with Google" button image, with a disabled state that dims the
+  official Google asset to ~60%. The underlying bitmap (@drawable/google_signin_button,
+  Google's official branding asset) is NEVER tinted, recolored or scaled by this
+  file; alpha is a view-level multiplier that darkens uniformly without touching
+  the pixels. The density-bucket PNGs live in drawable-mdpi/xhdpi/xxhdpi/xxxhdpi
+  so Android picks the right source at runtime.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_enabled="false">
+        <bitmap
+            android:src="@drawable/google_signin_button"
+            android:alpha="0.6" />
+    </item>
+    <item>
+        <bitmap android:src="@drawable/google_signin_button" />
+    </item>
+</selector>
