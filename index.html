@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>RESCUE — Break Free From The Legal Drug</title>
-<meta name="description" content="Porn and social media are engineered to hijack your brain. RESCUE is the movement — and the app — helping a generation break free and take their life back. Join the waitlist for early access." />
+<meta name="description" content="Adult content and social media are engineered to hijack your brain. RESCUE is the movement — and the app — helping a generation break free and take their life back. Join the waitlist for early access." />
 <meta name="theme-color" content="#060608" />
 
 <!-- Social share -->
@@ -294,7 +294,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 44px;text-align:center;ba
   <div class="wrap hero-content">
     <span class="eyebrow reveal">The legal drug no one's talking about</span>
     <h1 class="display reveal d1">RESCUE<span class="r-sub">Take your life back</span></h1>
-    <p class="lead reveal d2">Porn and social media are engineered to hijack your brain — a <b>legal drug</b> quietly dissolving your focus, your relationships and your self-worth, one scroll at a time. RESCUE is the movement helping a generation <b>break free</b>.</p>
+    <p class="lead reveal d2">Adult content and social media are engineered to hijack your brain — a <b>legal drug</b> quietly dissolving your focus, your relationships and your self-worth, one scroll at a time. RESCUE is the movement helping a generation <b>break free</b>.</p>
 
     <div class="reveal d3" id="join">
       <form class="waitlist-form" data-form="hero" novalidate>
@@ -357,7 +357,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 44px;text-align:center;ba
     <div class="pillars">
       <div class="pillar reveal"><div class="p-ic">🧠</div><div><h4>Reclaim your attention</h4><p>Cut the triggers and take back the hours the feed was stealing.</p></div></div>
       <div class="pillar reveal d1"><div class="p-ic">🧬</div><div><h4>Rewire the habit</h4><p>Science-backed tools that retrain your brain, not just block a site.</p></div></div>
-      <div class="pillar reveal d2"><div class="p-ic">🤝</div><div><h4>Rise together</h4><p>Real accountability and a community climbing out of the same pit.</p></div></div>
+      <div class="pillar reveal d2"><div class="p-ic">🤝</div><div><h4>Rise together</h4><p>Real accountability when willpower runs out.</p></div></div>
     </div>
   </div>
 </section>
@@ -371,9 +371,9 @@ footer{border-top:1px solid var(--line);padding:56px 0 44px;text-align:center;ba
       <p class="section-sub">RESCUE isn't willpower in an app. It's a system that steps in the moment the urge hits — and doesn't let go until you're free.</p>
       <div class="feature-list">
         <div class="feature"><div class="f-ic">🛑</div><div><h4>Block &amp; interrupt</h4><p>Cut off the triggers and break the loop the instant it starts.</p></div></div>
-        <div class="feature"><div class="f-ic">🔥</div><div><h4>Streaks &amp; science</h4><p>Track clean streaks and rewire cravings with guided challenges.</p></div></div>
-        <div class="feature"><div class="f-ic">🆘</div><div><h4>Panic button</h4><p>One tap when the urge hits — an instant intervention, not a feed.</p></div></div>
-        <div class="feature"><div class="f-ic">🤝</div><div><h4>Accountability</h4><p>A partner or the community that has your back when willpower runs out.</p></div></div>
+        <div class="feature"><div class="f-ic">🔥</div><div><h4>Day counter</h4><p>Tracks how many days your protection has stayed on, without a reset.</p></div></div>
+        <div class="feature"><div class="f-ic">🔐</div><div><h4>Exit challenge</h4><p>Removing a commitment takes a short math-and-typing challenge, every day for 5 days — not one tap.</p></div></div>
+        <div class="feature"><div class="f-ic">🤝</div><div><h4>Accountability partner</h4><p>Add one person by phone number. If protection goes dark before you finish removing it, they get a WhatsApp alert.</p></div></div>
       </div>
       <span class="badge-soon">Launching soon · Waitlist gets first access</span>
     </div>
@@ -470,7 +470,8 @@ footer{border-top:1px solid var(--line);padding:56px 0 44px;text-align:center;ba
         userAgent: navigator.userAgent
       });
       // Best-effort public counter (cosmetic). Never blocks the signup.
-      try { await setDoc(doc(db, "stats", "waitlist"), { count: increment(1) }, { merge: true }); } catch(_){}
+      try { await setDoc(doc(db, "stats", "waitlist"), { count: increment(1) }, { merge: true }); }
+      catch(e){ console.warn('[RESCUE] stats/waitlist increment failed (counter will stay stale):', e); }
     },
     async waitlistCount(){
       try {
@@ -516,8 +517,8 @@ const RESCUE = {
   CREATE_ORDER_ENDPOINT: "",   // optional serverless URL that creates a Razorpay order (recommended)
   VERIFY_ENDPOINT: "",         // optional serverless URL that verifies payment + writes subscription (recommended)
   PLANS: [
-    { id:"monthly", name:"Monthly", price:199,  period:"/month", tagline:"Full access, cancel anytime" },
-    { id:"yearly",  name:"Yearly",  price:1499, period:"/year",  tagline:"2 months free", badge:"Best value" }
+    { id:"monthly", name:"Monthly", price:99,  period:"/month", tagline:"One-time payment, full access" },
+    { id:"yearly",  name:"Yearly",  price:799, period:"/year",  tagline:"One-time payment — best value", badge:"Best value" }
   ]
 };
 
