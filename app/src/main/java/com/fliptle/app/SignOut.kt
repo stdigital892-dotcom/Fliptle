@@ -19,8 +19,21 @@ import com.google.firebase.auth.FirebaseAuth
  */
 object SignOut {
 
-    /** Show the required warning, then sign out on confirmation. */
-    fun confirm(activity: Activity) {
+    /**
+     * Show the required warning, then sign out on confirmation. While sign-out is
+     * locked ([SignOutGuard]) it refuses instead, with the locked message.
+     * [enforceLock] = false is for the deletion-check retry screen only, which must
+     * keep working exactly as before.
+     */
+    fun confirm(activity: Activity, enforceLock: Boolean = true) {
+        if (enforceLock && SignOutGuard.isLocked(activity)) {
+            AlertDialog.Builder(activity)
+                .setTitle(R.string.sign_out_locked_title)
+                .setMessage(R.string.sign_out_locked)
+                .setPositiveButton(R.string.sign_out_locked_ok, null)
+                .show()
+            return
+        }
         AlertDialog.Builder(activity)
             .setTitle(R.string.sign_out_title)
             .setMessage(R.string.sign_out_warning)

@@ -158,7 +158,10 @@ class SignInActivity : AppCompatActivity() {
         deletionCheckRetryButton.setOnClickListener {
             runDeletionCheck(PendingDeletion.signInCheckMethod(this))
         }
-        deletionCheckSignOutButton.setOnClickListener { signOut() }
+        // The deletion-check retry screen keeps its own, unlocked sign-out.
+        deletionCheckSignOutButton.setOnClickListener {
+            com.fliptle.app.SignOut.confirm(this, enforceLock = false)
+        }
 
         val current = auth?.currentUser
         when {
@@ -175,6 +178,7 @@ class SignInActivity : AppCompatActivity() {
         super.onResume()
         // Signed out: keep the "will be deleted on ..." notice current.
         if (auth != null && auth?.currentUser == null) showDeletionNotice()
+        if (accountSection.visibility == View.VISIBLE) applySignOutLock()
     }
 
     // ---- Google ----
@@ -388,6 +392,7 @@ class SignInActivity : AppCompatActivity() {
         authProgressSection.visibility = View.GONE
         statusText.visibility = View.GONE
         accountSection.visibility = View.VISIBLE
+        applySignOutLock()
 
         val user = auth?.currentUser
         accountEmailText.text = getString(R.string.auth_signed_in, user?.email ?: user?.uid ?: "")
@@ -423,6 +428,13 @@ class SignInActivity : AppCompatActivity() {
                 .format(java.util.Date(scheduledForMs))
             deletionBanner.text = getString(R.string.deletion_banner, whenText)
         }
+    }
+
+    /** While sign-out is locked, the Sign out button is replaced by the explanation. */
+    private fun applySignOutLock() {
+        val locked = com.fliptle.app.SignOutGuard.isLocked(this)
+        findViewById<View>(R.id.signOutButton).visibility = if (locked) View.GONE else View.VISIBLE
+        findViewById<View>(R.id.signOutLockedText).visibility = if (locked) View.VISIBLE else View.GONE
     }
 
     /** Sign out (with the required warning) via the shared flow. */

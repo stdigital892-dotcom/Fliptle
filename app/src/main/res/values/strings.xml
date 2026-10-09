@@ -309,6 +309,9 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <!-- Sign out warning -->
     <string name="sign_out_title">Sign out?</string>
     <string name="sign_out_warning">Your protection stays active on this device regardless of which account you use. Signing out only affects your account tracking — not your blocking.</string>
+    <string name="sign_out_locked_title">Sign-out is locked</string>
+    <string name="sign_out_locked">Sign-out is locked while your protection is on. It unlocks when you finish the exit process or when your plan ends. If you signed in with the wrong account, deleting your account is the way out, and your blocking keeps running during the 72-hour wait.</string>
+    <string name="sign_out_locked_ok">OK</string>
     <string name="sign_out_confirm">Sign out</string>
     <string name="sign_out_cancel">Cancel</string>
     <!-- Freeze: what it covers -->

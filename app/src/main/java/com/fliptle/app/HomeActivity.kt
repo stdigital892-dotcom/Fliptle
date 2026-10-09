@@ -112,7 +112,15 @@ class HomeActivity : AppCompatActivity() {
     /** "Set up" = the journey has begun: porn blocking on, or a cycle running. */
     private fun isSetUp(): Boolean = pornBlock.enabled || freezeStore.active
 
+    /** While sign-out is locked, the Sign out button is replaced by the explanation. */
+    private fun applySignOutLock() {
+        val locked = SignOutGuard.isLocked(this)
+        findViewById<View>(R.id.signOutButton).visibility = if (locked) View.GONE else View.VISIBLE
+        findViewById<View>(R.id.signOutLockedText).visibility = if (locked) View.VISIBLE else View.GONE
+    }
+
     private fun render() {
+        applySignOutLock()
         if (!isSetUp()) {
             startSection.visibility = View.VISIBLE
             statusSection.visibility = View.GONE

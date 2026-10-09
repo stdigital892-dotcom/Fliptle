@@ -133,6 +133,16 @@
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="6dp"
                 android:text="@string/auth_sign_out" />
+
+            <!-- Shown INSTEAD of the Sign out button while sign-out is locked. -->
+            <TextView
+                android:id="@+id/signOutLockedText"
+                style="@style/Text.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="@string/sign_out_locked"
+                android:visibility="gone" />
         </LinearLayout>
 
         <!-- Always visible (both Home states): opens the Account screen, which
