@@ -10,12 +10,15 @@
         android:orientation="vertical"
         android:padding="24dp">
 
+        <!-- Shared title: shown by the Account view only (set in code). The sign-in
+             face has its own centred wordmark and heading inside signInControls. -->
         <TextView
             android:id="@+id/authTitle"
             style="@style/Text.Title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/auth_title" />
+            android:text="@string/auth_title"
+            android:visibility="gone" />
 
         <!-- Account view (already signed in) -->
         <LinearLayout
@@ -107,11 +110,13 @@
                 android:text="@string/auth_delete_account" />
         </LinearLayout>
 
-        <!-- Sign-in controls (mandatory gate) -->
+        <!-- Sign-in controls (mandatory gate): Google is the only way in. The column is
+             centred; the Google button keeps its own size and aspect ratio. -->
         <LinearLayout
             android:id="@+id/signInControls"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
             android:orientation="vertical">
 
             <!-- Shown after deletion was scheduled and this phone signed out:
@@ -127,6 +132,27 @@
                 android:textColor="@color/notice_text"
                 android:visibility="gone" />
 
+            <TextView
+                android:id="@+id/authWordmark"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="36dp"
+                android:fontFamily="@font/anton_regular"
+                android:letterSpacing="0.06"
+                android:text="@string/auth_wordmark"
+                android:textAllCaps="true"
+                android:textColor="@color/ink"
+                android:textSize="34sp" />
+
+            <TextView
+                android:id="@+id/signInHeading"
+                style="@style/Text.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:text="@string/auth_title" />
+
             <!-- Google's official branded "Sign in with Google" button (Neutral,
                  text, square, Android+Web), used unmodified from the four PNG
                  densities in drawable-{m,xh,xxh,xxxh}dpi via the state selector
@@ -141,7 +167,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="22dp"
+                android:layout_marginTop="28dp"
                 android:minHeight="48dp"
                 android:adjustViewBounds="true"
                 android:scaleType="fitCenter"
@@ -150,62 +176,22 @@
                 android:src="@drawable/google_signin_button_src"
                 android:contentDescription="@string/auth_google_cd" />
 
+
             <TextView
-                style="@style/Text.SectionLabel"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="@string/auth_or_email" />
-
-            <EditText
-                android:id="@+id/emailInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:autofillHints="emailAddress"
-                android:hint="@string/auth_email_hint_field"
-                android:textColor="@color/ink"
-                android:inputType="textEmailAddress" />
-
-            <EditText
-                android:id="@+id/passwordInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:autofillHints="password"
-                android:hint="@string/auth_password_hint"
-                android:textColor="@color/ink"
-                android:inputType="textPassword" />
-
-            <LinearLayout
+                android:id="@+id/googleNoteText"
+                style="@style/Text.Caption"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/emailSignInButton"
-                    style="@style/Widget.Fliptle.Button.Secondary"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/auth_email_signin" />
-
-                <Button
-                    android:id="@+id/emailSignUpButton"
-                    style="@style/Widget.Fliptle.Button.Outline"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_weight="1"
-                    android:text="@string/auth_email_signup" />
-            </LinearLayout>
+                android:gravity="center"
+                android:text="@string/auth_google_note" />
 
             <TextView
                 android:id="@+id/legalNoticeText"
                 style="@style/Text.Caption"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="24dp"
                 android:gravity="center"
                 android:lineSpacingMultiplier="1.4" />
         </LinearLayout>
@@ -275,10 +261,8 @@
                 android:progressTint="@color/accent" />
         </LinearLayout>
 
-        <!-- Combined optional profile step (name + phone), shown once after
-             sign-in. Both fields are independently skippable — leaving a
-             field blank IS how you skip it; there's a single Continue
-             button rather than separate save/skip actions per field. -->
+        <!-- Optional name step, shown once after sign-in. Leaving the field blank
+             IS how you skip it; there is a single Continue button. -->
         <LinearLayout
             android:id="@+id/profileSection"
             android:layout_width="match_parent"
@@ -311,24 +295,6 @@
                 android:inputType="textPersonName|textCapWords"
                 android:maxLength="40"
                 android:textColor="@color/ink" />
-
-            <TextView
-                style="@style/Text.Caption"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:lineSpacingMultiplier="1.4"
-                android:text="@string/auth_parent_phone_hint" />
-
-            <EditText
-                android:id="@+id/parentPhoneInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:importantForAutofill="no"
-                android:hint="@string/auth_parent_phone_field"
-                android:textColor="@color/ink"
-                android:inputType="phone" />
 
             <Button
                 android:id="@+id/continueProfileButton"

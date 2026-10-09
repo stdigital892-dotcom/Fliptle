@@ -75,31 +75,20 @@
 
     <!-- Sign-in (Google + email/password) -->
     <!-- Accessibility label for the branded Google button image. Must stay literally "Sign in with Google" per Google's branding guidelines. -->
+    <string name="auth_wordmark">Rescue</string>
+    <string name="auth_google_note">Rescue uses your Google account to sign you in.</string>
     <string name="auth_google_cd">Sign in with Google</string>
-    <string name="auth_google">Sign in with Google (one tap)</string>
-    <string name="auth_or_email">Or use email &amp; password</string>
-    <string name="auth_email_hint_field">Email address</string>
-    <string name="auth_password_hint">Password (min 6 characters)</string>
-    <string name="auth_email_signin">Sign in</string>
-    <string name="auth_email_signup">Create account</string>
-    <string name="auth_email_hint">Enter an email and a password of at least 6 characters.</string>
     <string name="auth_legal_notice">By proceeding, you agree to our &lt;a href="https://fliptle.com/privacy"&gt;Privacy Policy&lt;/a&gt; and &lt;a href="https://fliptle.com/terms"&gt;Terms&lt;/a&gt;.</string>
-    <string name="auth_working">Working…</string>
-    <string name="auth_verify_sent">Account created. A verification link was sent to %1$s — tap it to verify your email.</string>
-    <string name="auth_email_failed">Email sign-in failed: %1$s</string>
     <string name="auth_google_failed">Google sign-in failed: %1$s</string>
     <string name="auth_google_unconfigured">Google sign-in isn\'t configured yet. Enable the Google provider in Firebase and add the SHA-1, then rebuild.</string>
     <string name="auth_signed_in">Signed in as %1$s</string>
     <string name="auth_verified">Email: verified ✓</string>
     <string name="auth_unverified">Email: not verified — check your inbox for the verification link.</string>
-    <string name="auth_profile_title">Tell us about you (optional)</string>
+    <string name="auth_profile_title">What should we call you? (optional)</string>
     <string name="auth_name_hint">Optional. We\'ll use it instead of your email wherever the app greets you.</string>
     <string name="auth_name_field">Your name</string>
     <string name="auth_name_too_long">Keep it under 40 characters.</string>
-    <string name="auth_parent_phone_hint">Optional for now. Contact info only — not used for login or verification.</string>
-    <string name="auth_parent_phone_field">e.g. +15551234567</string>
     <string name="auth_profile_continue">Continue</string>
-    <string name="auth_phone_invalid">Enter a valid phone number (7–15 digits, e.g. +15551234567).</string>
 
     <!-- Typing gate -->
     <string name="typing_title">Typing gate</string>
@@ -179,8 +168,8 @@
 
 No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="ob_signin_title">Sign in</string>
-    <string name="ob_signin_body">Sign in with Google or an email and password. This is required — it keys your commitment and uninstall history to your account so it survives a reinstall.</string>
-    <string name="ob_signin_action">Sign in with Google or email</string>
+    <string name="ob_signin_body">Sign in with Google. This is required — it keys your commitment and uninstall history to your account so it survives a reinstall.</string>
+    <string name="ob_signin_action">Sign in with Google</string>
     <string name="ob_get_started">Get started</string>
     <string name="ob_continue">Continue</string>
     <string name="ob_next">Next</string>

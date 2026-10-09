@@ -26,16 +26,18 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 
 /**
- * Free authentication (no billing): Google one-tap and email/password with the
- * built-in email-verification link. The user record and reinstall tracking are
- * keyed off the Firebase Auth UID. One combined, optional profile step follows
- * a fresh sign-in: a display name (cosmetic — shown in place of the email
- * wherever the app greets the user) and a parent phone number (contact-only
- * info, never used for login/verification), both on one screen. Each field is
- * independently skippable by leaving it blank — there's no separate skip
- * button per field.
+ * Free authentication (no billing): Sign in with Google is the only way in. The
+ * user record and reinstall tracking are keyed off the Firebase Auth UID. One
+ * optional name step follows a fresh sign-in: a display name (cosmetic — shown
+ * in place of the email wherever the app greets the user), pre-filled from the
+ * Google account. Leaving it blank skips it — there's no separate skip button.
+ * The app no longer asks for the user's own phone number.
  *
- * These are PER-ACCOUNT concerns, re-asked for any new account signing in —
+ * Accounts that were created earlier with an email and password and are still
+ * signed in stay signed in (nothing here signs anyone out); only the screens and
+ * code for creating or entering a password are gone.
+ *
+ * The name is a PER-ACCOUNT concern, re-asked for any new account signing in —
  * even on an already-onboarded device — which is why they live here rather
  * than in OnboardingActivity's per-device step machine. A shared "Step X of Y"
  * indicator (see [OnboardingProgress]) bridges the two Activities; it's only
@@ -45,7 +47,7 @@ import com.google.firebase.auth.GoogleAuthProvider
  *  • ALREADY signed in (opened from Home → Account): the account view — email +
  *    "Sign out". Never shows a sign-in prompt to an authenticated user.
  *  • NOT signed in (the mandatory gate): the sign-in controls.
- *  • JUST signed in via an action here: the combined optional profile step.
+ *  • JUST signed in via an action here: the optional name step.
  *
  * Sign-in is mandatory app-wide (see AuthGate); this screen is also the account
  * screen once authenticated.
@@ -56,8 +58,6 @@ class SignInActivity : AppCompatActivity() {
 
     private lateinit var titleText: TextView
     private lateinit var statusText: TextView
-    private lateinit var emailInput: EditText
-    private lateinit var passwordInput: EditText
     private lateinit var signInControls: LinearLayout
     private lateinit var accountSection: LinearLayout
     private lateinit var accountEmailText: TextView
@@ -75,7 +75,6 @@ class SignInActivity : AppCompatActivity() {
     private lateinit var authProgressBar: ProgressBar
     private lateinit var profileSection: LinearLayout
     private lateinit var nameInput: EditText
-    private lateinit var parentPhoneInput: EditText
 
     private val googleLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -104,8 +103,6 @@ class SignInActivity : AppCompatActivity() {
 
         titleText = findViewById(R.id.authTitle)
         statusText = findViewById(R.id.authStatusText)
-        emailInput = findViewById(R.id.emailInput)
-        passwordInput = findViewById(R.id.passwordInput)
         signInControls = findViewById(R.id.signInControls)
         accountSection = findViewById(R.id.accountSection)
         accountEmailText = findViewById(R.id.accountEmailText)
@@ -123,7 +120,6 @@ class SignInActivity : AppCompatActivity() {
         authProgressBar = findViewById(R.id.authProgressBar)
         profileSection = findViewById(R.id.profileSection)
         nameInput = findViewById(R.id.nameInput)
-        parentPhoneInput = findViewById(R.id.parentPhoneInput)
 
         // Static, Firebase-independent — set before the availability check below
         // so it still renders even in a degraded/unconfigured build.
@@ -146,8 +142,6 @@ class SignInActivity : AppCompatActivity() {
         // setOnClickListener is on View so the cast is widened. The id and click
         // handler (startGoogleSignIn) are unchanged.
         findViewById<View>(R.id.googleSignInButton).setOnClickListener { startGoogleSignIn() }
-        findViewById<Button>(R.id.emailSignUpButton).setOnClickListener { signUpEmail() }
-        findViewById<Button>(R.id.emailSignInButton).setOnClickListener { signInEmail() }
         findViewById<Button>(R.id.continueProfileButton).setOnClickListener { continueProfile() }
         findViewById<Button>(R.id.signOutButton).setOnClickListener { signOut() }
         // "Delete my account" starts the full process (days of gates) every time.
@@ -203,41 +197,6 @@ class SignInActivity : AppCompatActivity() {
     private fun webClientId(context: Context): String? {
         val id = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
         return if (id != 0) context.getString(id) else null
-    }
-
-    // ---- Email / password ----
-
-    private fun signUpEmail() {
-        val email = emailInput.text.toString().trim()
-        val pw = passwordInput.text.toString()
-        if (email.isEmpty() || pw.length < 6) {
-            Toast.makeText(this, R.string.auth_email_hint, Toast.LENGTH_SHORT).show()
-            return
-        }
-        status(getString(R.string.auth_working))
-        auth?.createUserWithEmailAndPassword(email, pw)?.addOnCompleteListener(this) { task ->
-            if (task.isSuccessful) {
-                auth?.currentUser?.sendEmailVerification()
-                status(getString(R.string.auth_verify_sent, email))
-                onSignedIn("password")
-            } else {
-                status(getString(R.string.auth_email_failed, task.exception?.message ?: ""))
-            }
-        }
-    }
-
-    private fun signInEmail() {
-        val email = emailInput.text.toString().trim()
-        val pw = passwordInput.text.toString()
-        if (email.isEmpty() || pw.isEmpty()) {
-            Toast.makeText(this, R.string.auth_email_hint, Toast.LENGTH_SHORT).show()
-            return
-        }
-        status(getString(R.string.auth_working))
-        auth?.signInWithEmailAndPassword(email, pw)?.addOnCompleteListener(this) { task ->
-            if (task.isSuccessful) onSignedIn("password")
-            else status(getString(R.string.auth_email_failed, task.exception?.message ?: ""))
-        }
     }
 
     // ---- Shared ----
@@ -387,6 +346,7 @@ class SignInActivity : AppCompatActivity() {
     /** Account view for an already-authenticated user: email + sign out. */
     private fun showAccountState() {
         titleText.setText(R.string.auth_account_title)
+        titleText.visibility = View.VISIBLE
         signInControls.visibility = View.GONE
         profileSection.visibility = View.GONE
         authProgressSection.visibility = View.GONE
@@ -441,10 +401,10 @@ class SignInActivity : AppCompatActivity() {
     private fun signOut() = com.fliptle.app.SignOut.confirm(this)
 
     /**
-     * After a sign-in ACTION here, reveal the combined optional profile step —
-     * name and parent phone together on one screen, each independently
-     * prefilled from the local cache and then best-effort adopted from
-     * Firestore for a returning/reinstalled user so they aren't re-prompted.
+     * After a sign-in ACTION here, reveal the optional name step. The field is
+     * prefilled from the local cache, then best-effort from Firestore for a
+     * returning/reinstalled user so they aren't re-prompted, and otherwise
+     * suggests the Google account's display name (see [NamePrefill]).
      */
     private fun showProfileStep() {
         signInControls.visibility = View.GONE
@@ -454,9 +414,6 @@ class SignInActivity : AppCompatActivity() {
         if (nameInput.text.isNullOrEmpty()) {
             store.signedInName?.let { nameInput.setText(it) }
         }
-        if (parentPhoneInput.text.isNullOrEmpty()) {
-            store.signedInPhone?.let { parentPhoneInput.setText(it) }
-        }
         val user = auth?.currentUser
         if (user != null && !store.nameProvided) {
             InstallTracker.fetchDisplayName(this, user.uid) { existing ->
@@ -464,18 +421,11 @@ class SignInActivity : AppCompatActivity() {
                     if (!existing.isNullOrBlank()) {
                         store.signedInName = existing
                         store.nameProvided = true
-                        if (nameInput.text.isNullOrEmpty()) nameInput.setText(existing)
                     }
-                }
-            }
-        }
-        if (user != null && !store.parentPhoneProvided) {
-            InstallTracker.fetchParentPhone(this, user.uid) { existing ->
-                runOnUiThread {
-                    if (!existing.isNullOrBlank()) {
-                        store.signedInPhone = existing
-                        store.parentPhoneProvided = true
-                        if (parentPhoneInput.text.isNullOrEmpty()) parentPhoneInput.setText(existing)
+                    if (nameInput.text.isNullOrEmpty()) {
+                        // Saved name first, then the Google display name. Only a
+                        // suggestion: nothing is saved until Continue is tapped.
+                        NamePrefill.choose(null, existing, user.displayName)?.let { nameInput.setText(it) }
                     }
                 }
             }
@@ -495,11 +445,9 @@ class SignInActivity : AppCompatActivity() {
     }
 
     /**
-     * Single "Continue" for the combined profile step. Each field is
-     * independently optional — a blank field IS how you skip it, there's no
-     * separate skip button. Name has no real validation beyond a length cap;
-     * phone keeps its format validation and blocks continuing if what's typed
-     * doesn't look like a number at all.
+     * Single "Continue" for the name step. The field is optional — a blank field
+     * IS how you skip it, there's no separate skip button. The name has no real
+     * validation beyond a length cap.
      */
     private fun continueProfile() {
         val user = auth?.currentUser
@@ -508,7 +456,7 @@ class SignInActivity : AppCompatActivity() {
         val name = nameInput.text.toString().trim()
         if (name.isEmpty()) {
             store.nameProvided = true
-        } else if (name.length > 40) {
+        } else if (name.length > NamePrefill.MAX_LENGTH) {
             Toast.makeText(this, R.string.auth_name_too_long, Toast.LENGTH_SHORT).show()
             return
         } else {
@@ -516,25 +464,6 @@ class SignInActivity : AppCompatActivity() {
             store.nameProvided = true
             if (user != null) {
                 InstallTracker.saveDisplayName(this, user.uid, name) { msg ->
-                    runOnUiThread { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() }
-                }
-            }
-        }
-
-        val phoneRaw = parentPhoneInput.text.toString().trim()
-        if (phoneRaw.isEmpty()) {
-            store.parentPhoneProvided = true
-        } else {
-            val normalized = normalizePhone(phoneRaw)
-            if (normalized == null) {
-                Toast.makeText(this, R.string.auth_phone_invalid, Toast.LENGTH_SHORT).show()
-                return
-            }
-            store.signedInPhone = normalized
-            store.parentPhoneProvided = true
-            parentPhoneInput.setText(normalized)
-            if (user != null) {
-                InstallTracker.saveParentPhone(this, user.uid, normalized) { msg ->
                     runOnUiThread { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() }
                 }
             }
@@ -558,26 +487,13 @@ class SignInActivity : AppCompatActivity() {
         finish()
     }
 
-    /**
-     * Validate and normalize a plausible phone number. Keeps an optional single
-     * leading '+' and the digits; requires 7–15 digits (E.164 caps at 15). Returns
-     * null if it doesn't look like a real number.
-     */
-    private fun normalizePhone(raw: String): String? {
-        val trimmed = raw.trim()
-        val digits = trimmed.filter { it.isDigit() }
-        if (digits.length < 7 || digits.length > 15) return null
-        return if (trimmed.startsWith("+")) "+$digits" else digits
-    }
-
     private fun disableAll() {
-        // googleSignInButton is an ImageButton; the other three are still Buttons.
-        // isEnabled is on View, so a widened cast disables all four uniformly and
+        // googleSignInButton is an ImageButton, continueProfileButton a Button.
+        // isEnabled is on View, so a widened cast disables both uniformly and
         // flips the Google button's state-list drawable to its dimmed variant.
-        for (id in intArrayOf(
-            R.id.googleSignInButton, R.id.emailSignUpButton,
-            R.id.emailSignInButton, R.id.continueProfileButton
-        )) findViewById<View>(id).isEnabled = false
+        for (id in intArrayOf(R.id.googleSignInButton, R.id.continueProfileButton)) {
+            findViewById<View>(id).isEnabled = false
+        }
     }
 
     private fun status(message: String) {

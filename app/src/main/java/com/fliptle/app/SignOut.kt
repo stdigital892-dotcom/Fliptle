@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import androidx.appcompat.app.AlertDialog
-import com.fliptle.app.auth.AuthStore
 import com.fliptle.app.auth.FirebaseGate
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -103,8 +102,6 @@ object SignOut {
             GoogleSignIn.getClient(activity, GoogleSignInOptions.DEFAULT_SIGN_IN).signOut()
         } catch (_: Exception) {
         }
-        // The parent-phone step is per sign-in session; require it again next time.
-        AuthStore(activity).parentPhoneProvided = false
         // Entitlement is per-account, and the cache is what MainActivity's
         // routing gate reads at launch — a stale ENTITLED cache from the
         // previous user would let a fresh signed-in user briefly reach Home

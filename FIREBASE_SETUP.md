@@ -35,8 +35,9 @@ them in Google Cloud console. On the next CI build the APK will be Firebase-enab
     printed in the GitHub Actions build log. Re-download `google-services.json`
     after enabling Google and commit it.
 - **Firestore Database → Create database.** User records live in `installs/{uid}`
-  (keyed by Auth UID); the parent phone is stored there as `parentPhone`
-  (contact-only). Typing-gate attempts are written under
+  (keyed by Auth UID). The app no longer asks for or stores the user's own phone
+  number; an older `installs/{uid}.parentPhone` value, if one exists, is simply
+  left as it is. Typing-gate attempts are written under
   `typing_gate/{uid}/attempts/{autoId}`.
 
 ### Firestore Security Rules (server-side validation)

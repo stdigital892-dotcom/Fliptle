@@ -95,7 +95,7 @@ if (!ok) return refuse("unsupported number format"); // never log the number
 
 Notes:
 
-- This rule is for numbers read from **our own data** (such as `parentPhone`). It
+- This rule is for numbers read from **our own data** (such as `partnerContacts.partnerPhone`). It
   does not apply to the `from` of an incoming STOP, which the webhook keys with
   `optOutKey()` directly, because Meta always sends the full international digits.
 - Numbers the app has already stored may fail this rule. The profile-step
@@ -117,12 +117,10 @@ Notes:
 Order: rule 0 (acceptable number), then step 2 (opt-out check), then send to the
 `optOutKey()` form, then step 3.
 
-The Android app does not need to call the helper: it only stores the entered
-parent number in `installs/{uid}.parentPhone` (`SignInActivity.normalizePhone`,
-which keeps `+` and digits and does not produce the `91` form). The sender
-normalises when it reads that field. If the app ever needs the canonical form
-itself, port `phone.js` to Kotlin and check it against
-`functions/test/phone-vectors.json`.
+The only number the app collects is the partner's, on the Partner screen. The app
+normalises it with `PartnerPhone.kt` (a Kotlin twin of `phone.js`) and the server
+normalises it again in `savePartner`. The app does not collect the user's own
+number any more, so there is no other phone field for the sender to read.
 
 ## Requirement for the partner-number screen (not built yet)
 

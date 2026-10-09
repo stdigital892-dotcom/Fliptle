@@ -9,7 +9,7 @@ import com.google.firebase.auth.FirebaseAuth
 
 /**
  * Sign-in is MANDATORY: the main app is not reachable until the user has signed
- * in with Google or email/password. There is no skip and no phone-number sign-in.
+ * in with Google. There is no skip, no email/password sign-in and no phone-number sign-in.
  *
  * One deliberate exception: if Firebase is not configured in this build
  * (no google-services.json), authentication is impossible, so requiring it would
@@ -17,8 +17,7 @@ import com.google.firebase.auth.FirebaseAuth
  * fail-open rule [FirebaseGate] applies everywhere else. In a properly configured
  * release build Firebase is always present, so sign-in is always required.
  *
- * The parent's phone number is a SEPARATE, optional step handled inside
- * [SignInActivity] (skippable for now — see PhoneGate).
+ * The user's own phone number is no longer collected.
  */
 object AuthGate {
 

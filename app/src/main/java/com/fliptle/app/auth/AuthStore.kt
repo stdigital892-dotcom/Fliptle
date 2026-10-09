@@ -23,10 +23,6 @@ class AuthStore(context: Context) {
         return id
     }
 
-    var signedInPhone: String?
-        get() = prefs.getString(KEY_PHONE, null)
-        set(value) = prefs.edit().putString(KEY_PHONE, value).apply()
-
     /** Optional display name, shown in place of the email wherever the app
      *  greets the user (Home's wordmark slot, the inbox-confirm headline). */
     var signedInName: String?
@@ -35,24 +31,12 @@ class AuthStore(context: Context) {
 
     /**
      * Whether the name step has been handled for the current signed-in user —
-     * either a name was entered or it was skipped. Mirrors [parentPhoneProvided]
-     * exactly, so a returning/reinstalled user who already made a choice isn't
-     * re-prompted.
+     * either a name was entered or it was skipped, so a returning/reinstalled user
+     * who already made a choice isn't re-prompted.
      */
     var nameProvided: Boolean
         get() = prefs.getBoolean(KEY_NAME_PROVIDED, false)
         set(value) = prefs.edit().putBoolean(KEY_NAME_PROVIDED, value).apply()
-
-    /**
-     * Whether the parent phone step has been handled for the current signed-in
-     * user — either a number was entered or it was skipped. Set optimistically on
-     * a valid entry (so an offline user is never trapped) and cleared on a fresh
-     * install (prefs wiped). Read by [com.fliptle.app.PhoneGate], whose
-     * enforcement is currently off (the phone number is optional for now).
-     */
-    var parentPhoneProvided: Boolean
-        get() = prefs.getBoolean(KEY_PHONE_PROVIDED, false)
-        set(value) = prefs.edit().putBoolean(KEY_PHONE_PROVIDED, value).apply()
 
     /**
      * Whether the once-per-account "how to uninstall" information screen has
@@ -95,6 +79,9 @@ class AuthStore(context: Context) {
 
     companion object {
         private const val KEY_INSTALL_ID = "install_id"
+        // Legacy keys: the app no longer asks for or stores the user's own phone
+        // number, but resetForAccountDeletion() still clears any value an older
+        // version left on this device.
         private const val KEY_PHONE = "phone"
         private const val KEY_PHONE_PROVIDED = "phone_provided"
         private const val KEY_NAME = "display_name"
