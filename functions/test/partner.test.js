@@ -338,6 +338,73 @@ test("evaluate: signedOutAt as a Firestore Timestamp is read correctly", async (
   assert.equal(older.ok, true);
 });
 
+test("evaluate: compares signedOutAt with lastHeartbeatAt (server time) when present", async () => {
+  const e = env();
+  const lastHeartbeatMs = NOW - 60 * H;
+  const at = NOW - 60 * H; // server stamp of the same heartbeat
+  const newer = await sender.evaluate(e.deps, "u1",
+    { ...installBase, lastHeartbeatMs, lastHeartbeatAt: at, signedOutAt: at + 1000 },
+    activeContact(), NOW, DEFAULT_CFG);
+  const older = await sender.evaluate(e.deps, "u1",
+    { ...installBase, lastHeartbeatMs, lastHeartbeatAt: at, signedOutAt: at - 1000 },
+    activeContact(), NOW, DEFAULT_CFG);
+  assert.deepEqual(newer, { ok: false, reason: sender.SKIP.SIGNED_OUT });
+  assert.equal(older.ok, true);
+});
+
+test("evaluate: a phone clock BEHIND the server does not cause a false skip", async () => {
+  const e = env();
+  // The user signed out at S (server), then signed back in and beat at S + 5 min.
+  // The phone clock is 10 min slow, so lastHeartbeatMs reads 5 min BEFORE S.
+  const S = NOW - 70 * H;
+  const lastHeartbeatAt = S + 5 * 60 * 1000;
+  const lastHeartbeatMs = S - 5 * 60 * 1000;
+  const r = await sender.evaluate(e.deps, "u1",
+    { ...installBase, lastHeartbeatMs, lastHeartbeatAt, signedOutAt: S },
+    activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(r.ok, true, "heartbeat after sign-out by server time must not be skipped");
+  // sanity: comparing against the phone clock alone WOULD have skipped
+  assert.ok(S > lastHeartbeatMs);
+  // and the event id still comes from lastHeartbeatMs, as before
+  assert.equal(r.event.eventId, String(lastHeartbeatMs));
+});
+
+test("evaluate: lastHeartbeatAt as a Firestore Timestamp is read correctly", async () => {
+  const e = env();
+  const ts = (ms) => ({ toMillis: () => ms });
+  const S = NOW - 70 * H;
+  const r = await sender.evaluate(e.deps, "u1",
+    { ...installBase, lastHeartbeatMs: S - 1000, lastHeartbeatAt: ts(S + 1000), signedOutAt: ts(S) },
+    activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(r.ok, true);
+});
+
+test("evaluate: falls back to lastHeartbeatMs when lastHeartbeatAt is missing", async () => {
+  const e = env();
+  const lastHeartbeatMs = NOW - 60 * H;
+  const skip = await sender.evaluate(e.deps, "u1",
+    { ...installBase, lastHeartbeatMs, signedOutAt: lastHeartbeatMs + 1 },
+    activeContact(), NOW, DEFAULT_CFG);
+  const pass = await sender.evaluate(e.deps, "u1",
+    { ...installBase, lastHeartbeatMs, signedOutAt: lastHeartbeatMs - 1 },
+    activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(skip.reason, sender.SKIP.SIGNED_OUT);
+  assert.equal(pass.ok, true);
+});
+
+test("evaluate: the stale check still uses lastHeartbeatMs, not lastHeartbeatAt", async () => {
+  const e = env();
+  // lastHeartbeatAt is fresh but lastHeartbeatMs is 60h old: stale check reads Ms, as today.
+  const r = await sender.evaluate(e.deps, "u1",
+    { ...installBase, lastHeartbeatMs: NOW - 60 * H, lastHeartbeatAt: NOW - H },
+    activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(r.ok, true);
+  const fresh = await sender.evaluate(e.deps, "u1",
+    { ...installBase, lastHeartbeatMs: NOW - H, lastHeartbeatAt: NOW - 60 * H },
+    activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(fresh.reason, sender.SKIP.NOT_STALE);
+});
+
 test("runOnce: a signed-out user is skipped, counted under 'signed_out', and nothing is sent", async () => {
   const lastHeartbeatMs = NOW - 60 * H;
   const e = env({

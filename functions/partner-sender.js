@@ -182,8 +182,16 @@ async function evaluate(deps, uid, install, partnerContact, nowMs, config) {
   // is newer than the last heartbeat the phone went quiet because the user signed
   // out, not because Rescue was removed. A later heartbeat (signing back in) makes
   // signedOutAt older again, so alerts resume on their own for a real removal.
+  //
+  // Both stamps should be SERVER time, so the heartbeat's lastHeartbeatAt is the
+  // reference; the phone's clock (lastHeartbeatMs) could be behind the server and
+  // make a later heartbeat look older than the sign-out. A doc without
+  // lastHeartbeatAt falls back to lastHeartbeatMs. The event id and the stale
+  // check below keep using lastHeartbeatMs unchanged.
   const signedOutMs = toMillis(install.signedOutAt);
-  if (signedOutMs != null && signedOutMs > lastHeartbeatMs) {
+  const heartbeatServerMs = toMillis(install.lastHeartbeatAt);
+  const heartbeatRefMs = heartbeatServerMs != null ? heartbeatServerMs : lastHeartbeatMs;
+  if (signedOutMs != null && signedOutMs > heartbeatRefMs) {
     return { ok: false, reason: SKIP.SIGNED_OUT };
   }
 
