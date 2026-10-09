@@ -8,3 +8,9 @@ local.properties
 captures/
 .externalNativeBuild/
 .cxx/
+
+# Firebase-generated per-project config (may hold project settings; never commit)
+functions/.env.*
+
+# Git bookkeeping file
+FETCH_HEAD
