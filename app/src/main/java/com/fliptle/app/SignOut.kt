@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import androidx.appcompat.app.AlertDialog
+import com.fliptle.app.auth.AuthStore
 import com.fliptle.app.auth.FirebaseGate
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -57,8 +58,14 @@ object SignOut {
      * server-forced sign-out never comes through here, so neither writes it.
      */
     fun perform(activity: Activity, markSignedOut: Boolean = false) {
-        if (markSignedOut) markSignedOutThen(activity) { finishSignOut(activity) }
-        else finishSignOut(activity)
+        if (markSignedOut) {
+            // Manual sign-out only: forget the saved name so a different Google
+            // account gets its own prefill. Account deletion's sign-out does not.
+            AuthStore(activity).clearSavedName()
+            markSignedOutThen(activity) { finishSignOut(activity) }
+        } else {
+            finishSignOut(activity)
+        }
     }
 
     /**

@@ -57,6 +57,21 @@ class AuthStore(context: Context) {
         set(value) = prefs.edit().putBoolean(KEY_INBOX_CONFIRM_SHOWN, value).apply()
 
     /**
+     * Forget the locally saved display name and the "name step handled" flag. Called
+     * on a manual sign-out so the next account gets its own prefill instead of
+     * inheriting this one's. Nothing else is touched (not the day counter, the
+     * freeze, the blocklists or the other once-per-account flags), and the name
+     * stored on the account in Firestore is untouched, so signing back in with the
+     * same account restores it.
+     */
+    fun clearSavedName() {
+        prefs.edit()
+            .remove(KEY_NAME)
+            .remove(KEY_NAME_PROVIDED)
+            .apply()
+    }
+
+    /**
      * Reset every per-account flag after the signed-in account is permanently
      * deleted. Firebase Auth never reuses a UID — even a fresh sign-up with the
      * exact same email afterward is a brand-new account — so any of these flags

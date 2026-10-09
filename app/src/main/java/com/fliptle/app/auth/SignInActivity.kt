@@ -1,8 +1,10 @@
 package com.fliptle.app.auth
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -22,7 +24,9 @@ import com.fliptle.app.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.GoogleAuthProvider
 
 /**
@@ -75,25 +79,47 @@ class SignInActivity : AppCompatActivity() {
     private lateinit var authProgressBar: ProgressBar
     private lateinit var profileSection: LinearLayout
     private lateinit var nameInput: EditText
+    private lateinit var googleButton: View
+    private lateinit var googleProgress: ProgressBar
+
+    /** Only one Google sign-in at a time; every way it can end releases it. */
+    private val attempt = SignInAttempt()
 
     private val googleLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
+        // Backing out of the account picker: no error, just put the button back.
+        GoogleSignInOutcome.fromPickerResult(
+            resultCanceled = result.resultCode == Activity.RESULT_CANCELED,
+            hasData = result.data != null
+        )?.let { failAttempt(it, null); return@registerForActivityResult }
         try {
             val account = GoogleSignIn.getSignedInAccountFromIntent(result.data)
                 .getResult(ApiException::class.java)
             val idToken = account?.idToken
             if (idToken == null) {
-                status(getString(R.string.auth_google_failed, "no ID token"))
+                failAttempt(SignInFailure.OTHER, null, "no id token")
                 return@registerForActivityResult
             }
             val credential = GoogleAuthProvider.getCredential(idToken, null)
-            auth?.signInWithCredential(credential)?.addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) onSignedIn("google") else
-                    status(getString(R.string.auth_google_failed, task.exception?.message ?: ""))
+            val firebase = auth
+            if (firebase == null) {
+                failAttempt(SignInFailure.OTHER, null, "no auth instance")
+                return@registerForActivityResult
+            }
+            firebase.signInWithCredential(credential).addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    endAttempt()
+                    onSignedIn("google")
+                } else {
+                    val e = task.exception
+                    failAttempt(GoogleSignInOutcome.fromFirebase(e is FirebaseNetworkException), e)
+                }
             }
         } catch (e: ApiException) {
-            status(getString(R.string.auth_google_failed, e.message ?: ""))
+            failAttempt(GoogleSignInOutcome.fromGoogleStatusCode(e.statusCode), e)
+        } catch (t: Throwable) {
+            failAttempt(SignInFailure.OTHER, t)
         }
     }
 
@@ -120,6 +146,8 @@ class SignInActivity : AppCompatActivity() {
         authProgressBar = findViewById(R.id.authProgressBar)
         profileSection = findViewById(R.id.profileSection)
         nameInput = findViewById(R.id.nameInput)
+        googleButton = findViewById(R.id.googleSignInButton)
+        googleProgress = findViewById(R.id.googleSignInProgress)
 
         // Static, Firebase-independent — set before the availability check below
         // so it still renders even in a degraded/unconfigured build.
@@ -141,7 +169,7 @@ class SignInActivity : AppCompatActivity() {
         // googleSignInButton is an ImageButton (Google's branded PNG), not a Button;
         // setOnClickListener is on View so the cast is widened. The id and click
         // handler (startGoogleSignIn) are unchanged.
-        findViewById<View>(R.id.googleSignInButton).setOnClickListener { startGoogleSignIn() }
+        googleButton.setOnClickListener { startGoogleSignIn() }
         findViewById<Button>(R.id.continueProfileButton).setOnClickListener { continueProfile() }
         findViewById<Button>(R.id.signOutButton).setOnClickListener { signOut() }
         // "Delete my account" starts the full process (days of gates) every time.
@@ -178,18 +206,64 @@ class SignInActivity : AppCompatActivity() {
     // ---- Google ----
 
     private fun startGoogleSignIn() {
+        if (!attempt.tryStart()) return // a sign-in is already running: ignore the extra tap
+        status("")
         val webClientId = webClientId(this)
         if (webClientId == null) {
+            attempt.end()
             status(getString(R.string.auth_google_unconfigured))
             return
         }
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(webClientId)
-            .requestEmail()
-            .build()
-        val client = GoogleSignIn.getClient(this, gso)
-        client.signOut() // force the account chooser each time
-        googleLauncher.launch(client.signInIntent)
+        setGoogleLoading(true)
+        try {
+            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(webClientId)
+                .requestEmail()
+                .build()
+            val client = GoogleSignIn.getClient(this, gso)
+            client.signOut() // force the account chooser each time
+            googleLauncher.launch(client.signInIntent)
+        } catch (t: Throwable) {
+            failAttempt(SignInFailure.OTHER, t)
+        }
+    }
+
+    /** Spinner on top, button dimmed (the drawable's disabled state) and not tappable. */
+    private fun setGoogleLoading(loading: Boolean) {
+        googleButton.isEnabled = !loading
+        googleProgress.visibility = if (loading) View.VISIBLE else View.GONE
+    }
+
+    /** Release the attempt: spinner off, button back. Called on success and on every failure. */
+    private fun endAttempt() {
+        attempt.end()
+        setGoogleLoading(false)
+    }
+
+    /**
+     * A sign-in attempt ended without signing in. The button is always restored and
+     * the user sees one calm line (never the raw exception). The details go to the
+     * log: the exception type and a status or error code only, nothing personal.
+     */
+    private fun failAttempt(kind: SignInFailure, cause: Throwable?, note: String? = null) {
+        endAttempt()
+        if (kind != SignInFailure.CANCELLED) {
+            val code = when (cause) {
+                is ApiException -> "api=${cause.statusCode}"
+                is FirebaseAuthException -> "auth=${cause.errorCode}"
+                else -> null
+            }
+            Log.w(TAG, "Google sign-in failed: kind=$kind type=${cause?.javaClass?.simpleName} code=$code note=$note")
+        }
+        status(
+            getString(
+                when (kind) {
+                    SignInFailure.CANCELLED -> R.string.auth_signin_cancelled
+                    SignInFailure.NO_INTERNET -> R.string.auth_no_internet
+                    SignInFailure.OTHER -> R.string.auth_signin_failed
+                }
+            )
+        )
     }
 
     /** default_web_client_id is generated by the Google Services plugin only when
@@ -498,5 +572,9 @@ class SignInActivity : AppCompatActivity() {
 
     private fun status(message: String) {
         statusText.text = message
+    }
+
+    private companion object {
+        const val TAG = "SignInActivity"
     }
 }

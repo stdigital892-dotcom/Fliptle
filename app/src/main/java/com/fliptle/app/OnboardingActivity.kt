@@ -12,7 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.fliptle.app.auth.SignInActivity
 
 /**
- * First-launch flow: intro -> optional sign-in (+ the combined name/phone
+ * First-launch flow: intro -> optional sign-in (+ the name
  * screen, hosted in SignInActivity) -> permissions requested one at a time in
  * order (usage access, overlay, Accessibility, then a combined OEM-guidance +
  * battery-optimization step), each with a plain-language reason. The
@@ -22,7 +22,7 @@ import com.fliptle.app.auth.SignInActivity
  * and just the battery request on everyone else.
  *
  * A "Step X of Y" indicator (see [OnboardingProgress]) spans this Activity
- * and the name/phone screen in SignInActivity — hidden on Intro only.
+ * and the name screen in SignInActivity — hidden on Intro only.
  */
 class OnboardingActivity : AppCompatActivity() {
 
@@ -223,7 +223,7 @@ class OnboardingActivity : AppCompatActivity() {
 
         // "Step X of Y" — hidden on Intro (an atmospheric welcome screen, not a
         // numbered task), visible everywhere else. DISPLAY_POSITION skips
-        // position 3, reserved for the combined name/phone screen that lives
+        // position 3, reserved for the name screen that lives
         // in SignInActivity, not this Activity's own step machine.
         if (step == STEP_INTRO) {
             progressSection.visibility = View.GONE
@@ -328,7 +328,7 @@ class OnboardingActivity : AppCompatActivity() {
 
         /** Maps this Activity's own step index to the shared "Step X of Y"
          *  display position — skips display position 3, reserved for the
-         *  combined name/phone screen hosted in SignInActivity. */
+         *  name screen hosted in SignInActivity. */
         private val DISPLAY_POSITION = intArrayOf(
             OnboardingProgress.INTRO,          // STEP_INTRO
             OnboardingProgress.SIGNIN,         // STEP_SIGNIN
