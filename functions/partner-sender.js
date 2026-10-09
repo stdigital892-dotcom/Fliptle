@@ -43,6 +43,7 @@ const SKIP = Object.freeze({
   NO_HEARTBEAT: "no_heartbeat",
   NOT_STALE: "not_stale",
   PROTECTION_WAS_NEVER_ACTIVE: "protection_never_active",
+  SIGNED_OUT: "signed_out",
   ALLOWLIST: "allowlist",
 });
 
@@ -80,6 +81,15 @@ function firstNameFrom(displayName, email) {
 }
 
 // ---- time ----------------------------------------------------------------
+
+/** A millis value from a Firestore Timestamp, a Date, or a number; null if absent/unreadable. */
+function toMillis(value) {
+  if (value == null) return null;
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value.toMillis === "function") return value.toMillis();
+  if (value instanceof Date) return value.getTime();
+  return null;
+}
 
 /** 2026-10-05T05:00:00Z -> "5 Oct 2026" in IST (Asia/Kolkata, +05:30). */
 function formatIstDate(ms) {
@@ -168,6 +178,15 @@ async function evaluate(deps, uid, install, partnerContact, nowMs, config) {
   if (!Number.isFinite(lastHeartbeatMs) || lastHeartbeatMs <= 0) {
     return { ok: false, reason: SKIP.NO_HEARTBEAT };
   }
+  // A clean manual sign-out (SignOut.perform in the app) stamps signedOutAt. If it
+  // is newer than the last heartbeat the phone went quiet because the user signed
+  // out, not because Rescue was removed. A later heartbeat (signing back in) makes
+  // signedOutAt older again, so alerts resume on their own for a real removal.
+  const signedOutMs = toMillis(install.signedOutAt);
+  if (signedOutMs != null && signedOutMs > lastHeartbeatMs) {
+    return { ok: false, reason: SKIP.SIGNED_OUT };
+  }
+
   const staleMs = config.staleHours * 60 * 60 * 1000;
   // "older than STALE_HOURS": strictly older. At exactly the boundary we wait.
   if (nowMs - lastHeartbeatMs <= staleMs) return { ok: false, reason: SKIP.NOT_STALE };

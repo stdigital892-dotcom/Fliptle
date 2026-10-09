@@ -24,19 +24,19 @@ object AdultBlocklist {
 
     val SOURCES: List<Source> = listOf(
         Source(
-            "stevenblack", "StevenBlack porn-only",
+            "stevenblack", "StevenBlack adult content only",
             "https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts"
         ),
         Source(
-            "sinfonietta", "Sinfonietta pornography",
+            "sinfonietta", "Sinfonietta adult content",
             "https://raw.githubusercontent.com/Sinfonietta/hostfiles/master/pornography-hosts"
         ),
         Source(
-            "mhhakim", "mhhakim porn",
+            "mhhakim", "mhhakim adult content",
             "https://raw.githubusercontent.com/mhhakim/pihole-blocklist/master/porn.txt"
         ),
         Source(
-            "tiuxo", "tiuxo porn",
+            "tiuxo", "tiuxo adult content",
             "https://raw.githubusercontent.com/tiuxo/hosts/master/porn"
         )
     )

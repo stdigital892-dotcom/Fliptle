@@ -288,6 +288,76 @@ test("evaluate: too-many-failed-attempts refuses the same event", async () => {
   assert.equal(r.reason, sender.SKIP.TOO_MANY_FAILS);
 });
 
+// ---------------------------------------------------------------- signedOutAt
+test("evaluate: signedOutAt newer than the last heartbeat skips with 'signed_out'", async () => {
+  const e = env();
+  const lastHeartbeatMs = NOW - 60 * H;
+  const r = await sender.evaluate(e.deps, "u1",
+    { ...installBase, lastHeartbeatMs, signedOutAt: lastHeartbeatMs + 1000 },
+    activeContact(), NOW, DEFAULT_CFG);
+  assert.deepEqual(r, { ok: false, reason: sender.SKIP.SIGNED_OUT });
+  assert.equal(sender.SKIP.SIGNED_OUT, "signed_out");
+});
+
+test("evaluate: signedOutAt older than the heartbeat does not skip (signed back in, then went dark)", async () => {
+  const e = env();
+  const lastHeartbeatMs = NOW - 60 * H;
+  const r = await sender.evaluate(e.deps, "u1",
+    { ...installBase, lastHeartbeatMs, signedOutAt: lastHeartbeatMs - 5 * H },
+    activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(r.ok, true);
+});
+
+test("evaluate: signedOutAt equal to the heartbeat does not skip", async () => {
+  const e = env();
+  const lastHeartbeatMs = NOW - 60 * H;
+  const r = await sender.evaluate(e.deps, "u1",
+    { ...installBase, lastHeartbeatMs, signedOutAt: lastHeartbeatMs },
+    activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(r.ok, true);
+});
+
+test("evaluate: a missing signedOutAt changes nothing", async () => {
+  const e = env();
+  const withField = await sender.evaluate(e.deps, "u1",
+    { ...installBase, signedOutAt: null }, activeContact(), NOW, DEFAULT_CFG);
+  const without = await sender.evaluate(e.deps, "u1", installBase, activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(without.ok, true);
+  assert.deepEqual(withField, without);
+});
+
+test("evaluate: signedOutAt as a Firestore Timestamp is read correctly", async () => {
+  const e = env();
+  const lastHeartbeatMs = NOW - 60 * H;
+  const ts = (ms) => ({ toMillis: () => ms });
+  const newer = await sender.evaluate(e.deps, "u1",
+    { ...installBase, lastHeartbeatMs, signedOutAt: ts(lastHeartbeatMs + 1) }, activeContact(), NOW, DEFAULT_CFG);
+  const older = await sender.evaluate(e.deps, "u1",
+    { ...installBase, lastHeartbeatMs, signedOutAt: ts(lastHeartbeatMs - 1) }, activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(newer.reason, sender.SKIP.SIGNED_OUT);
+  assert.equal(older.ok, true);
+});
+
+test("runOnce: a signed-out user is skipped, counted under 'signed_out', and nothing is sent", async () => {
+  const lastHeartbeatMs = NOW - 60 * H;
+  const e = env({
+    "installs/u1": { ...installBase, lastHeartbeatMs, signedOutAt: lastHeartbeatMs + 1000 },
+    "partnerContacts/u1": activeContact(),
+    "installs/u2": { ...installBase, lastHeartbeatMs, email: "b@x.com", displayName: "Bela" }, // removed: no signedOutAt
+    "partnerContacts/u2": activeContact("919000000001"),
+  });
+  const calls = [];
+  const deps = {
+    ...e.deps,
+    fetch: async (url, init) => { calls.push(JSON.parse(init.body).to); return { status: 200, async json() { return { messages: [{ id: "wamid.S1" }] }; } }; },
+    isOptedOut: async () => false,
+  };
+  const counts = await sender.runOnce(deps, NOW, SEND_CFG);
+  assert.equal(counts.bySkipReason[sender.SKIP.SIGNED_OUT], 1);
+  assert.equal(counts.sent, 1);
+  assert.deepEqual(calls, ["919000000001"], "only the removed user's partner is messaged");
+});
+
 // ---------------------------------------------------------------- processUser (send)
 function makeFetch(responses) {
   const calls = [];

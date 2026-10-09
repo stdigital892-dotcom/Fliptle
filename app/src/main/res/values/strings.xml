@@ -22,18 +22,18 @@
 
     <!-- Porn blocking: one-way switch -->
     <string name="porn_eyebrow">Protection</string>
-    <string name="porn_title">Porn blocking</string>
+    <string name="porn_title">Adult content blocking</string>
     <string name="porn_off_status">Not enabled yet</string>
     <string name="porn_off_body">Turning this on blocks adult sites across your browsers using an on-device list of 282,000+ domains, plus safe-search enforcement and blocked search keywords.</string>
-    <string name="porn_warning">This is permanent.\n\nOnce enabled, porn blocking CANNOT be turned off — there is no off switch anywhere in the app. The only way to remove it is uninstalling this app, which itself takes 5 days of daily gates.</string>
+    <string name="porn_warning">This is permanent.\n\nOnce enabled, adult content blocking CANNOT be turned off — there is no off switch anywhere in the app. The only way to remove it is uninstalling this app, which itself takes 5 days of daily gates.</string>
     <string name="porn_understand">I understand this cannot be undone</string>
-    <string name="porn_enable">Enable porn blocking permanently</string>
+    <string name="porn_enable">Enable adult content blocking permanently</string>
     <string name="porn_confirm_title">Enable permanently?</string>
     <string name="porn_confirm_body">There is no way to turn this off later. Continue?</string>
     <string name="porn_confirm_ok">Enable permanently</string>
     <string name="porn_confirm_cancel">Not yet</string>
-    <string name="porn_day_counter">Day %1$d since you enabled Porn Blocking</string>
-    <string name="porn_on_body">Porn blocking is on and cannot be turned off. This counter only ever counts up — it has no reset.</string>
+    <string name="porn_day_counter">Day %1$d since you enabled Adult Content Blocking</string>
+    <string name="porn_on_body">Adult content blocking is on and cannot be turned off. This counter only ever counts up — it has no reset.</string>
 
     <!-- Developer mode (debug builds only, hidden behind a gesture) -->
     <string name="dev_mode_on">[DEV MODE] Short timers active — one cycle is %1$s.</string>
@@ -175,7 +175,7 @@
     <string name="ob_watch_tutorial">▶  Watch tutorial</string>
     <string name="ob_progress_format">Step %1$d of %2$d</string>
     <string name="ob_intro_title">Take your focus back.</string>
-    <string name="ob_intro_body">This app blocks porn permanently and puts your distractions on a 3-day lock.
+    <string name="ob_intro_body">This app blocks adult content permanently and puts your distractions on a 3-day lock.
 
 No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="ob_signin_title">Sign in</string>
@@ -193,7 +193,7 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="ob_overlay_body">Shows a block screen over apps you\'ve chosen to restrict.</string>
     <string name="ob_overlay_action">Grant permission</string>
     <string name="ob_a11y_title">Why Rescue needs Accessibility</string>
-    <string name="ob_a11y_body">Rescue uses Android\'s Accessibility service for one job: blocking what you chose to block.\n\n<b>What it reads</b>\n• The web address shown in browsers such as Chrome, Firefox, Edge and Samsung Internet. If it can\'t find the address bar, it looks through the text on the browser screen for a web address.\n• In Instagram and YouTube, how the screen is built (not your feed), to spot the full-screen Reels, Stories and Shorts players.\n• Android only sends it events from browsers, Instagram and YouTube. It does not watch your other apps.\n• Blocking apps you chose uses a separate permission, Usage access.\n\n<b>What it does</b>\n• Checks each address or screen on your phone against your block list.\n• If there\'s a match, blocks that page or screen.\n• If you turned on porn blocking, it also keeps your searches on safe search and blocks searches for banned words.\n\n<b>What stays private</b>\n• Rescue does not record or upload the pages you visit, what is on your screen, or which apps you use.\n• Your block list, and your freeze and porn-blocking progress, are saved to your Rescue account so they survive a reinstall.\n• You can turn Accessibility off any time in Android settings, but Rescue can\'t protect you without it.</string>
+    <string name="ob_a11y_body">Rescue uses Android\'s Accessibility service for one job: blocking what you chose to block.\n\n<b>What it reads</b>\n• The web address shown in browsers such as Chrome, Firefox, Edge and Samsung Internet. If it can\'t find the address bar, it looks through the text on the browser screen for a web address.\n• In Instagram and YouTube, how the screen is built (not your feed), to spot the full-screen Reels, Stories and Shorts players.\n• Android only sends it events from browsers, Instagram and YouTube. It does not watch your other apps.\n• Blocking apps you chose uses a separate permission, Usage access.\n\n<b>What it does</b>\n• Checks each address or screen on your phone against your block list.\n• If there\'s a match, blocks that page or screen.\n• If you turned on adult content blocking, it also keeps your searches on safe search and blocks searches for banned words.\n\n<b>What stays private</b>\n• Rescue does not record or upload the pages you visit, what is on your screen, or which apps you use.\n• Your block list, and your freeze and adult-content blocking progress, are saved to your Rescue account so they survive a reinstall.\n• You can turn Accessibility off any time in Android settings, but Rescue can\'t protect you without it.</string>
     <string name="ob_a11y_action">I agree, continue</string>
     <string name="ob_a11y_decline">No thanks</string>
     <string name="ob_a11y_declined_note">Rescue can\'t protect you without Accessibility. Tap I agree, continue when you\'re ready.</string>
@@ -210,7 +210,7 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="home_journey_title">Let\'s start this journey</string>
     <string name="home_journey_body">One decision, and the hardest part is behind you.</string>
     <string name="home_journey_start">Start</string>
-    <string name="home_porn_off">Porn blocking is not enabled yet</string>
+    <string name="home_porn_off">Adult content blocking is not enabled yet</string>
     <string name="home_freeze_locked">Commitment: day %1$d of %2$d</string>
     <string name="home_freeze_none">No commitment running.</string>
     <string name="home_freeze_verifying">Locked — verifying real time after reboot</string>
@@ -247,7 +247,7 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <!-- Account screen -->
     <string name="auth_account_title">Account</string>
     <string name="auth_sign_out">Sign out</string>
-    <string name="auth_sign_out_note">Your progress (porn-blocking streak, freeze, blocked apps and domains) is saved to your account and to this device. Signing out keeps all of it — signing back in re-syncs it from the cloud.</string>
+    <string name="auth_sign_out_note">Your progress (adult-content blocking streak, freeze, blocked apps and domains) is saved to your account and to this device. Signing out keeps all of it — signing back in re-syncs it from the cloud.</string>
     <string name="auth_delete_account">Delete my account</string>
     <string name="deletion_confirm_title">Delete your account?</string>
     <string name="deletion_confirm_body">Your account will be deleted in 72 hours, and you will be signed out on every device. Sign in again before then to cancel.\n\nPayments are non-refundable.\n\nBlocking stays active on this phone until you uninstall the app from Android settings.</string>
