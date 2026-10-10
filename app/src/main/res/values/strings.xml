@@ -25,7 +25,7 @@
     <string name="porn_title">Adult content blocking</string>
     <string name="porn_off_status">Not enabled yet</string>
     <string name="porn_off_body">Turning this on blocks adult sites across your browsers using an on-device list of 282,000+ domains, plus safe-search enforcement and blocked search keywords.</string>
-    <string name="porn_warning">This is permanent.\n\nOnce enabled, adult content blocking CANNOT be turned off — there is no off switch anywhere in the app. The only way to remove it is uninstalling this app, which itself takes 5 days of daily gates.</string>
+    <string name="porn_warning">This is permanent. Once enabled, adult content blocking has no off switch inside the app. The 5-day exit challenge in Setup is the intended way to remove it, but it\'s a commitment, not a technical lock — Rescue cannot stop you from uninstalling, clearing app data, or force-stopping it directly instead.</string>
     <string name="porn_understand">I understand this cannot be undone</string>
     <string name="porn_enable">Enable adult content blocking permanently</string>
     <string name="porn_confirm_title">Enable permanently?</string>
@@ -33,7 +33,7 @@
     <string name="porn_confirm_ok">Enable permanently</string>
     <string name="porn_confirm_cancel">Not yet</string>
     <string name="porn_day_counter">Day %1$d since you enabled Adult Content Blocking</string>
-    <string name="porn_on_body">Adult content blocking is on and cannot be turned off. This counter only ever counts up — it has no reset.</string>
+    <string name="porn_on_body">Adult content blocking is on and has no off switch inside the app. This counter only ever counts up — it has no reset.</string>
 
     <!-- Developer mode (debug builds only, hidden behind a gesture) -->
     <string name="dev_mode_on">[DEV MODE] Short timers active — one cycle is %1$s.</string>
@@ -58,7 +58,7 @@
     <string name="website_blocked_subtitle">This site is on your blocklist.</string>
     <string name="website_blocked_home">Go to home screen</string>
     <string name="a11y_service_label">Focus URL Blocking</string>
-    <string name="a11y_service_description">Rescue reads the web address in browsers, and watches Instagram and YouTube for the Reels, Stories and Shorts players, only to block what you chose to block. Each is checked on your phone against your block list. Rescue does not record or upload the pages you visit, what is on your screen, or which apps you use. You can turn this off any time here, but Rescue can\'t protect you without it.</string>
+    <string name="a11y_service_description">Rescue\'s Accessibility service has one job: blocking what you chose to block. It watches only browsers, Instagram and YouTube. In a browser it reads the address bar (or, if that can\'t be found, the visible text on the screen, looking for a web address). In Instagram and YouTube it reads how the screen is built, not your feed, to spot the Reels, Stories and Shorts players. On a match it shows a block screen and presses Back (or Home), and for a blocked search it opens a safe-search address instead. Everything is checked on your phone, against your own block list; nothing is stored or sent anywhere. This cannot stop you from uninstalling the app, clearing its data, or force-stopping it. You can turn this off any time here, but Rescue can\'t protect you without it.</string>
 
     <string name="content_blocklist">Content Blocklist</string>
     <string name="blocklist_total">Total merged (unique): %1$d domains</string>
@@ -111,9 +111,9 @@
          messages the partner if Rescue is removed before the exit process
          finishes. Copy uses "adult content", never "porn". -->
     <string name="setup_partner">Your accountability partner</string>
-    <string name="setup_partner_sub">One trusted person, told only if Rescue is removed.</string>
+    <string name="setup_partner_sub">One trusted person, who may be told after about three days of silence.</string>
     <string name="partner_title">Your accountability partner</string>
-    <string name="partner_body">Choose ONE person you trust. If Rescue is removed from this phone before you finish the exit process, they will be messaged on WhatsApp with the date, how many days adult-content blocking was on, and your note. They will not be messaged while Rescue is working normally.\n\nYour partner will only be messaged if Rescue is removed before you finish the exit process. They can reply STOP at any time.</string>
+    <string name="partner_body">Choose ONE person you trust. If Rescue stops reporting from this phone for about three days (72 hours) before you finish the exit process, they may get one WhatsApp message with the date Rescue last reported, how many days adult-content blocking was on, and your note. This can also happen if your phone is off, offline, or signed out, and delivery is not guaranteed.\n\nWithout a partner added, nobody is notified. They can reply STOP at any time.</string>
 
     <string name="partner_phone_label">Partner\'s mobile number</string>
     <string name="partner_phone_hint">10 digits, starting 6-9</string>
@@ -159,7 +159,7 @@
     <!-- Uninstall request (math gate) -->
     <string name="setup_uninstall">Request to uninstall the app</string>
     <string name="uninstall_title">Request to uninstall</string>
-    <string name="uninstall_body">To uninstall, complete BOTH gates each day for 5 days in a row: (1) 10 arithmetic questions, then (2) type the numbers 1 to 50 with no spaces. Both are required for the day to count. Only one day unlocks every 24 hours; changing the phone clock or rebooting cannot skip days.</string>
+    <string name="uninstall_body">This is the intended way to finish with Rescue: complete BOTH gates each day for 5 days in a row: (1) 10 arithmetic questions, then (2) type the numbers 1 to 50 with no spaces. Both are required for the day to count. Only one day unlocks every 24 hours; changing the phone clock or rebooting cannot skip days. This is a commitment, not a technical lock — Rescue cannot stop you from uninstalling directly instead.</string>
     <string name="uninstall_typing_prompt">Second gate: type the numbers 1 to 50 in order, no spaces (paste is blocked).</string>
     <string name="uninstall_status">Progress: %1$d of %2$d days complete</string>
     <string name="uninstall_approved">Uninstall approved. You may now uninstall the app.</string>
@@ -181,9 +181,7 @@
     <string name="ob_watch_tutorial">▶  Watch tutorial</string>
     <string name="ob_progress_format">Step %1$d of %2$d</string>
     <string name="ob_intro_title">Take your focus back.</string>
-    <string name="ob_intro_body">This app blocks adult content permanently and puts your distractions on a 3-day lock.
-
-No willpower required — just commitment you can\'t undo on a bad day.</string>
+    <string name="ob_intro_body">This app blocks adult content permanently within the app and puts your distractions on a 3-day lock. No willpower required in the moment — just a commitment made ahead of time.</string>
     <string name="ob_signin_title">Sign in</string>
     <string name="ob_signin_body">Sign in with Google. This is required — it keys your commitment and uninstall history to your account so it survives a reinstall.</string>
     <string name="ob_signin_action">Sign in with Google</string>
@@ -199,7 +197,7 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="ob_overlay_body">Shows a block screen over apps you\'ve chosen to restrict.</string>
     <string name="ob_overlay_action">Grant permission</string>
     <string name="ob_a11y_title">Why Rescue needs Accessibility</string>
-    <string name="ob_a11y_body">Rescue uses Android\'s Accessibility service for one job: blocking what you chose to block.\n\n<b>What it reads</b>\n• The web address shown in browsers such as Chrome, Firefox, Edge and Samsung Internet. If it can\'t find the address bar, it looks through the text on the browser screen for a web address.\n• In Instagram and YouTube, how the screen is built (not your feed), to spot the full-screen Reels, Stories and Shorts players.\n• Android only sends it events from browsers, Instagram and YouTube. It does not watch your other apps.\n• Blocking apps you chose uses a separate permission, Usage access.\n\n<b>What it does</b>\n• Checks each address or screen on your phone against your block list.\n• If there\'s a match, blocks that page or screen.\n• If you turned on adult content blocking, it also keeps your searches on safe search and blocks searches for banned words.\n\n<b>What stays private</b>\n• Rescue does not record or upload the pages you visit, what is on your screen, or which apps you use.\n• Your block list, and your freeze and adult-content blocking progress, are saved to your Rescue account so they survive a reinstall.\n• You can turn Accessibility off any time in Android settings, but Rescue can\'t protect you without it.</string>
+    <string name="ob_a11y_body">Rescue uses Android\'s Accessibility service for one job: blocking what you chose to block.\n\n<b>What it reads</b>\n• The web address shown in browsers such as Chrome, Firefox, Edge and Samsung Internet. If it can\'t find the address bar, it looks through the text on the browser screen for a web address or search term — the one case where it reads on-screen text beyond the address bar itself.\n• In Instagram and YouTube, how the screen is built (not your feed, and not any text or images in it), to spot the full-screen Reels, Stories and Shorts players.\n• Android only sends it events from browsers, Instagram and YouTube. It does not watch your other apps.\n• Blocking apps you chose uses a separate permission, Usage access.\n\n<b>What it does</b>\n• Checks each address or screen on your phone against your block list.\n• If there\'s a match, shows a block screen and presses Back (or, if the page reappears right away, Home) to leave it.\n• If you turned on adult content blocking, it also keeps your searches on safe search — opening a safe-search address in place of a blocked one — and blocks searches for banned words.\n• Blocks Reels, Stories and Shorts the same way, if you\'ve turned that on.\n\n<b>What stays private</b>\n• Rescue does not record or upload the pages you visit, what is on your screen, or which apps you use. Every check happens on your phone, against your own block list.\n• Your block list, and your freeze and adult-content blocking progress, are saved to your Rescue account so they survive a reinstall.\n\n<b>What it can\'t do</b>\n• This cannot stop you from uninstalling the app, clearing its data, or force-stopping it.\n• You can turn Accessibility off any time in Android settings, but Rescue can\'t protect you without it.</string>
     <string name="ob_a11y_action">I agree, continue</string>
     <string name="ob_a11y_decline">No thanks</string>
     <string name="ob_a11y_declined_note">Rescue can\'t protect you without Accessibility. Tap I agree, continue when you\'re ready.</string>
@@ -324,7 +322,7 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <!-- Uninstall hard reset -->
     <string name="uninstall_reset_toast">A day was missed — progress has reset to day 1.</string>
     <string name="setup_freeze_sub">Start a cycle and manage what it holds.</string>
-    <string name="setup_uninstall_sub">Five days of daily gates before removal.</string>
+    <string name="setup_uninstall_sub">A 5-day exit challenge — a commitment, not a lock.</string>
     <string name="setup_account_caption">A slow, deliberate path — here when you truly need it.</string>
     <string name="ob_a11y_step1">Tap Installed services and find %1$s</string>
     <string name="ob_a11y_step2">Tap the switch to turn ON</string>
@@ -356,9 +354,9 @@ No willpower required — just commitment you can\'t undo on a bad day.</string>
     <string name="uninstall_info_step4">Do this for 5 days straight.\nMiss a day → back to day 1.</string>
     <string name="uninstall_info_step5">After 5 days, uninstall is approved.</string>
     <string name="uninstall_info_caution_title">⚠️  If you delete this app directly from your phone without following the process:</string>
-    <string name="uninstall_info_caution_lede">Your partner will be notified on WhatsApp immediately with the following details:</string>
-    <string name="uninstall_info_caution_bullets">•  The exact date and time you uninstalled\n•  How many days you had been protected\n•  That you left without completing the process</string>
-    <string name="uninstall_info_caution_final">This cannot be undone or hidden.</string>
+    <string name="uninstall_info_caution_lede">If you added an accountability partner, they may get one WhatsApp message after Rescue stops reporting from your phone for about three days (72 hours):</string>
+    <string name="uninstall_info_caution_bullets">• The date Rescue last reported from your phone\n• How many days you had been protected\n• That the exit challenge was not finished</string>
+    <string name="uninstall_info_caution_final">This can also happen if your phone is off, offline, or signed out — delivery is not guaranteed, and without a partner added, nobody is notified.</string>
     <string name="uninstall_info_close">This process exists so you don\'t leave\non a bad day. Respect it.</string>
     <string name="uninstall_info_scroll_hint">Scroll to the end to continue</string>
     <string name="uninstall_info_got_it">Got it — let\'s start</string>
