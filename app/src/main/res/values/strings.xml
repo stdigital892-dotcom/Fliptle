@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">[APP NAME]</string>
+    <string name="app_name">Rescue</string>
 
     <!-- Freeze: fixed 3-day commitment cycle -->
     <string name="freeze_eyebrow">Freeze</string>
