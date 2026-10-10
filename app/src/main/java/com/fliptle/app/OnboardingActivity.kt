@@ -82,20 +82,40 @@ class OnboardingActivity : AppCompatActivity() {
         // permission step: MainActivity holds them on the inbox screen.
         if (routeIfUnpaid()) return
 
-        // If onboarding was already completed but a permission is now missing,
-        // resume directly at the first missing permission step.
-        if (OnboardingState(this).complete) {
-            val missing = firstMissingPermissionStep()
-            if (missing < 0) {
-                routeThroughMain()
-                return
-            }
-            step = missing
-        } else {
-            step = firstStep()
-        }
+        step = resumeStep()
         render()
     }
+
+    /**
+     * Where to open, from LIVE state only (never a saved step number) — this is
+     * what makes resuming after the process was killed mid-onboarding (C2) land
+     * on the right step instead of always restarting at Usage access, and what
+     * sends a completed user back to a permission that was revoked afterward.
+     * Not-signed-in users still see the atmospheric Intro screen first, exactly
+     * as before; the live picker only takes over from Sign-in onward.
+     */
+    private fun resumeStep(): Int {
+        if (!AuthGate.signedIn(this)) return STEP_INTRO
+        return when (liveStep()) {
+            OnboardingStep.SIGN_IN -> STEP_SIGNIN
+            OnboardingStep.USAGE -> STEP_USAGE
+            OnboardingStep.OVERLAY -> STEP_OVERLAY
+            OnboardingStep.ACCESSIBILITY -> STEP_ACCESSIBILITY
+            OnboardingStep.BATTERY -> STEP_OEM_BATTERY
+            // Everything already satisfied: land on the last step so Finish is
+            // one tap away, rather than silently routing away mid-review.
+            OnboardingStep.DONE -> STEP_LAST
+        }
+    }
+
+    private fun liveStep(): OnboardingStep = OnboardingStepPicker.firstUnsatisfiedStep(
+        signedIn = AuthGate.signedIn(this),
+        nameHandled = com.fliptle.app.auth.AuthStore(this).nameProvided,
+        usage = Permissions.hasUsageAccess(this),
+        overlay = Permissions.hasOverlay(this),
+        accessibility = Permissions.isAccessibilityEnabled(this),
+        battery = Permissions.hasBatteryExemption(this)
+    )
 
     /** Signed in means Intro and Sign-in are behind us (and the paywall was
      *  cleared to get here), so the flow begins at the first permission step. */
@@ -113,7 +133,13 @@ class OnboardingActivity : AppCompatActivity() {
         // Covers system-Back landing here from the profile screen before the
         // paywall is cleared.
         if (routeIfUnpaid()) return
-        render() // refresh permission status after returning from a settings screen
+        // Re-pick from live state on every resume (C2) — e.g. returning from the
+        // Settings screen for the step we're on, or from granting several
+        // permissions in one Settings visit, or a permission having been
+        // revoked since. The atmospheric Intro page is left alone: it has no
+        // live requirement of its own and is only ever left via "Get started".
+        if (step != STEP_INTRO) step = resumeStep()
+        render()
     }
 
     private fun onAction() {

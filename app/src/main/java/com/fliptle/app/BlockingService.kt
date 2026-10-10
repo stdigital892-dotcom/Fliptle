@@ -135,10 +135,22 @@ class BlockingService : Service() {
 
     private fun maybeLaunchGuard() {
         val fg = ForegroundApp.current(this)
-        // Skip when our own screen is up, foreground is unknown, or the user is in
-        // an app we must never interrupt: the dialer (calls/emergencies), and the
-        // Settings screens where they actually re-enable protection.
-        if (fg == null || fg == packageName || isSkipApp(fg)) return
+        // Skip when our own screen is up, or the user is in an app we must never
+        // interrupt: the dialer (calls/emergencies), and the Settings screens
+        // where they actually re-enable protection.
+        if (fg == packageName || (fg != null && isSkipApp(fg))) return
+        // fg is unknown either way Usage access is off (ForegroundApp.current()
+        // ALWAYS returns null without it — see ForegroundApp.hasUsageAccess), or
+        // a transient query glitch. Only skip for the second case: when Usage
+        // access is granted, an unknown fg is treated as "might be Settings or
+        // the dialer" and we wait for the next poll, as before. When Usage
+        // access is the very permission that's missing, we can never learn fg
+        // this way, so the old "skip on unknown" rule meant the guard could
+        // NEVER appear for that one permission (the reported bug) — we show it
+        // anyway. It may briefly appear over Settings in that one case, but the
+        // screen is always exitable (Back/Home are never overridden), so it
+        // can't trap the user there.
+        if (fg == null && Permissions.hasUsageAccess(this)) return
 
         val now = SystemClock.elapsedRealtime()
         if (now - lastGuardLaunchMs < GUARD_MIN_INTERVAL_MS) return
