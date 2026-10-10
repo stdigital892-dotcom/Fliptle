@@ -932,7 +932,7 @@ exports.whatsappWebhook = onRequest(
 //     partner.alerts_dry_run=true \
 //     partner.alerts_allowed_uids=
 //   firebase functions:secrets:set WHATSAPP_ACCESS_TOKEN
-//   firebase deploy --only functions:savePartner,functions:removePartner,functions:sendPartnerAlerts
+//   firebase deploy --only functions:savePartner,functions:requestPartnerRemoval,functions:cancelPartnerChange,functions:applyPendingPartnerChanges,functions:sendPartnerAlerts
 //
 // Firestore rules the operator must add (not in this repo):
 //   match /partnerContacts/{uid} { allow read, write: if false; }
@@ -942,6 +942,11 @@ exports.whatsappWebhook = onRequest(
 
 const WHATSAPP_ACCESS_TOKEN = defineSecret("WHATSAPP_ACCESS_TOKEN");
 
+// Optional: the WhatsApp Business Account's own number, so a user can't add it
+// as their "partner" by mistake. Blank (the default) skips that one check.
+const PARTNER_WHATSAPP_BUSINESS_NUMBER =
+  defineString("PARTNER_WHATSAPP_BUSINESS_NUMBER", { default: "" });
+
 // Shared helpers for partner.js / partner-sender.js.
 const partnerFieldValues = {
   timestampFromMs: (ms) => admin.firestore.Timestamp.fromMillis(ms),
@@ -950,7 +955,12 @@ const partnerFieldValues = {
 };
 
 function partnerCallDeps() {
-  return { db: admin.firestore(), logger, fv: partnerFieldValues };
+  return {
+    db: admin.firestore(),
+    logger,
+    fv: partnerFieldValues,
+    businessNumberRaw: PARTNER_WHATSAPP_BUSINESS_NUMBER.value(),
+  };
 }
 
 function partnerHttpsError(e) {
@@ -978,14 +988,34 @@ exports.savePartner = onCall(
   }
 );
 
-exports.removePartner = onCall(
+// D3: removing or replacing an EXISTING partner is delayed 72 hours (see
+// partner.js). requestPartnerRemoval / cancelPartnerChange / the hourly
+// applyPendingPartnerChanges implement that; the old immediate removePartner
+// callable is retired (partner.removePartner still exists in partner.js but
+// is no longer exposed here).
+exports.requestPartnerRemoval = onCall(
   { region: RAZORPAY_REGION },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
     const uid = request.auth.uid;
     try {
-      const result = await partner.removePartner(partnerCallDeps(), uid);
-      logger.info("removePartner: ok", { uid });
+      const result = await partner.requestPartnerRemoval(partnerCallDeps(), uid, Date.now());
+      logger.info("requestPartnerRemoval: ok", { uid });
+      return result;
+    } catch (e) {
+      throw partnerHttpsError(e);
+    }
+  }
+);
+
+exports.cancelPartnerChange = onCall(
+  { region: RAZORPAY_REGION },
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
+    const uid = request.auth.uid;
+    try {
+      const result = await partner.cancelPartnerChange(partnerCallDeps(), uid);
+      logger.info("cancelPartnerChange: ok", { uid });
       return result;
     } catch (e) {
       throw partnerHttpsError(e);
@@ -1052,5 +1082,23 @@ exports.sendPartnerAlerts = onSchedule(
       isOptedOut: whatsapp.isOptedOut,
     };
     await partnerSender.runOnce(deps, Date.now(), cfg);
+  }
+);
+
+// D3: applies a queued partner removal/replace once its 72 hours are up, but
+// only if the account's heartbeat is still fresh (see partner.js). Pages of
+// 200; one account failing never stops the rest; counts only are logged.
+exports.applyPendingPartnerChanges = onSchedule(
+  { schedule: "every 1 hours", region: RAZORPAY_REGION, timeoutSeconds: 300 },
+  async () => {
+    const deps = {
+      db: admin.firestore(),
+      logger,
+      fv: partnerFieldValues,
+      // Shared opt-out check from whatsapp.js — a replacement number that is
+      // already opted out still gets applied, just marked "stopped".
+      isOptedOut: whatsapp.isOptedOut,
+    };
+    await partner.applyPendingPartnerChanges(deps, Date.now());
   }
 );

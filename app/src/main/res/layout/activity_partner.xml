@@ -4,6 +4,13 @@
   entries). Save stays disabled until BOTH the 10-digit mobile is valid AND
   the "I have told my partner" box is ticked. The copy uses "adult content",
   never "porn".
+
+  States (see PartnerActivity.render()): no partner -> the form alone;
+  saved/stopped -> the status message + Change/Remove (or Add a different
+  partner); a pending remove/replace -> the status message + "Keep my
+  (current) partner" only, form hidden. Removing or changing an EXISTING
+  partner always goes through a 72-hour delay (D3) — the form itself only
+  ever saves immediately for the FIRST partner.
 -->
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -40,14 +47,35 @@
             android:padding="14dp"
             android:visibility="gone" />
 
-        <!-- Form card -->
+        <!-- Shown for saved/stopped (no pending change): Change or Remove,
+             or Add a different partner. -->
+        <Button
+            android:id="@+id/partnerPrimaryButton"
+            style="@style/Widget.Fliptle.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:visibility="gone" />
+
+        <!-- Remove, or Keep my (current) partner while a change is pending. -->
+        <Button
+            android:id="@+id/partnerSecondaryButton"
+            style="@style/Widget.Fliptle.Button.Text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:visibility="gone" />
+
+        <!-- Form card: the first partner, or a Change/Add-different in progress. -->
         <LinearLayout
+            android:id="@+id/partnerFormSection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
             android:background="@drawable/card_bg"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:padding="20dp"
+            android:visibility="gone">
 
             <TextView
                 style="@style/Text.CardTitle"
@@ -130,15 +158,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
             android:text="@string/partner_save"
-            android:enabled="false" />
-
-        <Button
-            android:id="@+id/removePartnerButton"
-            style="@style/Widget.Fliptle.Button.Text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="@string/partner_remove"
+            android:enabled="false"
             android:visibility="gone" />
 
     </LinearLayout>

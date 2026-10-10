@@ -128,17 +128,32 @@
 
     <string name="partner_save">Save partner</string>
     <string name="partner_remove">Remove partner</string>
+    <string name="partner_change">Change partner</string>
     <string name="partner_saving">Saving…</string>
     <string name="partner_removing">Removing…</string>
     <string name="partner_saved_toast">Partner saved.</string>
     <string name="partner_removed_toast">Partner removed.</string>
     <string name="partner_save_failed">Could not save your partner: %1$s</string>
     <string name="partner_remove_failed">Could not remove your partner: %1$s</string>
+    <string name="partner_change_failed">Could not request that change: %1$s</string>
+    <string name="partner_keep">Keep my partner</string>
+    <string name="partner_keep_current">Keep my current partner</string>
+    <string name="partner_keep_failed">Could not cancel that: %1$s</string>
+    <string name="partner_requesting">Requesting…</string>
+
+    <!-- D3: the 72-hour delay before a remove or replace takes effect -->
+    <string name="partner_confirm_delay_title">This takes 72 hours</string>
+    <string name="partner_confirm_delay_body">This takes effect in 72 hours. Until then your current partner stays active.</string>
+    <string name="partner_confirm_delay_ok">Continue</string>
+    <string name="partner_confirm_delay_cancel">Cancel</string>
+    <string name="partner_pending_remove">Your partner will be removed on %1$s. Until then they stay active.</string>
+    <string name="partner_pending_replace">A new partner (ending %1$s) will take over on %2$s. Until then your current partner stays active.</string>
 
     <!-- Current status shown above the form -->
     <string name="partner_status_none">No partner saved yet.</string>
-    <string name="partner_status_saved">A partner is saved (ending in %1$s).</string>
+    <string name="partner_status_saved">Thank you. Your accountability partner is saved (number ending %1$s). They may be messaged if Rescue stops reporting from your phone for about three days (72 hours). They can reply STOP at any time.</string>
     <string name="partner_status_stopped">Your partner asked not to receive messages.</string>
+    <string name="partner_add_different">Add a different partner</string>
     <string name="partner_status_checking">Checking…</string>
 
     <!-- Uninstall request (math gate) -->

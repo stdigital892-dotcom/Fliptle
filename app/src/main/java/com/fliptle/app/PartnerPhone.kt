@@ -25,4 +25,44 @@ object PartnerPhone {
         if (!Regex("^[6-9][0-9]{9}$").matches(d)) return null
         return "91$d"
     }
+
+    // ---- the shared validation rule set (D1) ----
+    //
+    // Beyond "is this syntactically a valid Indian mobile", reject numbers that
+    // are almost certainly typos or placeholders. This mirrors
+    // functions/partner.js's validatePartnerPhone() exactly, EXCEPT the "equals
+    // the WhatsApp business number" check: that number is a server secret the
+    // app never has, so the server is the only place that rule can run (it
+    // always re-validates on savePartner).
+
+    private fun allSameDigit(ten: String): Boolean = ten.toSet().size == 1
+
+    private fun isSequentialRun(ten: String): Boolean {
+        var ascending = true
+        var descending = true
+        for (i in 1 until ten.length) {
+            val diff = ten[i] - ten[i - 1]
+            if (diff != 1) ascending = false
+            if (diff != -1) descending = false
+        }
+        return ascending || descending
+    }
+
+    private fun distinctDigitCount(ten: String): Int = ten.toSet().size
+
+    /** True if [input] passes every LOCALLY checkable rule (shape + the three fake-number rules). */
+    fun isValidPartnerNumber(input: String?): Boolean {
+        val normalized = normalizeIndianNumber(input) ?: return false
+        val ten = normalized.substring(2)
+        if (allSameDigit(ten)) return false
+        if (isSequentialRun(ten)) return false
+        if (distinctDigitCount(ten) < 4) return false
+        return true
+    }
+
+    /** The normalized "91"+10 digit number if [input] passes every local rule, else null. */
+    fun normalizedIfValid(input: String?): String? {
+        val normalized = normalizeIndianNumber(input) ?: return null
+        return if (isValidPartnerNumber(input)) normalized else null
+    }
 }

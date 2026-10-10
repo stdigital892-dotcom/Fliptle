@@ -630,3 +630,243 @@ test("the sender never sends without calling isOptedOut, even if a caller passes
   assert.equal(optOutCalls, 1, "isOptedOut MUST be called exactly once per send");
   assert.equal(fetcher.calls.length, 1);
 });
+
+// ---------------------------------------------------------------- D1: shared validation rules
+test("validatePartnerPhone: valid numbers pass and normalize to 91+10", () => {
+  assert.equal(partner.validatePartnerPhone("9812345670"), "919812345670");
+  assert.equal(partner.validatePartnerPhone("7001234567"), "917001234567");
+});
+
+test("validatePartnerPhone: normalization cases (spaces, leading 0, +91/91)", () => {
+  assert.equal(partner.validatePartnerPhone("+91 98123 45670"), "919812345670");
+  assert.equal(partner.validatePartnerPhone("098123 45670"), "919812345670");
+  assert.equal(partner.validatePartnerPhone("919812345670"), "919812345670");
+});
+
+test("validatePartnerPhone: rejects a number not starting with 6-9", () => {
+  assert.equal(partner.validatePartnerPhone("5812345670"), null);
+});
+
+test("validatePartnerPhone: rejects all-same-digit numbers", () => {
+  assert.equal(partner.validatePartnerPhone("9999999999"), null);
+});
+
+test("validatePartnerPhone: rejects an ascending or descending run", () => {
+  assert.equal(partner.validatePartnerPhone("9876543210"), null); // descending
+});
+
+test("validatePartnerPhone: rejects fewer than 4 distinct digits", () => {
+  assert.equal(partner.validatePartnerPhone("9898989898"), null); // 2 distinct
+});
+
+test("validatePartnerPhone: rejects non-digits or the wrong length", () => {
+  assert.equal(partner.validatePartnerPhone("98123abcde"), null);
+  assert.equal(partner.validatePartnerPhone("981234567"), null); // 9 digits
+});
+
+test("validatePartnerPhone: rejects the configured WhatsApp business number", () => {
+  const biz = "9812345670";
+  assert.equal(partner.validatePartnerPhone(biz, biz), null);
+  assert.equal(partner.validatePartnerPhone(biz, "+91 98123 45670"), null); // different spelling, same number
+  assert.equal(partner.validatePartnerPhone(biz, "7001234567"), "919812345670"); // different business number: unaffected
+  assert.equal(partner.validatePartnerPhone(biz), "919812345670"); // not configured: unaffected
+});
+
+test("savePartner rejects numbers that fail the new rules and writes nothing", async () => {
+  const e = env();
+  for (const bad of ["9999999999", "9876543210", "9898989898", "5812345670"]) {
+    await assert.rejects(
+      partner.savePartner(e.deps, USER.uid, { partnerPhone: bad, userConfirmed: true }, NOW),
+      (err) => err.code === "invalid-argument"
+    );
+  }
+  assert.equal(e.store.has("partnerContacts/" + USER.uid), false);
+});
+
+// ---------------------------------------------------------------- D3: 72-hour delay
+const PARTNER2_RAW = "7001234567";
+const PARTNER2_CANONICAL = "917001234567";
+
+test("the first partner saves immediately (no pending change)", async () => {
+  const e = env();
+  const out = await partner.savePartner(e.deps, USER.uid, { partnerPhone: PARTNER_RAW, userConfirmed: true }, NOW);
+  assert.equal(out.status, "saved");
+  assert.equal(out.pending, undefined);
+  assert.equal(e.store.get("partnerContacts/" + USER.uid).partnerPhone, PARTNER_CANONICAL);
+  assert.equal(e.store.get("partnerContacts/" + USER.uid).pendingChange, undefined);
+});
+
+test("saving a SECOND number while a partner exists queues a delayed replace; the old partner stays active", async () => {
+  const e = env();
+  await partner.savePartner(e.deps, USER.uid, { partnerPhone: PARTNER_RAW, userConfirmed: true }, NOW);
+  const out = await partner.savePartner(e.deps, USER.uid, { partnerPhone: PARTNER2_RAW, userConfirmed: true }, NOW);
+  assert.deepEqual(out.pending, { type: "replace", effectiveAtMs: NOW + partner.PENDING_CHANGE_DELAY_MS });
+
+  const contact = e.store.get("partnerContacts/" + USER.uid);
+  assert.equal(contact.partnerPhone, PARTNER_CANONICAL, "old partner's number is untouched");
+  assert.equal(contact.status, "active");
+  assert.equal(contact.pendingChange.type, "replace");
+  assert.equal(contact.pendingChange.newPhone, PARTNER2_CANONICAL);
+  assert.equal(contact.pendingChangeEffectiveAt, NOW + partner.PENDING_CHANGE_DELAY_MS);
+
+  const link = e.store.get("partnerLinks/" + USER.uid);
+  assert.equal(link.status, "saved", "link still shows the OLD partner as saved");
+  assert.equal(link.pendingType, "replace");
+  assert.equal(link.pendingEffectiveAt, NOW + partner.PENDING_CHANGE_DELAY_MS);
+});
+
+test("requestPartnerRemoval queues a delayed remove; the partner stays active until applied", async () => {
+  const e = env();
+  await partner.savePartner(e.deps, USER.uid, { partnerPhone: PARTNER_RAW, userConfirmed: true }, NOW);
+  const out = await partner.requestPartnerRemoval(e.deps, USER.uid, NOW);
+  assert.deepEqual(out.pending, { type: "remove", effectiveAtMs: NOW + partner.PENDING_CHANGE_DELAY_MS });
+
+  const contact = e.store.get("partnerContacts/" + USER.uid);
+  assert.equal(contact.status, "active");
+  assert.equal(contact.pendingChange.type, "remove");
+  const link = e.store.get("partnerLinks/" + USER.uid);
+  assert.equal(link.status, "saved");
+  assert.equal(link.pendingType, "remove");
+});
+
+test("requestPartnerRemoval with no partner refuses", async () => {
+  const e = env();
+  await assert.rejects(
+    partner.requestPartnerRemoval(e.deps, USER.uid, NOW),
+    (err) => err.code === "failed-precondition" && err.message === partner.MSG_NO_PARTNER
+  );
+});
+
+test("cancelPartnerChange clears the pending fields and is harmless when nothing is pending", async () => {
+  const e = env();
+  await partner.savePartner(e.deps, USER.uid, { partnerPhone: PARTNER_RAW, userConfirmed: true }, NOW);
+  await partner.requestPartnerRemoval(e.deps, USER.uid, NOW);
+  assert.deepEqual(await partner.cancelPartnerChange(e.deps, USER.uid), { cancelled: true });
+  assert.equal(e.store.get("partnerContacts/" + USER.uid).pendingChange, undefined);
+  assert.equal(e.store.get("partnerLinks/" + USER.uid).pendingType, undefined);
+  assert.deepEqual(await partner.cancelPartnerChange(e.deps, USER.uid), { cancelled: true }); // idempotent
+  const none = env();
+  assert.deepEqual(await partner.cancelPartnerChange(none.deps, USER.uid), { cancelled: true }); // no doc at all
+});
+
+test("a newer pending request restarts the 72 hours and replaces the earlier one", async () => {
+  const e = env();
+  await partner.savePartner(e.deps, USER.uid, { partnerPhone: PARTNER_RAW, userConfirmed: true }, NOW);
+  await partner.requestPartnerRemoval(e.deps, USER.uid, NOW); // pending: remove
+  const H = 3600 * 1000;
+  await partner.savePartner(e.deps, USER.uid, { partnerPhone: PARTNER2_RAW, userConfirmed: true }, NOW + H); // pending: replace, later
+  const contact = e.store.get("partnerContacts/" + USER.uid);
+  assert.equal(contact.pendingChange.type, "replace", "the newer request wins");
+  assert.equal(contact.pendingChangeEffectiveAt, NOW + H + partner.PENDING_CHANGE_DELAY_MS);
+});
+
+function installWithHeartbeat(atMs) {
+  return { ["installs/" + USER.uid]: { lastHeartbeatAt: atMs, protectionActive: true } };
+}
+
+test("applyPendingPartnerChanges: a remove applies after 72h with a fresh heartbeat", async () => {
+  const effectiveAt = NOW + partner.PENDING_CHANGE_DELAY_MS;
+  const e = env({ ...installWithHeartbeat(effectiveAt - 1000) });
+  await partner.savePartner(e.deps, USER.uid, { partnerPhone: PARTNER_RAW, userConfirmed: true }, NOW);
+  await partner.requestPartnerRemoval(e.deps, USER.uid, NOW);
+  const deps = { ...e.deps, isOptedOut: async () => false };
+  const counts = await partner.applyPendingPartnerChanges(deps, effectiveAt);
+  assert.equal(counts.removed, 1);
+  assert.equal(e.store.has("partnerContacts/" + USER.uid), false);
+  assert.equal(e.store.get("partnerLinks/" + USER.uid).status, "none");
+});
+
+test("applyPendingPartnerChanges: a replace applies after 72h with a fresh heartbeat", async () => {
+  const effectiveAt = NOW + partner.PENDING_CHANGE_DELAY_MS;
+  const e = env({ ...installWithHeartbeat(effectiveAt - 1000) });
+  await partner.savePartner(e.deps, USER.uid, { partnerPhone: PARTNER_RAW, userConfirmed: true }, NOW);
+  await partner.savePartner(e.deps, USER.uid, { partnerPhone: PARTNER2_RAW, userConfirmed: true }, NOW);
+  const deps = { ...e.deps, isOptedOut: async () => false };
+  const counts = await partner.applyPendingPartnerChanges(deps, effectiveAt);
+  assert.equal(counts.replaced, 1);
+  const contact = e.store.get("partnerContacts/" + USER.uid);
+  assert.equal(contact.partnerPhone, PARTNER2_CANONICAL);
+  assert.equal(contact.pendingChange, undefined);
+  const link = e.store.get("partnerLinks/" + USER.uid);
+  assert.equal(link.status, "saved");
+  assert.equal(link.partnerPhoneLast4, "4567");
+});
+
+test("applyPendingPartnerChanges: a stale heartbeat drops the change and keeps the partner", async () => {
+  const effectiveAt = NOW + partner.PENDING_CHANGE_DELAY_MS;
+  const staleAt = effectiveAt - 25 * 3600 * 1000; // > 24h before apply time
+  const e = env({ ...installWithHeartbeat(staleAt) });
+  await partner.savePartner(e.deps, USER.uid, { partnerPhone: PARTNER_RAW, userConfirmed: true }, NOW);
+  await partner.requestPartnerRemoval(e.deps, USER.uid, NOW);
+  const deps = { ...e.deps, isOptedOut: async () => false };
+  const counts = await partner.applyPendingPartnerChanges(deps, effectiveAt);
+  assert.equal(counts.dropped, 1);
+  const contact = e.store.get("partnerContacts/" + USER.uid);
+  assert.equal(contact.status, "active", "partner kept");
+  assert.equal(contact.partnerPhone, PARTNER_CANONICAL);
+  assert.equal(contact.pendingChange, undefined, "the request itself is forgotten");
+  assert.equal(e.store.get("partnerLinks/" + USER.uid).status, "saved");
+});
+
+test("applyPendingPartnerChanges: no heartbeat at all also drops the change", async () => {
+  const effectiveAt = NOW + partner.PENDING_CHANGE_DELAY_MS;
+  const e = env();
+  await partner.savePartner(e.deps, USER.uid, { partnerPhone: PARTNER_RAW, userConfirmed: true }, NOW);
+  await partner.requestPartnerRemoval(e.deps, USER.uid, NOW);
+  const deps = { ...e.deps, isOptedOut: async () => false };
+  const counts = await partner.applyPendingPartnerChanges(deps, effectiveAt);
+  assert.equal(counts.dropped, 1);
+  assert.equal(e.store.get("partnerContacts/" + USER.uid).status, "active");
+});
+
+test("applyPendingPartnerChanges: a replacement number that is already opted out is applied but marked stopped", async () => {
+  const effectiveAt = NOW + partner.PENDING_CHANGE_DELAY_MS;
+  const e = env({ ...installWithHeartbeat(effectiveAt - 1000) });
+  await partner.savePartner(e.deps, USER.uid, { partnerPhone: PARTNER_RAW, userConfirmed: true }, NOW);
+  await partner.savePartner(e.deps, USER.uid, { partnerPhone: PARTNER2_RAW, userConfirmed: true }, NOW);
+  const deps = { ...e.deps, isOptedOut: async (_db, phone) => phone === PARTNER2_CANONICAL };
+  const counts = await partner.applyPendingPartnerChanges(deps, effectiveAt);
+  assert.equal(counts.replaced, 1);
+  assert.equal(e.store.get("partnerLinks/" + USER.uid).status, "stopped");
+  assert.equal(e.store.get("partnerContacts/" + USER.uid).partnerPhone, PARTNER2_CANONICAL);
+});
+
+test("applyPendingPartnerChanges never touches whatsappOptOuts", async () => {
+  const effectiveAt = NOW + partner.PENDING_CHANGE_DELAY_MS;
+  const e = env({
+    ...installWithHeartbeat(effectiveAt - 1000),
+    ["whatsappOptOuts/" + PARTNER_CANONICAL]: { optedOut: true, optedOutAt: 1, source: "whatsapp_reply" },
+  });
+  await partner.savePartner(e.deps, USER.uid, { partnerPhone: PARTNER_RAW, userConfirmed: true }, NOW);
+  await partner.requestPartnerRemoval(e.deps, USER.uid, NOW);
+  const deps = { ...e.deps, isOptedOut: async () => false };
+  await partner.applyPendingPartnerChanges(deps, effectiveAt);
+  assert.deepEqual(e.store.get("whatsappOptOuts/" + PARTNER_CANONICAL), { optedOut: true, optedOutAt: 1, source: "whatsapp_reply" });
+});
+
+test("applyPendingPartnerChanges: one account failing does not stop the batch, and logs counts only", async () => {
+  const effectiveAt = NOW + partner.PENDING_CHANGE_DELAY_MS;
+  const e = env({
+    "installs/u1": { lastHeartbeatAt: effectiveAt - 1000 },
+    "installs/u2": { lastHeartbeatAt: effectiveAt - 1000 },
+  });
+  await partner.savePartner(e.deps, "u1", { partnerPhone: PARTNER_RAW, userConfirmed: true }, NOW);
+  await partner.requestPartnerRemoval(e.deps, "u1", NOW);
+  await partner.savePartner(e.deps, "u2", { partnerPhone: PARTNER_RAW, userConfirmed: true }, NOW);
+  await partner.requestPartnerRemoval(e.deps, "u2", NOW);
+
+  const deps = {
+    ...e.deps,
+    isOptedOut: async () => false,
+    db: { ...e.deps.db, doc: (path) => {
+      if (path === "installs/u1") throw new Error("boom"); // first account's heartbeat read explodes
+      return e.deps.db.doc(path);
+    } },
+  };
+  const counts = await partner.applyPendingPartnerChanges(deps, effectiveAt);
+  assert.equal(counts.checked, 2);
+  assert.ok(counts.failed >= 1, "u1's failure is counted");
+  assert.equal(counts.removed, 1, "u2 still got processed");
+  const loggedNumbers = e.logger.lines.some((l) => l.includes(PARTNER_RAW) || l.includes(PARTNER_CANONICAL));
+  assert.equal(loggedNumbers, false, "no phone number ever logged");
+});
