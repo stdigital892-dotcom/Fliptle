@@ -43,6 +43,13 @@ object CloudState {
         // Once-per-account screens: only ever set to true (never reset).
         if (AuthStore(ctx).uninstallInfoSeen) data["uninstallInfoSeen"] = true
         if (AuthStore(ctx).inboxConfirmShown) data["inboxConfirmShown"] = true
+        // E1: the exit process's own progress (day count + approved), so a device
+        // wipe (Clear data) doesn't silently reset it back to day 0. Only ever
+        // grows locally (see UninstallLatch), so backing up whatever is local now
+        // is always safe to merge back in later.
+        val gate = UninstallGateStore(ctx)
+        if (gate.daysDone > 0) data["uninstallDays"] = gate.daysDone
+        if (gate.approved) data["uninstallApproved"] = true
 
         FirebaseFirestore.getInstance().collection(COLLECTION).document(user.uid)
             .set(mapOf(FIELD to data), SetOptions.merge())
@@ -99,6 +106,14 @@ object CloudState {
         // Once-per-account screens: latch to true (never reset).
         if (s["uninstallInfoSeen"] == true) AuthStore(ctx).uninstallInfoSeen = true
         if (s["inboxConfirmShown"] == true) AuthStore(ctx).inboxConfirmShown = true
+        // E1: the exit process's own progress, latched forward only — see
+        // UninstallGateStore.applyCloudLatch. A cloud "approved" is what lets
+        // SignOutGuard unlock again after a device wipe.
+        val cloudDays = asInt(s["uninstallDays"], 0)
+        val cloudApproved = s["uninstallApproved"] == true
+        if (cloudDays > 0 || cloudApproved) {
+            UninstallGateStore(ctx).applyCloudLatch(cloudDays, cloudApproved)
+        }
     }
 
     private fun asLong(v: Any?): Long = when (v) {

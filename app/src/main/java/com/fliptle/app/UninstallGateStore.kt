@@ -58,6 +58,24 @@ class UninstallGateStore(context: Context) {
         prefs.edit().clear().apply()
     }
 
+    /**
+     * E1: apply a cloud latch after a restore. Never lowers [daysDone], never
+     * turns [approved] from true back to false — only ever moves this LOCAL
+     * state forward to match whichever of (this device, the cloud) is further
+     * along. If the cloud says approved, this device's exit process is marked
+     * approved too (which is what lets SignOutGuard unlock), and if either side
+     * has any progress at all the gate is marked active so the screen reflects
+     * it. Never used by the normal in-app flow — only a restore calls this.
+     */
+    fun applyCloudLatch(cloudDays: Int, cloudApproved: Boolean) {
+        val newDays = UninstallLatch.latchedDays(daysDone, cloudDays)
+        val newApproved = UninstallLatch.latchedApproved(approved, cloudApproved)
+        if (newDays == daysDone && newApproved == approved) return
+        val editor = prefs.edit().putInt(KEY_DAYS, newDays).putBoolean(KEY_APPROVED, newApproved)
+        if (newDays > 0 || newApproved) editor.putBoolean(KEY_ACTIVE, true)
+        editor.apply()
+    }
+
     fun state(): State {
         if (!active) return State.INACTIVE
         if (daysDone >= DAYS_REQUIRED || approved) return State.APPROVED

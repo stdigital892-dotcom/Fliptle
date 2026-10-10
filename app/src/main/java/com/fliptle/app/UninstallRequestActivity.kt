@@ -216,6 +216,9 @@ class UninstallRequestActivity : AppCompatActivity() {
         if (done >= UninstallGateStore.DAYS_REQUIRED) {
             UninstallLog.logApproved(this)
         }
+        // E1: back up the new day count (and approved, once reached) so a device
+        // wipe doesn't silently reset this progress to day 0.
+        CloudState.backup(this)
         Toast.makeText(this, getString(R.string.math_day_done, done), Toast.LENGTH_LONG).show()
         render()
     }
