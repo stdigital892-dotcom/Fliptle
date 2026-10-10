@@ -3,9 +3,23 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<link rel="icon" type="image/png" href="/favicon.png" />
 <title>Privacy Policy — RESCUE</title>
 <meta name="description" content="What Rescue collects, why, and how to get your data deleted." />
 <meta name="theme-color" content="#060608" />
+
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://fliptle.com/privacy" />
+<meta property="og:site_name" content="Rescue" />
+<meta property="og:title" content="Privacy Policy — RESCUE" />
+<meta property="og:description" content="What Rescue collects, why, and how to get your data deleted." />
+<meta property="og:image" content="https://fliptle.com/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Privacy Policy — RESCUE" />
+<meta name="twitter:description" content="What Rescue collects, why, and how to get your data deleted." />
+<meta name="twitter:image" content="https://fliptle.com/og-image.png" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -106,7 +120,7 @@ footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line)
   <div class="wrap">
     <span class="eyebrow">Legal</span>
     <h1 class="display">Privacy Policy</h1>
-    <p class="updated">Last updated: 9 October 2026</p>
+    <p class="updated">Last updated: 10 October 2026</p>
   </div>
 </section>
 
@@ -163,8 +177,26 @@ footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line)
   </div>
 
   <h2 id="accessibility">Why Rescue uses Accessibility</h2>
-  <p>Rescue uses Android's Accessibility service for one job: blocking what you chose to block. It reads the web address shown in your browser, and — for Instagram and YouTube only — how the screen is built (not your feed), so it can spot full-screen Reels, Stories and Shorts players. It is not used to watch any other app.</p>
-  <p>When it finds a match against your block list, it shows a block screen, and while a commitment like a freeze or adult-content blocking is active, it stops that block being removed from inside the app. Matching happens only on your phone, against your own block list — nothing about the pages you visit, your screen, or your other apps is stored or sent anywhere. You can turn Accessibility off at any time in Android's settings, but Rescue can't protect you without it.</p>
+  <p>Rescue's Accessibility service has one job: blocking what you chose to block, and nothing else. It watches only web browsers (Chrome, Firefox, Edge, Samsung Internet and others), Instagram and YouTube — no other app sends it anything.</p>
+
+  <p><strong>What it reads.</strong></p>
+  <ul>
+    <li>In a browser: the address bar. If it can't find the address bar by its known ID, it falls back to reading the visible text on the browser's screen, looking for something that looks like a web address or search term — this is the one case where it reads on-screen text beyond the address bar itself.</li>
+    <li>In Instagram and YouTube: how the screen is built — which views are present and how they're arranged — not your feed's content, not any text or images in it. This is only ever used to recognise the shape of a full-screen Reels, Stories or Shorts player.</li>
+  </ul>
+
+  <p><strong>What it does, on a match.</strong></p>
+  <ul>
+    <li>Shows a block screen over the page.</li>
+    <li>Presses the phone's Back action to leave it; if the same page reappears right away, presses Home instead.</li>
+    <li>For a blocked search, opens a safe-search address in place of the one you searched, instead of just leaving the page.</li>
+    <li>For an adult-content or custom-domain match, or a blocked search word, blocking only applies once you've turned on adult-content blocking; your own domain list always applies.</li>
+    <li>For Reels, Stories or Shorts (when that toggle is on): shows the block screen and leaves the player the same way.</li>
+  </ul>
+
+  <p><strong>What stays private.</strong> Every check happens on the phone, against the block list stored on the phone. Nothing it reads — the address, the screen's structure, or anything else — is stored or sent anywhere, by Rescue or to anyone else.</p>
+
+  <p><strong>What it can't do.</strong> This service (and nothing else in Rescue) cannot prevent uninstalling the app, clearing its data, or force-stopping it. Turning Accessibility off (in Android's own settings) stops this feature completely; Rescue can't protect you without it.</p>
 
   <h2 id="why">Why we use it</h2>
   <p>To run the app, keep your protection and settings, send you emails about your account, process payments, notice when protection stops, and — only if you've added a partner — send them a one-time alert if protection stops reporting before you finish removing the app.</p>
@@ -173,8 +205,8 @@ footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line)
   <p>Google (Firebase) stores the app's data. Razorpay processes payments. Resend sends our emails. Meta's WhatsApp Business service delivers the accountability-partner alert, if you've added a partner. We do not sell your data.</p>
 
   <h2 id="accountability-partner">Accountability partner</h2>
-  <p>If you choose to add one accountability partner, we store their mobile number and your note so we can alert them — and only them — on WhatsApp if your protection stops reporting before you finish the removal process. That message includes your first name, your note, your days of protection, your exit status, and the date. We send at most one alert per event, with at least 7 days between alerts to the same partner.</p>
-  <p>Adding a partner requires you to confirm, in the app, that you've told them and that they're okay receiving these messages. Your partner can reply <strong>STOP</strong> to any message at any time to stop all future messages from us — we keep a record of that opt-out (their number only, nothing that identifies you) so it is honoured even after you delete your account.</p>
+  <p>If you choose to add one accountability partner, we store their mobile number and your note so we can alert them — and only them — on WhatsApp if Rescue stops hearing from your phone for about 72 hours before you finish removing the app. This can also happen if your phone is off, offline, or you're signed out — not only when you're actively trying to remove it. That message includes your first name, your note, your days of protection, your exit status, and the date Rescue last heard from your phone. We send at most one alert per event, with at least 7 days between alerts to the same partner, and delivery through WhatsApp is not guaranteed.</p>
+  <p>Adding a partner requires you to confirm, in the app, that you've told them and that they're okay receiving these messages. Removing your partner, or replacing them with someone else, takes effect 72 hours after you ask — your current partner stays active until then. Your partner can reply <strong>STOP</strong> to any message at any time to stop all future messages from us — we keep a record of that opt-out (their number only, nothing that identifies you) so it is honoured even after you delete your account.</p>
 
   <h2 id="deleting-your-data">Deleting your data</h2>
   <p>Open the app, go to Account, and tap Delete my account. Your data — including your partner's number and note, if you added one — is deleted 72 hours after you ask, and you can cancel before then. You can also email <a href="mailto:sales@fliptle.com" class="inline">sales@fliptle.com</a>. Razorpay may keep payment records as the law requires, and if your partner ever opted out by replying STOP, we keep that record (their number only) so they stay opted out even after your account is gone. See the <a href="/delete-account" class="inline">Delete Account page</a> for details.</p>
@@ -201,6 +233,7 @@ footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line)
     <a href="/contact">Contact</a>
   </div>
   <p class="footer-copy">© 2026 RESCUE. fliptle.com</p>
+  <p class="footer-copy">Rescue is a product of Fliptle.</p>
 </footer>
 
 </body>

@@ -16,6 +16,7 @@
     "test:whatsapp": "node --test test/phone.test.js test/whatsapp.test.js",
     "test:partner": "node --test test/partner.test.js",
     "test:subscription": "node --test test/subscription.test.js test/razorpay-webhook.test.js",
-    "test:all": "node --test test/deletion.test.js test/phone.test.js test/whatsapp.test.js test/partner.test.js test/subscription.test.js test/razorpay-webhook.test.js"
+    "test:waitlist": "node --test test/waitlist-email.test.js",
+    "test:all": "node --test test/deletion.test.js test/phone.test.js test/whatsapp.test.js test/partner.test.js test/subscription.test.js test/razorpay-webhook.test.js test/waitlist-email.test.js"
   }
 }
