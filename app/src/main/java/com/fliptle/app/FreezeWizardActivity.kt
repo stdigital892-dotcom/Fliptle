@@ -295,7 +295,7 @@ class FreezeWizardActivity : AppCompatActivity() {
             Toast.makeText(this, R.string.enter_domain, Toast.LENGTH_SHORT).show()
             return
         }
-        val normalized = DomainBlocklist(this).normalize(text)
+        val normalized = DomainBlocklist.normalize(text)
         if (normalized.isNotEmpty()) userDomains.add(normalized)
         domainInput.text.clear()
         refreshDomains()
