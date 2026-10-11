@@ -384,7 +384,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 44px;text-align:center;ba
       <div class="feature-list">
         <div class="feature"><div class="f-ic">🛑</div><div><h4>Block &amp; interrupt</h4><p>Cut off the triggers and break the loop the instant it starts.</p></div></div>
         <div class="feature"><div class="f-ic">🔥</div><div><h4>Day counter</h4><p>Tracks how many days your protection has stayed on, without a reset.</p></div></div>
-        <div class="feature"><div class="f-ic">🔐</div><div><h4>Exit challenge</h4><p>The in-app way to remove a commitment is a short math-and-typing challenge, every day for 5 days — not one tap. It's a commitment tool, not a technical lock: Rescue can't stop you uninstalling or clearing data directly through Android.</p></div></div>
+        <div class="feature"><div class="f-ic">🔐</div><div><h4>Exit challenge</h4><p>The in-app way to remove a commitment is two gates each day for 5 days — 10 math questions, then typing 1 to 50 — not one tap. It's a commitment tool, not a technical lock: Rescue can't stop you uninstalling or clearing data directly through Android.</p></div></div>
         <div class="feature"><div class="f-ic">🤝</div><div><h4>Accountability partner</h4><p>Add one person by phone number. If Rescue goes quiet for about 3 days before you finish removing it — including if your phone is off or offline — we try to alert them on WhatsApp. Delivery isn't guaranteed.</p></div></div>
       </div>
       <span class="badge-soon">Launching soon · Waitlist gets first access</span>
@@ -448,7 +448,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 44px;text-align:center;ba
 <!-- ===================== FIREBASE (module) ===================== -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, addDoc, doc, setDoc, getDoc, serverTimestamp, increment }
+  import { getFirestore, collection, addDoc, doc, setDoc, getDoc, serverTimestamp, runTransaction }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   // Shared Firebase project (same project as the Android app: apps-99e1e).
@@ -484,8 +484,20 @@ footer{border-top:1px solid var(--line);padding:56px 0 44px;text-align:center;ba
         userAgent: navigator.userAgent
       });
       // Best-effort public counter (cosmetic). Never blocks the signup.
-      try { await setDoc(doc(db, "stats", "waitlist"), { count: increment(1) }, { merge: true }); }
-      catch(e){ console.warn('[RESCUE] stats/waitlist increment failed (counter will stay stale):', e); }
+      // Explicit read-then-write inside a transaction, not increment() — the
+      // write always sends a plain literal {count: old+1} (or {count: 1} on
+      // create), matching the published rule's exact-value check with no
+      // FieldValue-transform ambiguity. The transaction also makes this safe
+      // against two signups landing at the same moment.
+      try {
+        const statsRef = doc(db, "stats", "waitlist");
+        await runTransaction(db, async (txn) => {
+          const snap = await txn.get(statsRef);
+          const current = snap.exists() ? Number(snap.data().count) : 0;
+          const next = (Number.isFinite(current) ? current : 0) + 1;
+          txn.set(statsRef, { count: next });
+        });
+      } catch(e){ console.error('[RESCUE] stats/waitlist write failed (counter will stay stale):', e); }
     },
     async waitlistCount(){
       try {
