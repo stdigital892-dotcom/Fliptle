@@ -42,7 +42,7 @@ block list stored on the phone. Nothing it reads — the address, the
 screen's structure, or anything else — is stored or sent anywhere, by Rescue
 or to anyone else.
 
-**What it can't do.** This service (and nothing else in Rescue) can prevent
+**What it can't do.** This service (and nothing else in Rescue) cannot prevent
 uninstalling the app, clearing its data, or force-stopping it. Turning
 Accessibility off (in Android's own settings) stops this feature
 completely; Rescue can't protect you without it.

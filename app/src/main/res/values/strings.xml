@@ -376,7 +376,7 @@
     <string name="freeze_setup_button">Set up my 3-day freeze</string>
     <string name="freeze_change_button">Change my freeze</string>
     <string name="wizard_apps_title">Block apps</string>
-    <string name="wizard_apps_body">Choose the apps to block for the next 3 days. Nothing is locked until the last step. Instagram and YouTube aren\'t listed here — use the Reels/Shorts step to block those.</string>
+    <string name="wizard_apps_body">Choose the apps to block for the next 3 days. Nothing is locked until the last step. Instagram and YouTube aren\'t listed here — use the Shorts and Reels step to block those.</string>
     <string name="wizard_domains_title">Block domains</string>
     <string name="wizard_domains_body">Add the websites to block. Tap one to remove it.</string>
     <string name="wizard_domain_tap_remove">tap to remove</string>
