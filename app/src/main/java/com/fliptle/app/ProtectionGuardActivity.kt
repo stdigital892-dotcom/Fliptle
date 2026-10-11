@@ -3,6 +3,7 @@ package com.fliptle.app
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.SystemClock
 import android.provider.Settings
 import android.view.View
 import android.widget.Button
@@ -17,6 +18,14 @@ import androidx.appcompat.app.AppCompatActivity
  * HARD RULE: this screen is always exitable. Back and Home are NOT overridden, so
  * the phone stays fully usable (calls, emergencies). It nags relentlessly by being
  * re-launched from [BlockingService], but it never traps the device.
+ *
+ * Tapping any "enable" button suppresses the next relaunch for
+ * [GuardCooldown.SUPPRESS_MS] ([suppressGuardUntilMs]/[isGuardSuppressed]):
+ * without this, BlockingService's 1-second poll could still catch the user on
+ * the destination Settings screen (its own skip-list only covers
+ * com.android.settings/com.samsung.android.settings, not every OEM's Settings
+ * package, and there's a brief window before the Settings activity is actually
+ * foregrounded) and yank the guard back over it mid-tap.
  */
 class ProtectionGuardActivity : AppCompatActivity() {
 
@@ -28,17 +37,21 @@ class ProtectionGuardActivity : AppCompatActivity() {
         setContentView(R.layout.activity_protection_guard)
 
         findViewById<Button>(R.id.enableAccessibilityButton).setOnClickListener {
+            suppressGuard()
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
         findViewById<Button>(R.id.enableUsageButton).setOnClickListener {
+            suppressGuard()
             startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         }
         findViewById<Button>(R.id.enableOverlayButton).setOnClickListener {
+            suppressGuard()
             startActivity(
                 Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
             )
         }
         findViewById<Button>(R.id.enableBatteryButton).setOnClickListener {
+            suppressGuard()
             try {
                 startActivity(
                     Intent(
@@ -54,6 +67,10 @@ class ProtectionGuardActivity : AppCompatActivity() {
                 )
             }
         }
+    }
+
+    private fun suppressGuard() {
+        suppressGuardUntilMs = SystemClock.elapsedRealtime() + GuardCooldown.SUPPRESS_MS
     }
 
     override fun onResume() {
@@ -84,5 +101,15 @@ class ProtectionGuardActivity : AppCompatActivity() {
 
     private fun showIfMissing(buttonId: Int, granted: Boolean) {
         findViewById<Button>(buttonId).visibility = if (granted) View.GONE else View.VISIBLE
+    }
+
+    companion object {
+        // Process-wide: BlockingService (same process) checks this before
+        // relaunching the guard. Not persisted — a process restart naturally
+        // clears any stale suppression.
+        @Volatile private var suppressGuardUntilMs: Long = 0L
+
+        fun isGuardSuppressed(): Boolean =
+            GuardCooldown.isSuppressed(SystemClock.elapsedRealtime(), suppressGuardUntilMs)
     }
 }

@@ -263,6 +263,13 @@ class FreezeWizardActivity : AppCompatActivity() {
         for (resolveInfo in pm.queryIntentActivities(launcherIntent, 0)) {
             val pkg = resolveInfo.activityInfo.packageName
             if (pkg == packageName) continue // never offer ourselves
+            // Instagram and YouTube have their own narrower control (the
+            // Reels/Shorts surface toggle, step c) and must never be offered
+            // here: BlockedAppsStore would silently drop them anyway, which
+            // would make a checked-but-ignored box look like a bug rather
+            // than a deliberate design choice. wizard_apps_body says where
+            // to find the real control for these two apps.
+            if (BlockedAppsStore.EXCLUDED.contains(pkg)) continue
             if (seen.add(pkg)) {
                 val label = resolveInfo.loadLabel(pm).toString()
                 val icon = try { resolveInfo.loadIcon(pm) } catch (_: Throwable) { null }

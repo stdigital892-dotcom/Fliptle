@@ -152,6 +152,11 @@ class BlockingService : Service() {
         // can't trap the user there.
         if (fg == null && Permissions.hasUsageAccess(this)) return
 
+        // The user just tapped an "enable" button on the guard and is (or is
+        // about to be) on a Settings screen: give them 60s before relaunching,
+        // regardless of what isSkipApp/fg say (see ProtectionGuardActivity).
+        if (ProtectionGuardActivity.isGuardSuppressed()) return
+
         val now = SystemClock.elapsedRealtime()
         if (now - lastGuardLaunchMs < GUARD_MIN_INTERVAL_MS) return
         lastGuardLaunchMs = now

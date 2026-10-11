@@ -50,4 +50,26 @@ class DomainBlocklistTest {
         assertEquals("instagram.com", DomainBlocklist.normalize("instagram.com#frag"))
         assertEquals("instagram.com", DomainBlocklist.normalize("instagram.com."))
     }
+
+    /**
+     * userDomains() re-normalizes every stored entry on read, so a domain a
+     * pre-fix build stored raw (e.g. "www.instagram.com", before the "www."
+     * strip existed) ends up matching exactly like a freshly-saved one. This
+     * models that read-time transform directly, since userDomains() itself
+     * needs a real Context/SharedPreferences.
+     */
+    private fun reread(storedRaw: Set<String>): Set<String> =
+        storedRaw.mapNotNull { DomainBlocklist.normalize(it).ifEmpty { null } }.toSet()
+
+    @Test fun legacyStoredEntries_areNormalizedOnRead() {
+        val stored = setOf("www.instagram.com", "INSTAGRAM.CO.UK", "https://m.example.com/")
+        val reread = reread(stored)
+        assertTrue(reread.contains("instagram.com"))
+        assertTrue(reread.contains("instagram.co.uk"))
+        assertTrue(reread.contains("m.example.com"))
+
+        // And the re-normalized value now blocks the bare domain, which the
+        // raw "www.instagram.com" string on its own never would have.
+        assertTrue(blocked("instagram.com", reread.first { it == "instagram.com" }))
+    }
 }

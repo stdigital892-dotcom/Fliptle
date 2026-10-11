@@ -113,7 +113,7 @@
     <string name="setup_partner">Your accountability partner</string>
     <string name="setup_partner_sub">One trusted person, who may be told after about three days of silence.</string>
     <string name="partner_title">Your accountability partner</string>
-    <string name="partner_body">Choose ONE person you trust. If Rescue stops reporting from this phone for about three days (72 hours) before you finish the exit process, they may get one WhatsApp message with the date Rescue last reported, how many days adult-content blocking was on, and your note. This can also happen if your phone is off, offline, or signed out, and delivery is not guaranteed.\n\nWithout a partner added, nobody is notified. They can reply STOP at any time.</string>
+    <string name="partner_body">Choose ONE person you trust. They can reply STOP at any time to stop being messaged. If Rescue stops reporting from this phone for about three days (72 hours) before you finish the exit process, they may get one WhatsApp message with the date Rescue last reported, how many days adult-content blocking was on, and your note. This can also happen if your phone is off, offline, or signed out, and delivery is not guaranteed. Changing or removing your partner also takes effect after about three days (72 hours); until then, your current partner stays active.\n\nWithout a partner added, nobody is notified.</string>
 
     <string name="partner_phone_label">Partner\'s mobile number</string>
     <string name="partner_phone_hint">10 digits, starting 6-9</string>
@@ -376,7 +376,7 @@
     <string name="freeze_setup_button">Set up my 3-day freeze</string>
     <string name="freeze_change_button">Change my freeze</string>
     <string name="wizard_apps_title">Block apps</string>
-    <string name="wizard_apps_body">Choose the apps to block for the next 3 days. Nothing is locked until the last step.</string>
+    <string name="wizard_apps_body">Choose the apps to block for the next 3 days. Nothing is locked until the last step. Instagram and YouTube aren\'t listed here — use the Reels/Shorts step to block those.</string>
     <string name="wizard_domains_title">Block domains</string>
     <string name="wizard_domains_body">Add the websites to block. Tap one to remove it.</string>
     <string name="wizard_domain_tap_remove">tap to remove</string>

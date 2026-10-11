@@ -15,8 +15,16 @@ class DomainBlocklist(context: Context) {
     private val prefs = context.applicationContext
         .getSharedPreferences("domain_blocklist", Context.MODE_PRIVATE)
 
-    fun userDomains(): Set<String> =
-        HashSet(prefs.getStringSet(KEY_DOMAINS, emptySet()) ?: emptySet())
+    /**
+     * Re-normalizes every stored entry on read (not just the ones added since
+     * the www./scheme/case fix), so a domain saved by an older build — e.g.
+     * "www.instagram.com" stored before [normalize] stripped "www." — matches
+     * correctly without needing a one-off migration step.
+     */
+    fun userDomains(): Set<String> {
+        val stored = prefs.getStringSet(KEY_DOMAINS, emptySet()) ?: emptySet()
+        return stored.mapNotNull { normalize(it).ifEmpty { null } }.toSet()
+    }
 
     /** All active domains: the ones the user chose. */
     fun allDomains(): List<String> = userDomains().toList()
