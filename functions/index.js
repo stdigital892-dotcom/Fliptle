@@ -64,53 +64,9 @@ function offerLink(email, source, name) {
 }
 
 // ---- Template 1: WEBSITE waitlist signups (pre-launch, no app yet) --------
-function buildWaitlistHtml(link) {
-  return `<!DOCTYPE html>
-<html>
-  <body style="margin:0;background:#060608;font-family:Arial,Helvetica,sans-serif;color:#f5f5f7;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#060608;padding:32px 0;">
-      <tr><td align="center">
-        <table role="presentation" width="100%" style="max-width:520px;background:#0c0c11;border:1px solid #1c1c22;border-radius:16px;padding:36px;">
-          <tr><td>
-            <div style="font-size:26px;font-weight:800;letter-spacing:2px;color:#ffffff;">RESCUE<span style="color:#FF2233;">.</span></div>
-            <h1 style="font-size:24px;line-height:1.25;margin:22px 0 10px;color:#ffffff;">You're in. Welcome to the rescue.</h1>
-            <p style="font-size:15px;line-height:1.6;color:#c9c9d2;margin:0 0 24px;">
-              You've decided to take your life back &mdash; that's the hardest step, and you just took it.
-              As an early member, here's your first-access offer for the RESCUE app.
-            </p>
-            <a href="${link}" style="display:inline-block;background:#FF2233;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;padding:15px 34px;border-radius:12px;">
-              See your early-access offer &rarr;
-            </a>
-            <p style="font-size:13px;line-height:1.6;color:#8a8a97;margin:26px 0 0;">
-              Or paste this link into your browser:<br />
-              <a href="${link}" style="color:#ff6a6a;word-break:break-all;">${link}</a>
-            </p>
-            <hr style="border:none;border-top:1px solid #1c1c22;margin:28px 0;" />
-            <p style="font-size:12px;color:#6c6c78;margin:0;">
-              You're receiving this because you joined the RESCUE waitlist at fliptle.com.
-              Questions? Just reply to this email.
-            </p>
-          </td></tr>
-        </table>
-      </td></tr>
-    </table>
-  </body>
-</html>`;
-}
-
-function buildWaitlistText(link) {
-  return [
-    "You're in. Welcome to the rescue.",
-    "",
-    "You've decided to take your life back - that's the hardest step, and you just took it.",
-    "As an early member, here's your first-access offer for the RESCUE app:",
-    "",
-    link,
-    "",
-    "You're receiving this because you joined the RESCUE waitlist at fliptle.com.",
-    "Questions? Just reply to this email.",
-  ].join("\n");
-}
+// A short, plain confirmation — no offer, no pricing, no link to /offer.
+// See waitlist-email.js (and its tests).
+const waitlistEmail = require("./waitlist-email");
 
 // ---- Template 2: APP users (already have the app, choosing a plan) -------
 // Never says "early access" — that phrase is reserved for website waitlist
@@ -193,7 +149,6 @@ exports.sendWaitlistWelcome = onDocumentCreated(
       return;
     }
 
-    const link = offerLink(email, "web");
     const resend = new Resend(RESEND_API_KEY.value());
 
     try {
@@ -201,9 +156,9 @@ exports.sendWaitlistWelcome = onDocumentCreated(
         from: FROM,
         to: [email],
         replyTo: REPLY_TO,
-        subject: "You're in - your RESCUE early-access offer",
-        html: buildWaitlistHtml(link),
-        text: buildWaitlistText(link),
+        subject: waitlistEmail.SUBJECT,
+        html: waitlistEmail.buildWaitlistHtml(),
+        text: waitlistEmail.buildWaitlistText(),
       });
 
       if (error) {

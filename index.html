@@ -3,15 +3,24 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<link rel="icon" type="image/png" href="/favicon.png" />
 <title>RESCUE — Break Free From The Legal Drug</title>
-<meta name="description" content="Adult content and social media are engineered to hijack your brain. RESCUE is the movement — and the app — helping a generation break free and take their life back. Join the waitlist for early access." />
+<meta name="description" content="Adult content and social media are engineered to hijack your brain. RESCUE is the movement — and the app — helping a generation break free and take their life back. Join the waitlist to hear when we launch." />
 <meta name="theme-color" content="#060608" />
 
 <!-- Social share -->
 <meta property="og:type" content="website" />
+<meta property="og:url" content="https://fliptle.com/" />
+<meta property="og:site_name" content="Rescue" />
 <meta property="og:title" content="RESCUE — Break Free From The Legal Drug" />
-<meta property="og:description" content="A movement against the legal drug silently harming millions. Join the rescue and get early access." />
+<meta property="og:description" content="A movement against the legal drug silently harming millions. Join the rescue and we'll email you when we launch." />
+<meta property="og:image" content="https://fliptle.com/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="RESCUE — Break Free From The Legal Drug" />
+<meta name="twitter:description" content="A movement against the legal drug silently harming millions. Join the rescue and we'll email you when we launch." />
+<meta name="twitter:image" content="https://fliptle.com/og-image.png" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -124,6 +133,9 @@ header.scrolled{background:rgba(6,6,8,.82);backdrop-filter:blur(14px);border-col
 .form-msg{margin-top:14px;font-size:.95rem;font-weight:500;min-height:1.2em}
 .form-msg.ok{color:var(--light)}
 .form-msg.err{color:#ff7a7a}
+.email-hint{margin-top:8px;font-size:.86rem;color:var(--muted);width:100%}
+.email-hint button{background:none;border:none;padding:0;margin:0 2px;font:inherit;color:var(--light);text-decoration:underline;cursor:pointer}
+.email-hint button:hover{color:#fff}
 /* big live social-proof counter */
 .count-signal{margin-top:26px;display:none;flex-direction:column;gap:2px}
 .count-signal.show{display:flex}
@@ -309,7 +321,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 44px;text-align:center;ba
         <span class="count-num">0</span>
         <span class="count-label"><span class="live-dot"></span>have already decided to take their life back</span>
       </div>
-      <p class="form-note">Join the Rescue. Get early access to the app before anyone else.</p>
+      <p class="form-note">Join the Rescue. We'll email you once, when the app launches.</p>
     </div>
   </div>
   <div class="scroll-cue">Scroll</div>
@@ -368,14 +380,15 @@ footer{border-top:1px solid var(--line);padding:56px 0 44px;text-align:center;ba
     <div class="app-teaser reveal">
       <span class="eyebrow">The app</span>
       <h2 class="section-title">Your escape plan,<br />in your pocket.</h2>
-      <p class="section-sub">RESCUE isn't willpower in an app. It's a system that steps in the moment the urge hits — and doesn't let go until you're free.</p>
+      <p class="section-sub">RESCUE isn't willpower in an app. It's a commitment system: you decide once, while you're clear-headed, and removing that decision later takes real effort — not a lock Rescue holds over your phone.</p>
       <div class="feature-list">
         <div class="feature"><div class="f-ic">🛑</div><div><h4>Block &amp; interrupt</h4><p>Cut off the triggers and break the loop the instant it starts.</p></div></div>
         <div class="feature"><div class="f-ic">🔥</div><div><h4>Day counter</h4><p>Tracks how many days your protection has stayed on, without a reset.</p></div></div>
-        <div class="feature"><div class="f-ic">🔐</div><div><h4>Exit challenge</h4><p>Removing a commitment takes a short math-and-typing challenge, every day for 5 days — not one tap.</p></div></div>
-        <div class="feature"><div class="f-ic">🤝</div><div><h4>Accountability partner</h4><p>Add one person by phone number. If protection goes dark before you finish removing it, they get a WhatsApp alert.</p></div></div>
+        <div class="feature"><div class="f-ic">🔐</div><div><h4>Exit challenge</h4><p>The in-app way to remove a commitment is a short math-and-typing challenge, every day for 5 days — not one tap. It's a commitment tool, not a technical lock: Rescue can't stop you uninstalling or clearing data directly through Android.</p></div></div>
+        <div class="feature"><div class="f-ic">🤝</div><div><h4>Accountability partner</h4><p>Add one person by phone number. If Rescue goes quiet for about 3 days before you finish removing it — including if your phone is off or offline — we try to alert them on WhatsApp. Delivery isn't guaranteed.</p></div></div>
       </div>
       <span class="badge-soon">Launching soon · Waitlist gets first access</span>
+      <p style="margin-top:18px;color:var(--muted);font-size:.86rem;line-height:1.6">Blocking uses Android's Accessibility service to check web addresses and app screens on your phone against your own block list — nothing is stored or sent anywhere. Full explanation in our <a href="/privacy#accessibility" style="color:var(--light);text-decoration:underline">Privacy Policy</a>.</p>
     </div>
   </div>
 </section>
@@ -385,7 +398,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 44px;text-align:center;ba
   <div class="inner">
     <span class="eyebrow reveal">Join the rescue</span>
     <h2 class="reveal d1">The rescue starts with <span class="accent">one decision.</span></h2>
-    <p class="reveal d2">Be first through the door. Join the waitlist and get early access the moment we launch.</p>
+    <p class="reveal d2">Be first through the door. Join the waitlist and we'll email you the moment Rescue launches.</p>
     <div class="reveal d3">
       <form class="waitlist-form" data-form="final" novalidate>
         <label class="field">
@@ -422,6 +435,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 44px;text-align:center;ba
       <a href="/contact">Contact</a>
     </div>
     <p class="footer-copy">© 2026 RESCUE. A movement to take our lives back.</p>
+    <p class="footer-copy">Rescue is a product of Fliptle.</p>
   </div>
 </footer>
 
@@ -476,8 +490,13 @@ footer{border-top:1px solid var(--line);padding:56px 0 44px;text-align:center;ba
     async waitlistCount(){
       try {
         const snap = await getDoc(doc(db, "stats", "waitlist"));
-        return snap.exists() ? (snap.data().count || 0) : 0;
-      } catch(_) { return null; }
+        if (!snap.exists()) return 0;
+        // Coerce defensively: if the stored value is ever non-numeric (e.g. a
+        // stale write from before this field existed), fall back to 0 instead
+        // of displaying garbage — but show the real number whenever it is one.
+        const n = Number(snap.data().count);
+        return Number.isFinite(n) ? n : 0;
+      } catch(_) { return null; } // genuine read failure — caller falls back to 0
     },
     // Phase 2 — subscription (keyed by email). At launch this should be written
     // by a server after verifying the Razorpay signature; see WEBSITE_SETUP.md.
@@ -581,7 +600,36 @@ if (RESCUE.CAMPAIGN_VIDEO_URL){
 })();
 
 /* ============ WAITLIST forms ============ */
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Real syntax check: one @, a non-empty name, a domain with at least one dot
+// (every label non-empty), a final part of at least two letters, no spaces,
+// max 320 characters. Stricter than the old regex, which accepted obviously
+// wrong addresses.
+function isValidEmail(email){
+  if (typeof email !== 'string') return false;
+  if (email.length === 0 || email.length > 320) return false;
+  if (/\s/.test(email)) return false;
+  if ((email.match(/@/g) || []).length !== 1) return false;
+  const [local, domain] = email.split('@');
+  if (!local) return false;
+  if (!domain || domain.indexOf('.') < 0) return false;
+  const labels = domain.split('.');
+  if (labels.some(p => p.length === 0)) return false;
+  const tld = labels[labels.length - 1];
+  if (!/^[a-zA-Z]{2,}$/.test(tld)) return false;
+  return true;
+}
+// Common domain typos — corrected with one tap rather than rejected outright.
+const EMAIL_TYPO_DOMAINS = {
+  'gmial.com': 'gmail.com', 'gmail.con': 'gmail.com', 'gamil.com': 'gmail.com',
+  'hotmial.com': 'hotmail.com', 'yahooo.com': 'yahoo.com',
+};
+function suggestEmailFix(email){
+  const at = email.lastIndexOf('@');
+  if (at < 0) return null;
+  const domain = email.slice(at + 1).trim().toLowerCase();
+  const fixed = EMAIL_TYPO_DOMAINS[domain];
+  return fixed ? email.slice(0, at + 1) + fixed : null;
+}
 let liveCount = null;
 
 function setMsg(key, text, kind){
@@ -620,17 +668,44 @@ async function initCount(){
 function bindForms(){
   document.querySelectorAll('.waitlist-form').forEach(form=>{
     const key = form.getAttribute('data-form');
+    const input = form.querySelector('input[name=email]');
+    const field = input.closest('.field') || input;
+
+    // "Did you mean ...?" hint for common typo domains — accepted with one tap.
+    const hint = document.createElement('div');
+    hint.className = 'email-hint';
+    hint.hidden = true;
+    field.insertAdjacentElement('afterend', hint);
+    function updateHint(){
+      const fixed = suggestEmailFix(input.value.trim());
+      if (!fixed){ hint.hidden = true; hint.textContent = ''; return; }
+      hint.hidden = false;
+      hint.textContent = 'Did you mean ';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = fixed;
+      btn.addEventListener('click', () => {
+        input.value = fixed;
+        hint.hidden = true;
+        input.focus();
+      });
+      hint.appendChild(btn);
+      hint.appendChild(document.createTextNode('?'));
+    }
+    input.addEventListener('input', updateHint);
+    input.addEventListener('blur', updateHint);
+
     form.addEventListener('submit', async (e)=>{
       e.preventDefault();
-      const input = form.querySelector('input[name=email]');
       const email = input.value.trim();
       const btn = form.querySelector('button');
-      if(!EMAIL_RE.test(email)){ setMsg(key,'Please enter a valid email address.','err'); input.focus(); return; }
+      if(!isValidEmail(email)){ setMsg(key,'Please enter a valid email address.','err'); input.focus(); return; }
       if(!window.RescueDB || !window.RescueDB.ready){ setMsg(key,'Waitlist is warming up — please try again in a moment.','err'); return; }
       btn.disabled = true; const label = btn.textContent; btn.textContent = 'Joining…'; setMsg(key,'',null);
       try {
         await window.RescueDB.joinWaitlist(email);
         form.reset();
+        hint.hidden = true;
         setMsg(key,"You're in. Welcome to the rescue — watch your inbox.",'ok');
         liveCount = (liveCount==null?0:liveCount) + 1; renderCount(liveCount);
       } catch(err){
@@ -699,7 +774,7 @@ function wireCheckout(){
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
     const email = form.querySelector('input[name=email]').value.trim();
-    if(!EMAIL_RE.test(email)){ setMsg('co','Please enter a valid email.','err'); return; }
+    if(!isValidEmail(email)){ setMsg('co','Please enter a valid email.','err'); return; }
     if(!RESCUE.RAZORPAY_KEY_ID){ setMsg('co','Payments not configured yet.','err'); return; }
     startPayment(email, selectedPlan);
   });
