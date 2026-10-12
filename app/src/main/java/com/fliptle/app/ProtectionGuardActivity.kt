@@ -26,6 +26,10 @@ import androidx.appcompat.app.AppCompatActivity
  * com.android.settings/com.samsung.android.settings, not every OEM's Settings
  * package, and there's a brief window before the Settings activity is actually
  * foregrounded) and yank the guard back over it mid-tap.
+ *
+ * The Accessibility button shows [AccessibilityDisclosure] first; the
+ * cooldown for THAT button only starts once the disclosure is agreed to, so
+ * declining it leaves the guard's normal nagging untouched.
  */
 class ProtectionGuardActivity : AppCompatActivity() {
 
@@ -37,8 +41,13 @@ class ProtectionGuardActivity : AppCompatActivity() {
         setContentView(R.layout.activity_protection_guard)
 
         findViewById<Button>(R.id.enableAccessibilityButton).setOnClickListener {
-            suppressGuard()
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            // Show the same disclosure onboarding shows before this permission
+            // is ever requested. Settings only opens from "I agree, continue";
+            // "No thanks" dismisses and starts nothing, leaving the guard as is.
+            AccessibilityDisclosure.show(this) {
+                suppressGuard()
+                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            }
         }
         findViewById<Button>(R.id.enableUsageButton).setOnClickListener {
             suppressGuard()
