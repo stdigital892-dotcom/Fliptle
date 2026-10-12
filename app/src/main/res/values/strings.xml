@@ -113,7 +113,7 @@
     <string name="setup_partner">Your accountability partner</string>
     <string name="setup_partner_sub">One trusted person, who may be told after about three days of silence.</string>
     <string name="partner_title">Your accountability partner</string>
-    <string name="partner_body">Choose ONE person you trust. They can reply STOP at any time to stop being messaged. If Rescue stops reporting from this phone for about three days (72 hours) before you finish the exit process, they may get one WhatsApp message with the date Rescue last reported, how many days adult-content blocking was on, and your note. This can also happen if your phone is off, offline, or signed out, and delivery is not guaranteed. Changing or removing your partner also takes effect after about three days (72 hours); until then, your current partner stays active.\n\nWithout a partner added, nobody is notified.</string>
+    <string name="partner_body">Choose ONE person you trust. They can reply STOP at any time to stop being messaged. If Rescue stops reporting from this phone for about three days (72 hours) before you finish the exit process, they may get one WhatsApp message with the date Rescue last checked in, how many days adult-content blocking was on, and your note. The message says Rescue hasn\'t checked in for about three days. This can happen if the app was removed, or if your phone was off, offline or signed out. Delivery is not guaranteed. Changing or removing your partner also takes effect after about three days (72 hours); until then, your current partner stays active.\n\nWithout a partner added, nobody is notified.</string>
 
     <string name="partner_phone_label">Partner\'s mobile number</string>
     <string name="partner_phone_hint">10 digits, starting 6-9</string>
@@ -355,8 +355,8 @@
     <string name="uninstall_info_step5">After 5 days, uninstall is approved.</string>
     <string name="uninstall_info_caution_title">⚠️  If you delete this app directly from your phone without following the process:</string>
     <string name="uninstall_info_caution_lede">If you added an accountability partner, they may get one WhatsApp message after Rescue stops reporting from your phone for about three days (72 hours):</string>
-    <string name="uninstall_info_caution_bullets">• The date Rescue last reported from your phone\n• How many days you had been protected\n• That the exit challenge was not finished</string>
-    <string name="uninstall_info_caution_final">This can also happen if your phone is off, offline, or signed out — delivery is not guaranteed, and without a partner added, nobody is notified.</string>
+    <string name="uninstall_info_caution_bullets">• The date Rescue last checked in from your phone\n• How many days you had been protected\n• That the exit challenge was not finished</string>
+    <string name="uninstall_info_caution_final">The message says Rescue hasn\'t checked in for about three days. This can happen if the app was removed, or if your phone was off, offline or signed out. Delivery is not guaranteed, and without a partner added, nobody is notified.</string>
     <string name="uninstall_info_close">This process exists so you don\'t leave\non a bad day. Respect it.</string>
     <string name="uninstall_info_scroll_hint">Scroll to the end to continue</string>
     <string name="uninstall_info_got_it">Got it — let\'s start</string>
