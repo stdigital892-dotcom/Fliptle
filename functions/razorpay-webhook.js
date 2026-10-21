@@ -134,11 +134,13 @@ async function handleRequest(req, res, deps) {
     );
 
     logger.info("Razorpay webhook: subscription confirmed", {
-      email, paymentId: payment.id, applied: result.applied,
+      paymentId: payment.id, orderId: payment.order_id || null, applied: result.applied,
     });
     res.status(200).send("ok");
   } catch (e) {
-    logger.error("Razorpay webhook: Firestore write failed", { email, message: e && e.message });
+    logger.error("Razorpay webhook: Firestore write failed", {
+      paymentId: payment.id, orderId: payment.order_id || null, message: e && e.message,
+    });
     res.status(500).send("internal error");
   }
 }
