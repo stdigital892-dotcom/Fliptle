@@ -643,6 +643,18 @@ exports.getEntitlement = onCall(
       throw new HttpsError("failed-precondition", "Auth token has no valid email.");
     }
 
+    // ---- 0. Reviewer allowlist: entitled with no payment, trial, or
+    // Firestore doc of any kind. Checked first so it can never be shadowed
+    // by an "expired" result from a stale subscriptions/planSelections doc
+    // the same account might also have. The email itself is never logged.
+    const reviewerEmails = REVIEWER_ALLOWED_EMAILS.value()
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+    if (reviewerEmails.includes(email)) {
+      return { entitled: true, reason: "reviewer", expiresAt: null };
+    }
+
     const db = admin.firestore();
     const nowMs = admin.firestore.Timestamp.now().toMillis();
 
@@ -990,6 +1002,11 @@ const PARTNER_WHATSAPP_TEMPLATE_LANG =
 const PARTNER_ALERTS_DRY_RUN = defineBoolean("PARTNER_ALERTS_DRY_RUN", { default: true });
 const PARTNER_ALERTS_ALLOWED_UIDS =
   defineString("PARTNER_ALERTS_ALLOWED_UIDS", { default: "" });
+// Comma-separated emails (e.g. a Play Store reviewer account) granted full
+// entitlement with no payment or trial — see getEntitlement's precedence
+// chain above. Never logged. Set in functions/.env.apps-99e1e, never a
+// secret, never committed.
+const REVIEWER_ALLOWED_EMAILS = defineString("REVIEWER_ALLOWED_EMAILS", { default: "" });
 const PARTNER_ALERTS_STALE_HOURS =
   defineInt("PARTNER_ALERTS_STALE_HOURS", { default: partnerSender.STALE_HOURS_DEFAULT });
 const PARTNER_ALERTS_COOLDOWN_DAYS =
