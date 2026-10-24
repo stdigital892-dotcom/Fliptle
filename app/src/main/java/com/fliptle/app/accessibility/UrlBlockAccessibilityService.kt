@@ -50,6 +50,8 @@ class UrlBlockAccessibilityService : AccessibilityService() {
     private var lastSafeSearchUrl: String? = null
     private var lastSafeSearchAtMs = 0L
 
+    private var pollRunning = false
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
@@ -57,6 +59,35 @@ class UrlBlockAccessibilityService : AccessibilityService() {
         KeywordBlocklist.ensureLoaded(this)
         com.fliptle.app.BlockedDomainApps.recompute(this)
         narrowScopeToMonitoredApps()
+        startPollIfNeeded()
+    }
+
+    /**
+     * Lightweight re-evaluation while a monitored browser is foreground, so an
+     * already-open tab (no new AccessibilityEvent fires on it), a throttled
+     * event, or a domain blocked after the tab was opened still gets caught.
+     * Self-terminating: stops rescheduling the moment the foreground window
+     * isn't a monitored browser, and never touches PackageManager -- just
+     * [rootInActiveWindow] and the same [extractUrl]/[handleUrl] path events
+     * already use.
+     */
+    private val reevaluateRunnable = object : Runnable {
+        override fun run() {
+            val root = rootInActiveWindow
+            val pkg = root?.packageName?.toString()
+            if (root != null && pkg != null && BrowserDetector.isBrowser(this@UrlBlockAccessibilityService, pkg)) {
+                extractUrl(root, pkg)?.let { handleUrl(it, pkg) }
+                handler.postDelayed(this, REEVALUATE_MS)
+            } else {
+                pollRunning = false
+            }
+        }
+    }
+
+    private fun startPollIfNeeded() {
+        if (pollRunning) return
+        pollRunning = true
+        handler.postDelayed(reevaluateRunnable, REEVALUATE_MS)
     }
 
     /**
@@ -113,8 +144,8 @@ class UrlBlockAccessibilityService : AccessibilityService() {
 
         val root = rootInActiveWindow ?: return
         if (isBrowser) {
-            val url = extractUrl(root, pkg) ?: return
-            handleUrl(url, pkg)
+            extractUrl(root, pkg)?.let { handleUrl(it, pkg) }
+            startPollIfNeeded() // restart the poll if it had stopped (browser back to front)
         } else {
             handleSurface(root, pkg, event.eventType)
         }
@@ -143,36 +174,47 @@ class UrlBlockAccessibilityService : AccessibilityService() {
         blockAndLeave(surface.name)
     }
 
-    private fun handleUrl(url: String, pkg: String) {
+    private fun handleUrl(read: UrlReadResult, pkg: String) {
         // Adult blocking is a one-way switch the user turns on once; it can never
         // be turned back off from anywhere in the app. The user's own domain list
         // is separate and always applies.
         val pornBlocking = PornBlockStore(this).enabled
-        val result = SafeSearch.evaluate(url)
+        val result = SafeSearch.evaluate(read.text)
 
-        // 1) Blocked search keyword -> one clean overlay, no navigation.
+        // 1) Blocked search keyword -> one clean overlay, no navigation. Safe to
+        // act on regardless of read confidence: showing more often is safe, only
+        // HIDING incorrectly is the risk this function must guard against.
         if (pornBlocking && result is SafeSearch.Result.BlockKeyword) {
             BlockOverlay.show(this)
             return
         }
 
         // 2) Domain/porn blocklist match (subdomains included) -> one clean overlay.
-        val host = hostOf(url)
+        val host = hostOf(read.text)
         val blocked = host != null &&
             ((pornBlocking && AdultBlocklist.isBlocked(host)) || DomainBlocklist(this).isBlocked(host))
-        if (blocked) {
-            // Idempotent: repeated detections of the same block do NOT stack, and
-            // we never hit back / reload / open a new tab (no tab cascade).
-            BlockOverlay.show(this)
-            return
-        }
 
-        // 3) Not blocked -> make sure the block overlay is down.
-        BlockOverlay.hide()
+        // decideOverlay: blocked -> always show (even from a fallback guess);
+        // not blocked -> only a CONFIDENT read (real url-bar node) may clear the
+        // overlay; a fallback guess leaving the overlay untouched is what fixes
+        // the myntra.com case (a collapsed Chrome toolbar makes looksLikeUrl's
+        // fallback return junk text for an unrelated node, which must never be
+        // read as proof the blocked page is gone).
+        when (decideOverlay(read.confident, blocked)) {
+            true -> {
+                // Idempotent: repeated detections of the same block do NOT stack,
+                // and we never hit back / reload / open a new tab (no cascade).
+                BlockOverlay.show(this)
+                return
+            }
+            false -> BlockOverlay.hide()
+            null -> return
+        }
 
         // 4) Safe-search enforcement — apply ONCE per search, rate-limited, and
         //    never re-fire the same target URL (prevents the redirect loop that
-        //    trips Google's "unusual traffic" CAPTCHA).
+        //    trips Google's "unusual traffic" CAPTCHA). Only reached on a
+        //    confident, non-blocked read.
         if (pornBlocking && result is SafeSearch.Result.Redirect) {
             maybeApplySafeSearch(result.url, pkg)
         }
@@ -216,7 +258,16 @@ class UrlBlockAccessibilityService : AccessibilityService() {
 
     // ---- URL extraction ------------------------------------------------------
 
-    private fun extractUrl(root: AccessibilityNodeInfo, pkg: String): String? {
+    /**
+     * A read from [extractUrl]: [confident] is true only when the text came
+     * from the real url-bar node (matched by its known view id). A
+     * [confident] == false read came from [scanForUrl]'s generic fallback and
+     * must never be trusted to clear the overlay or apply safe-search -- see
+     * [handleUrl]/[decideOverlay].
+     */
+    private data class UrlReadResult(val text: String, val confident: Boolean)
+
+    private fun extractUrl(root: AccessibilityNodeInfo, pkg: String): UrlReadResult? {
         for (id in urlBarIdsFor(pkg)) {
             val nodes = try {
                 root.findAccessibilityNodeInfosByViewId(id)
@@ -225,11 +276,15 @@ class UrlBlockAccessibilityService : AccessibilityService() {
             }
             if (!nodes.isNullOrEmpty()) {
                 val text = nodes[0].text?.toString()?.trim()
-                if (!text.isNullOrEmpty()) return text
+                if (!text.isNullOrEmpty()) return UrlReadResult(text, confident = true)
             }
         }
-        // Generic fallback: find a node whose text looks like a URL/host.
-        return scanForUrl(root, 0)
+        // Generic fallback: find a node whose text looks like a URL/host. No
+        // url-bar node found at all (e.g. a collapsed toolbar) falls through
+        // to this; if it finds nothing either, extractUrl returns null and the
+        // caller leaves the current overlay state exactly as it was.
+        val fallback = scanForUrl(root, 0) ?: return null
+        return UrlReadResult(fallback, confident = false)
     }
 
     private fun scanForUrl(node: AccessibilityNodeInfo?, depth: Int): String? {
@@ -241,12 +296,6 @@ class UrlBlockAccessibilityService : AccessibilityService() {
             if (found != null) return found
         }
         return null
-    }
-
-    private fun looksLikeUrl(text: String): Boolean {
-        if (text.length > 2048 || text.contains(' ')) return false
-        if (text.startsWith("http://") || text.startsWith("https://")) return true
-        return text.contains('.')
     }
 
     private fun hostOf(text: String): String? {
@@ -330,5 +379,39 @@ class UrlBlockAccessibilityService : AccessibilityService() {
         private const val OVERLAY_MS = 1_500L
         private const val MAX_DEPTH = 40
         private const val SAFE_SEARCH_COOLDOWN_MS = 20_000L
+        private const val REEVALUATE_MS = 1_000L
+
+        /**
+         * Requires a real hostname shape: one or more "label." segments
+         * followed by an alphabetic TLD of 2+ letters, optionally preceded by
+         * a scheme and followed by a path. Rejects pure numbers and anything
+         * whose last segment isn't alphabetic (e.g. "4.5", "Rs.499", "e.g.",
+         * "v1.2.3") -- see DomainAppResolverTest's sibling, this file's own
+         * test, for the exact accept/reject list this was tightened against.
+         */
+        private val URL_LIKE_REGEX = Regex(
+            "^(https?://)?([a-z0-9-]+\\.)+[a-z]{2,}(/.*)?$",
+            RegexOption.IGNORE_CASE
+        )
+
+        /** Pure, Context-free -- directly unit-tested (see UrlHeuristicsTest). */
+        fun looksLikeUrl(text: String): Boolean {
+            if (text.isEmpty() || text.length > 2048 || text.contains(' ')) return false
+            return URL_LIKE_REGEX.matches(text)
+        }
+
+        /**
+         * The overlay rule at the heart of this fix: a [blocked] match always
+         * shows the overlay, confident or not (showing more is always safe).
+         * Clearing it -- the only unsafe direction -- requires [confident] to
+         * be true. Returns null when the overlay must be left exactly as it
+         * is (a fallback guess found nothing blocked: not proof enough).
+         * Pure -- directly unit-tested (see UrlHeuristicsTest).
+         */
+        fun decideOverlay(confident: Boolean, blocked: Boolean): Boolean? = when {
+            blocked -> true
+            confident -> false
+            else -> null
+        }
     }
 }
