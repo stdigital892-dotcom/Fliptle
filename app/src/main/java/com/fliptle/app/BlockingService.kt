@@ -67,6 +67,7 @@ class BlockingService : Service() {
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         freezeStore = FreezeStore(this)
         blockedStore = BlockedAppsStore(this)
+        BlockedDomainApps.recompute(this) // one-time, not per-poll
         ContextCompat.registerReceiver(
             this, unlockReceiver, IntentFilter(Intent.ACTION_USER_PRESENT),
             ContextCompat.RECEIVER_NOT_EXPORTED
@@ -89,14 +90,20 @@ class BlockingService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    /** Core rule: block only while a freeze is active AND the app is on the list. */
+    /**
+     * Core rule: block while a freeze is active AND the app is on the user's
+     * list, OR unconditionally if the app is one that handles a domain the
+     * user blocked (BlockedDomainApps -- recomputed off this loop, never a
+     * PackageManager call here). The second condition is NOT gated by
+     * freezeActive, matching how the domain list itself always applies: a
+     * website block must not be bypassable by opening the same site's app.
+     */
     private fun enforce() {
         val freezeActive = freezeStore.active
         val fg = ForegroundApp.current(this)
-        val shouldBlock = freezeActive &&
-            fg != null &&
+        val shouldBlock = fg != null &&
             fg != packageName &&
-            blockedStore.get().contains(fg)
+            ((freezeActive && blockedStore.get().contains(fg)) || BlockedDomainApps.current().contains(fg))
 
         if (shouldBlock) showOverlay() else hideOverlay()
 

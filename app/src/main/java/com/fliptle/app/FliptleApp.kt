@@ -19,6 +19,7 @@ class FliptleApp : Application() {
         FreezeMigration.run(this)
         AdultBlocklist.ensureLoaded(this)
         KeywordBlocklist.ensureLoaded(this)
+        BlockedDomainApps.recompute(this)
         BlocklistUpdateWorker.schedule(this)
         HeartbeatWorker.schedule(this)
         EntitlementWorker.schedule(this)

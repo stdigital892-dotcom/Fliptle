@@ -12,7 +12,8 @@ import android.content.Context
  */
 class DomainBlocklist(context: Context) {
 
-    private val prefs = context.applicationContext
+    private val appContext = context.applicationContext
+    private val prefs = appContext
         .getSharedPreferences("domain_blocklist", Context.MODE_PRIVATE)
 
     /**
@@ -33,17 +34,24 @@ class DomainBlocklist(context: Context) {
         val domain = normalize(input)
         if (domain.isEmpty()) return
         val set = userDomains().toMutableSet()
-        if (set.add(domain)) prefs.edit().putStringSet(KEY_DOMAINS, set).apply()
+        if (set.add(domain)) {
+            prefs.edit().putStringSet(KEY_DOMAINS, set).apply()
+            BlockedDomainApps.recompute(appContext)
+        }
     }
 
     fun removeUser(domain: String) {
         val set = userDomains().toMutableSet()
-        if (set.remove(domain)) prefs.edit().putStringSet(KEY_DOMAINS, set).apply()
+        if (set.remove(domain)) {
+            prefs.edit().putStringSet(KEY_DOMAINS, set).apply()
+            BlockedDomainApps.recompute(appContext)
+        }
     }
 
     /** Replace the user-added set (used when a commitment starts from the draft). */
     fun setUserDomains(domains: Set<String>) {
         prefs.edit().putStringSet(KEY_DOMAINS, HashSet(domains)).apply()
+        BlockedDomainApps.recompute(appContext)
     }
 
     /** Merge in domains from a cloud backup (union — never drops existing blocks). */
@@ -54,7 +62,10 @@ class DomainBlocklist(context: Context) {
             val n = normalize(d)
             if (n.isNotEmpty() && set.add(n)) changed = true
         }
-        if (changed) prefs.edit().putStringSet(KEY_DOMAINS, set).apply()
+        if (changed) {
+            prefs.edit().putStringSet(KEY_DOMAINS, set).apply()
+            BlockedDomainApps.recompute(appContext)
+        }
     }
 
     fun isBlocked(host: String): Boolean {

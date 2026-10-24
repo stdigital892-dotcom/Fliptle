@@ -55,6 +55,7 @@ class UrlBlockAccessibilityService : AccessibilityService() {
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         AdultBlocklist.ensureLoaded(this)
         KeywordBlocklist.ensureLoaded(this)
+        com.fliptle.app.BlockedDomainApps.recompute(this)
         narrowScopeToMonitoredApps()
     }
 
