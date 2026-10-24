@@ -38,10 +38,16 @@ object BrowserDetector {
         "com.cloudmosa.puffinFree",        // Puffin
         "com.alohamobile.browser",         // Aloha
         "com.ecosia.ecosiaapp",            // Ecosia
-        "mark.via.gp"                      // Via
-        // Skipped: Mi Browser and Oppo/Heytap Browser -- their package names
-        // have changed across regions/rebrands and the current one isn't
-        // certain enough to add here without risking a wrong entry.
+        "mark.via.gp",                     // Via
+        // Candidate package names across Mi/Oppo/Realme rebrands and
+        // regions; harmless if a name is wrong or unused on a given device.
+        "com.mi.globalbrowser",            // Mi Browser (global)
+        "com.android.browser",             // Mi Browser (MIUI, AOSP-derived package)
+        "com.miui.browser",                // Mi Browser (alternate MIUI package)
+        "com.heytap.browser",              // Oppo/Heytap Browser (current)
+        "com.oppo.browser",                // Oppo Browser (older)
+        "com.coloros.browser",             // Oppo ColorOS browser
+        "com.realme.browser"               // Realme Browser
     )
 
     fun isExempt(pkg: String): Boolean = pkg == CHROME
