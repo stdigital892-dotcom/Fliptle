@@ -22,6 +22,7 @@ class BlocklistStatusActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_blocklist_status)
+        EdgeToEdge.applyInsets(this)
         countText = findViewById(R.id.blocklistCountText)
         updateButton = findViewById(R.id.updateNowButton)
 

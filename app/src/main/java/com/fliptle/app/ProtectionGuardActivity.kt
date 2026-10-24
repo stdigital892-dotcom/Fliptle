@@ -40,6 +40,7 @@ class ProtectionGuardActivity : AppCompatActivity() {
         if (!PaywallGate.gate(this)) return
         setContentView(R.layout.activity_protection_guard)
 
+        EdgeToEdge.applyInsets(this)
         findViewById<Button>(R.id.enableAccessibilityButton).setOnClickListener {
             // Show the same disclosure onboarding shows before this permission
             // is ever requested. Settings only opens from "I agree, continue";

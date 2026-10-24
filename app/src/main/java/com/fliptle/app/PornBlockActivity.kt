@@ -27,6 +27,7 @@ class PornBlockActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_porn_block)
+        EdgeToEdge.applyInsets(this)
         store = PornBlockStore(this)
 
         statusText = findViewById(R.id.pornStatusText)

@@ -34,6 +34,7 @@ class UninstallInfoActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_uninstall_info)
 
+        EdgeToEdge.applyInsets(this)
         scroll = findViewById(R.id.uninstallInfoScroll)
         hint = findViewById(R.id.scrollHintText)
         button = findViewById(R.id.gotItButton)

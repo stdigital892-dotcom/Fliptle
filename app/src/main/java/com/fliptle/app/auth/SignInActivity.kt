@@ -127,6 +127,7 @@ class SignInActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sign_in)
 
+        com.fliptle.app.EdgeToEdge.applyInsets(this)
         titleText = findViewById(R.id.authTitle)
         statusText = findViewById(R.id.authStatusText)
         signInControls = findViewById(R.id.signInControls)

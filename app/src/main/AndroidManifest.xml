@@ -12,9 +12,6 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <uses-permission
-        android:name="android.permission.QUERY_ALL_PACKAGES"
-        tools:ignore="QueryAllPackagesPermission" />
 
     <!-- No ad/attribution use for this app: remove the AD_ID permission that
          transitive deps (e.g. Firebase Analytics, Play services) may merge
@@ -23,10 +20,15 @@
         android:name="com.google.android.gms.permission.AD_ID"
         tools:node="remove" />
 
-    <!-- Package visibility for the domain -> app resolver (DomainAppResolver)
-         on Android 11+. QUERY_ALL_PACKAGES above already grants this; this
-         block documents the actual intent used and is a no-op fallback if
-         that permission is ever removed. -->
+    <!-- Package visibility (Android 11+), now the ONLY source of it since
+         QUERY_ALL_PACKAGES was removed (Play restricts that permission).
+         VIEW/BROWSABLE covers the domain -> app resolver (DomainAppResolver)
+         and BrowserDetector's probe intents; MAIN/LAUNCHER covers every
+         installed-app listing (FreezeWizardActivity's app picker,
+         BrowserDetector.installedBrowsers' queryIntentActivities path, and
+         any getApplicationInfo/getPackageInfo/getApplicationLabel call for a
+         specific package name, which <queries> does NOT gate at all: those
+         remain visible regardless. -->
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
@@ -37,6 +39,10 @@
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="http" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
         </intent>
     </queries>
 

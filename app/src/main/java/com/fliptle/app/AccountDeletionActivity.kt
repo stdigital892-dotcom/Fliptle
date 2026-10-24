@@ -92,6 +92,7 @@ class AccountDeletionActivity : AppCompatActivity() {
             return
         }
         setContentView(R.layout.activity_account_deletion)
+        EdgeToEdge.applyInsets(this)
         store = DeletionGateStore(this, uid)
         if (!store.active) store.start()
 

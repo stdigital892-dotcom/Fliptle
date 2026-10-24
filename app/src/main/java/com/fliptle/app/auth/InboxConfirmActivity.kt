@@ -54,6 +54,7 @@ class InboxConfirmActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_inbox_confirm)
 
+        com.fliptle.app.EdgeToEdge.applyInsets(this)
         email = intent.getStringExtra(EXTRA_EMAIL) ?: ""
 
         // Mark shown immediately so a back-stack edge-case never re-shows it.

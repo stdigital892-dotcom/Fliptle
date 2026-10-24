@@ -45,6 +45,7 @@ class FreezeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         if (!Permissions.gate(this)) return
         setContentView(R.layout.activity_freeze)
+        EdgeToEdge.applyInsets(this)
         store = FreezeStore(this)
 
         statusText = findViewById(R.id.cycleStatusText)

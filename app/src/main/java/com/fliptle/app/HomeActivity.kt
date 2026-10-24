@@ -58,6 +58,7 @@ class HomeActivity : AppCompatActivity() {
             return
         }
         setContentView(R.layout.activity_home)
+        EdgeToEdge.applyInsets(this)
         freezeStore = FreezeStore(this)
         pornBlock = PornBlockStore(this)
 

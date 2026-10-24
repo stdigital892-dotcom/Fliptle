@@ -64,6 +64,7 @@ class PartnerActivity : AppCompatActivity() {
         if (FirebaseAuth.getInstance().currentUser == null) { finish(); return }
         setContentView(R.layout.activity_partner)
 
+        EdgeToEdge.applyInsets(this)
         statusText = findViewById(R.id.partnerStatusText)
         primaryButton = findViewById(R.id.partnerPrimaryButton)
         secondaryButton = findViewById(R.id.partnerSecondaryButton)

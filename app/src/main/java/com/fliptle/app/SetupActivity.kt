@@ -26,6 +26,7 @@ class SetupActivity : AppCompatActivity() {
         if (!Permissions.gate(this)) return
         setContentView(R.layout.activity_setup)
 
+        EdgeToEdge.applyInsets(this)
         open(R.id.scheduleButton, FreezeActivity::class.java)
         open(R.id.partnerButton, PartnerActivity::class.java)
         open(R.id.uninstallButton, UninstallRequestActivity::class.java)

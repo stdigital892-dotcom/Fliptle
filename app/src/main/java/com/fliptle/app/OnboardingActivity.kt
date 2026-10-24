@@ -50,6 +50,7 @@ class OnboardingActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_onboarding)
+        EdgeToEdge.applyInsets(this)
         root = findViewById(R.id.onboardingRoot)
         progressSection = findViewById(R.id.progressSection)
         progressText = findViewById(R.id.progressText)

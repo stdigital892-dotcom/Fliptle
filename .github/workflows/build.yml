@@ -25,10 +25,11 @@ jobs:
         with:
           # The action's default package list includes the obsolete "tools"
           # package, which Google removed from the SDK repository. Requesting it
-          # makes sdkmanager fail ("Failed to find package 'tools'"). Install only
-          # platform-tools here; Gradle auto-downloads the platform/build-tools it
-          # needs (licenses are accepted by this action).
-          packages: 'platform-tools'
+          # makes sdkmanager fail ("Failed to find package 'tools'"). platforms;android-36
+          # is installed explicitly (compileSdk 36) rather than relying on
+          # Gradle's auto-download, since that path is more failure-prone in CI;
+          # Gradle still auto-downloads build-tools (licenses accepted by this action).
+          packages: 'platform-tools platforms;android-36'
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew

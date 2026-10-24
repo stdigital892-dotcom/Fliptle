@@ -75,6 +75,7 @@ class UninstallRequestActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_uninstall_request)
+        EdgeToEdge.applyInsets(this)
         store = UninstallGateStore(this)
         if (!store.active) store.start()
 

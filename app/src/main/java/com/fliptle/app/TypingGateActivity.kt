@@ -36,6 +36,7 @@ class TypingGateActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_typing_gate)
 
+        EdgeToEdge.applyInsets(this)
         inputField = findViewById(R.id.typingField)
         progressText = findViewById(R.id.progressText)
         errorText = findViewById(R.id.errorText)

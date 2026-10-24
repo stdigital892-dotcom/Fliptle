@@ -21,6 +21,7 @@ class BrowserListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_browser_list)
 
+        EdgeToEdge.applyInsets(this)
         listView = findViewById(R.id.browserList)
         emptyText = findViewById(R.id.emptyText)
         findViewById<Button>(R.id.rescanButton).setOnClickListener { refresh() }

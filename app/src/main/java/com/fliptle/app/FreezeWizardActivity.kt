@@ -77,6 +77,7 @@ class FreezeWizardActivity : AppCompatActivity() {
         }
         setContentView(R.layout.activity_freeze_wizard)
 
+        EdgeToEdge.applyInsets(this)
         draft = FreezeDraftStore(this)
         draft.ensureInitialized()
 
