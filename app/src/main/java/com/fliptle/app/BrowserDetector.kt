@@ -33,7 +33,15 @@ object BrowserDetector {
         "com.sec.android.app.sbrowser",    // Samsung Internet
         "com.duckduckgo.mobile.android",   // DuckDuckGo
         "com.vivaldi.browser",             // Vivaldi
-        "com.kiwibrowser.browser"          // Kiwi
+        "com.kiwibrowser.browser",         // Kiwi
+        "com.vivo.browser",                // Vivo Browser
+        "com.cloudmosa.puffinFree",        // Puffin
+        "com.alohamobile.browser",         // Aloha
+        "com.ecosia.ecosiaapp",            // Ecosia
+        "mark.via.gp"                      // Via
+        // Skipped: Mi Browser and Oppo/Heytap Browser -- their package names
+        // have changed across regions/rebrands and the current one isn't
+        // certain enough to add here without risking a wrong entry.
     )
 
     fun isExempt(pkg: String): Boolean = pkg == CHROME

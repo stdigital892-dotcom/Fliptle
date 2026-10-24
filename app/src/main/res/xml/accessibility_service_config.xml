@@ -18,5 +18,5 @@
     android:accessibilityFlags="flagReportViewIds"
     android:canRetrieveWindowContent="true"
     android:notificationTimeout="300"
-    android:packageNames="com.android.chrome,org.mozilla.firefox,com.brave.browser,com.opera.browser,com.opera.mini.native,com.microsoft.emmx,com.UCMobile.intl,com.sec.android.app.sbrowser,com.duckduckgo.mobile.android,com.vivaldi.browser,com.kiwibrowser.browser,com.instagram.android,com.google.android.youtube"
+    android:packageNames="com.android.chrome,org.mozilla.firefox,com.brave.browser,com.opera.browser,com.opera.mini.native,com.microsoft.emmx,com.UCMobile.intl,com.sec.android.app.sbrowser,com.duckduckgo.mobile.android,com.vivaldi.browser,com.kiwibrowser.browser,com.vivo.browser,com.cloudmosa.puffinFree,com.alohamobile.browser,com.ecosia.ecosiaapp,mark.via.gp,com.instagram.android,com.google.android.youtube"
     android:description="@string/a11y_service_description" />
