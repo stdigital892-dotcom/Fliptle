@@ -462,6 +462,33 @@ exports.getSubscription = onCall(
 );
 
 // ============================================================================
+// getTrialStatus — lets offer.html hide the Free Trial card for an email that
+// has already used its trial (or ever paid). Display only: the server already
+// refuses a second trial in getEntitlement, so a tampered page gains nothing.
+// Reveals one boolean about an email, and nothing else.
+// ============================================================================
+exports.getTrialStatus = onCall(
+  {
+    region: RAZORPAY_REGION,
+    cors: true,
+  },
+  async (request) => {
+    const email = String((request.data || {}).email || "").trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) {
+      throw new HttpsError("invalid-argument", "A valid email is required.");
+    }
+    const [planSnap, subSnap] = await Promise.all([
+      admin.firestore().doc("planSelections/" + email).get(),
+      admin.firestore().doc("subscriptions/" + email).get(),
+    ]);
+    const plan = planSnap.exists ? planSnap.data() || {} : null;
+    const trialUsed = !!(plan && (plan.selectedPlan === "trial" || plan.trialStartedAt));
+    const everPaid = subSnap.exists;
+    return { trialUsed: trialUsed || everPaid };
+  }
+);
+
+// ============================================================================
 // Account deletion, with a 72-hour delay.
 //
 //   requestAccountDeletion  — schedules it (always a fresh 72 hours; writes
