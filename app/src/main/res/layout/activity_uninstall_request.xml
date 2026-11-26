@@ -148,6 +148,26 @@
                 android:layout_marginTop="8dp"
                 android:textColor="@color/notice_text"
                 android:textSize="14sp" />
+
+            <!-- Day 5 only: shown once typing is complete, instead of
+                 auto-finishing, so the server write can be awaited. -->
+            <Button
+                android:id="@+id/finishDayButton"
+                style="@style/Widget.Fliptle.Button.Primary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/uninstall_finish_final_day"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/finishDayErrorText"
+                style="@style/Text.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="@color/notice_text"
+                android:textSize="14sp" />
         </LinearLayout>
 
         <!-- Developer-only switches (hidden unless DevMode is unlocked). -->

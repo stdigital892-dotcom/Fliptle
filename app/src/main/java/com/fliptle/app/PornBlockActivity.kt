@@ -55,6 +55,9 @@ class PornBlockActivity : AppCompatActivity() {
             .setNegativeButton(R.string.porn_confirm_cancel, null)
             .setPositiveButton(R.string.porn_confirm_ok) { _, _ ->
                 store.enable()
+                // Turning adult-content blocking on is a new commitment too:
+                // revoke a prior exit approval. No-op if never approved.
+                ExitStateReset.resetIfNeeded(this, ExitStateReset.Trigger.NEW_COMMITMENT)
                 CloudState.backup(this) // preserve the streak across reinstall/sign-out
                 render()
             }

@@ -15,6 +15,7 @@ class BootReceiver : BroadcastReceiver() {
             // hasn't been opened yet.
             if (EntitlementStore(context).state == EntitlementStore.State.DENIED) return
             BlockingService.start(context)
+            com.fliptle.app.auth.Heartbeat.beat(context)
         }
     }
 }

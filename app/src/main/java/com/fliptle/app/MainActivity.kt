@@ -61,7 +61,14 @@ class MainActivity : AppCompatActivity() {
             !AuthGate.signedIn(this) && !onboarded -> OnboardingActivity::class.java
             AuthGate.required(this) -> com.fliptle.app.auth.SignInActivity::class.java
             !PaywallGate.open(this) -> {
-                routeToInboxConfirm()
+                // A lapsed user (had a plan that ran out) sees the plan-expired
+                // screen instead; a new user (never had one) still goes to
+                // InboxConfirmActivity, as before.
+                if (entitlement.state == EntitlementStore.State.DENIED && entitlement.reason == "expired") {
+                    routeToPlanExpired()
+                } else {
+                    routeToInboxConfirm()
+                }
                 return
             }
             !onboarded -> OnboardingActivity::class.java
@@ -78,6 +85,15 @@ class MainActivity : AppCompatActivity() {
         startActivity(
             Intent(this, com.fliptle.app.auth.InboxConfirmActivity::class.java)
                 .putExtra(com.fliptle.app.auth.InboxConfirmActivity.EXTRA_EMAIL, email)
+        )
+        finish()
+    }
+
+    private fun routeToPlanExpired() {
+        val email = FirebaseAuth.getInstance().currentUser?.email ?: ""
+        startActivity(
+            Intent(this, PlanExpiredActivity::class.java)
+                .putExtra(PlanExpiredActivity.EXTRA_EMAIL, email)
         )
         finish()
     }

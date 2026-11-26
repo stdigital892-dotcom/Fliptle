@@ -51,10 +51,18 @@ class UninstallRequestActivity : AppCompatActivity() {
     private lateinit var typingProgressText: TextView
     private lateinit var typingField: NoPasteEditText
     private lateinit var typingErrorText: TextView
+    private lateinit var finishDayButton: Button
+    private lateinit var finishDayErrorText: TextView
 
     private var phase = Phase.NONE
     private var questions: List<MathQuestion> = emptyList()
     private var qIndex = 0
+
+    // Day 5 only: typing is done but completion now waits on an awaited
+    // server write (see UninstallLog.logApprovedAwait / FinalDayGate).
+    private var finalDayPendingTap = false
+    private var finalDayInFlight = false
+    private var finalDayError: String? = null
 
     private val expectedSeq: String = buildString { for (i in 1..50) append(i) }
     private val typedSeq = StringBuilder()
@@ -98,6 +106,9 @@ class UninstallRequestActivity : AppCompatActivity() {
         typingField = findViewById(R.id.typingField)
         typingErrorText = findViewById(R.id.typingErrorText)
         typingField.addTextChangedListener(typingWatcher)
+        finishDayButton = findViewById(R.id.finishDayButton)
+        finishDayErrorText = findViewById(R.id.finishDayErrorText)
+        finishDayButton.setOnClickListener { attemptFinalDayFinish() }
 
         // Short-day / fast-heartbeat testing switches are developer tools: hidden
         // unless DevMode is unlocked, and absent entirely from release builds.
@@ -211,24 +222,73 @@ class UninstallRequestActivity : AppCompatActivity() {
 
     private fun finishDay() {
         phase = Phase.NONE
-        val done = store.completeDay()
-        // Each day's completion is logged to Firestore keyed to email/UID.
-        UninstallLog.logDayComplete(this, done, UninstallGateStore.DAYS_REQUIRED)
-        if (done >= UninstallGateStore.DAYS_REQUIRED) {
-            UninstallLog.logApproved(this)
+        val isFinalDay = store.daysDone + 1 >= UninstallGateStore.DAYS_REQUIRED
+        if (!isFinalDay) {
+            val done = store.completeDay()
+            // Each day's completion is logged to Firestore keyed to email/UID.
+            UninstallLog.logDayComplete(this, done, UninstallGateStore.DAYS_REQUIRED)
+            CloudState.backup(this)
+            Toast.makeText(this, getString(R.string.math_day_done, done), Toast.LENGTH_LONG).show()
+            render()
+            return
         }
-        // E1: back up the new day count (and approved, once reached) so a device
-        // wipe doesn't silently reset this progress to day 0.
-        CloudState.backup(this)
-        Toast.makeText(this, getString(R.string.math_day_done, done), Toast.LENGTH_LONG).show()
+        // Day 5: typing is done, but completion now waits on a tap of Finish
+        // (and the server write it awaits) -- see attemptFinalDayFinish().
+        finalDayPendingTap = true
+        finalDayError = null
         render()
+    }
+
+    private fun attemptFinalDayFinish() {
+        if (!Connectivity.isOnline(this)) { render(); return }
+        finalDayInFlight = true
+        finalDayError = null
+        render()
+        UninstallLog.logApprovedAwait(this) { succeeded ->
+            runOnUiThread {
+                finalDayInFlight = false
+                if (FinalDayGate.mayApprove(succeeded)) {
+                    val done = store.recordFinalDayLocally()
+                    store.markApproved()
+                    UninstallLog.logDayComplete(this, done, UninstallGateStore.DAYS_REQUIRED)
+                    // E1: back up the new day count and approved flag so a
+                    // device wipe doesn't silently reset this progress.
+                    CloudState.backup(this)
+                    finalDayPendingTap = false
+                    Toast.makeText(this, getString(R.string.math_day_done, done), Toast.LENGTH_LONG).show()
+                } else {
+                    finalDayError = getString(R.string.uninstall_server_unreachable)
+                }
+                render()
+            }
+        }
     }
 
     // ---- Rendering ----
 
     private fun render() {
+        if (finalDayPendingTap) {
+            mathSection.visibility = View.GONE
+            typingSection.visibility = View.VISIBLE
+            finishDayButton.visibility = View.VISIBLE
+            val online = Connectivity.isOnline(this)
+            finishDayButton.isEnabled = online && !finalDayInFlight
+            finishDayButton.text = if (finalDayInFlight) {
+                getString(R.string.uninstall_finishing)
+            } else {
+                getString(R.string.uninstall_finish_final_day)
+            }
+            finishDayErrorText.text = when {
+                finalDayError != null -> finalDayError
+                !online -> getString(R.string.uninstall_needs_internet)
+                else -> ""
+            }
+            return
+        }
+
         mathSection.visibility = if (phase == Phase.MATH) View.VISIBLE else View.GONE
         typingSection.visibility = if (phase == Phase.TYPING) View.VISIBLE else View.GONE
+        finishDayButton.visibility = View.GONE
 
         if (phase == Phase.MATH) {
             questionText.text = questions[qIndex].text

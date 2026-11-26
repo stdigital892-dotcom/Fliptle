@@ -368,6 +368,8 @@ class SignInActivity : AppCompatActivity() {
         // Re-sync this account's progress from the cloud (restores after a reinstall
         // or a previous sign-out; a no-op for a brand-new account).
         CloudState.restore(this) {}
+        // Register the FCM token for the silent heartbeat_ping push.
+        FcmTokenRegistrar.registerForCurrentUser(this)
         // Record this app sign-in (triggers the app's own welcome/setup email via
         // Cloud Function). Separate from the website's `waitlist` collection —
         // app users already have the app and are choosing a plan, not waiting
@@ -465,11 +467,14 @@ class SignInActivity : AppCompatActivity() {
         }
     }
 
-    /** While sign-out is locked, the Sign out button is replaced by the explanation. */
+    /**
+     * The Sign out button always stays visible and tappable; while locked,
+     * tapping it opens the SignOutLockSheet (via SignOut.confirm) instead of
+     * signing out. Never hides the button or shows a dead end.
+     */
     private fun applySignOutLock() {
-        val locked = com.fliptle.app.SignOutGuard.isLocked(this)
-        findViewById<View>(R.id.signOutButton).visibility = if (locked) View.GONE else View.VISIBLE
-        findViewById<View>(R.id.signOutLockedText).visibility = if (locked) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.signOutButton).visibility = View.VISIBLE
+        findViewById<View>(R.id.signOutLockedText).visibility = View.GONE
     }
 
     /** Sign out (with the required warning) via the shared flow. */

@@ -33,11 +33,7 @@ object SignOut {
      */
     fun confirm(activity: Activity, enforceLock: Boolean = true) {
         if (enforceLock && SignOutGuard.isLocked(activity)) {
-            AlertDialog.Builder(activity)
-                .setTitle(R.string.sign_out_locked_title)
-                .setMessage(R.string.sign_out_locked)
-                .setPositiveButton(R.string.sign_out_locked_ok, null)
-                .show()
+            SignOutLockSheet.show(activity)
             return
         }
         AlertDialog.Builder(activity)

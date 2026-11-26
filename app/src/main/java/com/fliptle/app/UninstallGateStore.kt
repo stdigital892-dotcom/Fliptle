@@ -109,6 +109,28 @@ class UninstallGateStore(context: Context) {
         return done
     }
 
+    /**
+     * Day 5 only: record the day locally WITHOUT marking approved yet. The
+     * caller must await the server write (UninstallLog.logApprovedAwait) and
+     * call [markApproved] only once it succeeds -- see [markApproved].
+     */
+    fun recordFinalDayLocally(): Int {
+        prefs.edit()
+            .putInt(KEY_DAYS, DAYS_REQUIRED)
+            .putLong(KEY_LAST_COMPLETE, System.currentTimeMillis())
+            .apply()
+        return DAYS_REQUIRED
+    }
+
+    /**
+     * Day 5 only, after the server confirms the write: the only place
+     * [approved] is set true from a completed (not restored/latched) exit
+     * process. Never call this before the server write has succeeded.
+     */
+    fun markApproved() {
+        prefs.edit().putBoolean(KEY_APPROVED, true).apply()
+    }
+
     /** Re-anchor the monotonic unlock from trusted time after a reboot. */
     fun applyTrustedTime(trustedNow: Long) {
         if (!active || daysDone == 0 || daysDone >= DAYS_REQUIRED) return

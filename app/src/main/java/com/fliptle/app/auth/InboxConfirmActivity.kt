@@ -21,8 +21,10 @@ import com.google.firebase.firestore.SetOptions
 /**
  * Post-sign-in screen and renewal screen in one. Shown when [MainActivity]
  * cannot route the user to Home — either because they've never seen this
- * screen (fresh sign-in) or because their entitlement is not ENTITLED
- * (never was, or expired).
+ * screen (fresh sign-in) or because their entitlement is not ENTITLED and
+ * they never had a plan (reason "none"). A LAPSED plan (reason "expired")
+ * goes to [com.fliptle.app.PlanExpiredActivity] instead -- see MainActivity's
+ * routing chain.
  *
  * "Take me to my email" is always visible. "I've confirmed — continue" is
  * hidden until [EntitlementGate] returns entitled=true. This screen polls

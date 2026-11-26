@@ -77,14 +77,15 @@ object EntitlementGate {
                 }
                 val entitled = data["entitled"] as? Boolean ?: false
                 val reason = data["reason"] as? String ?: if (entitled) "paid" else "none"
-                val expiresAtAny = data["expiresAt"]
-                val expiresAtMs: Long? = when (expiresAtAny) {
-                    is Number -> expiresAtAny.toLong()
-                    else -> null
-                }
+                // planName/expiredAt are additive and may be absent on older
+                // server versions or for a reason that doesn't set them --
+                // handled as plain nulls, never a failure.
+                val planName = data["planName"] as? String
+                val expiresAtMs = (data["expiresAt"] as? Number)?.toLong()
+                val expiredAtMs = (data["expiredAt"] as? Number)?.toLong()
                 val nowMs = System.currentTimeMillis()
                 if (entitled) {
-                    store.recordEntitled(reason, expiresAtMs, nowMs)
+                    store.recordEntitled(reason, expiresAtMs, nowMs, planName)
                     onResult(Result.Entitled(reason, expiresAtMs))
                 } else if (PendingDeletion.isDueFor(context, uidAtCall, nowMs)) {
                     // This account's scheduled deletion has come due, so "not
@@ -98,7 +99,7 @@ object EntitlementGate {
                     store.clear()
                     onResult(Result.TransientError("Account deletion is due"))
                 } else {
-                    store.recordDenied(reason, nowMs)
+                    store.recordDenied(reason, nowMs, planName, expiredAtMs)
                     onResult(Result.Denied(reason))
                 }
             }

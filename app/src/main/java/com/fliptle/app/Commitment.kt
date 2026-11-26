@@ -47,6 +47,10 @@ object Commitment {
         BlockingService.start(ctx)
         if (wasActive) freeze.restartCycle() else freeze.startCycle()
         draft.reset()
+        // A new/restarted freeze is a new commitment: revoke a prior exit
+        // approval so staying in doesn't leave sign-out unlocked. No-op if
+        // the exit process was never approved.
+        ExitStateReset.resetIfNeeded(ctx, ExitStateReset.Trigger.NEW_COMMITMENT)
         CloudState.backup(ctx)
         return if (wasActive) Result.RESTARTED else Result.STARTED
     }

@@ -39,26 +39,39 @@ class EntitlementStore(context: Context) {
     val expiresAt: Long?
         get() = prefs.getLong(KEY_EXPIRES_AT, -1L).takeIf { it > 0L }
 
+    /** The plan's display name, if the server returned one (e.g. "Monthly"). */
+    val planName: String?
+        get() = prefs.getString(KEY_PLAN_NAME, null)
+
+    /** When a now-DENIED plan actually ended, if the server returned one.
+     *  Distinct from [expiresAt], which is the forward-looking expiry of an
+     *  ACTIVE entitlement. */
+    val expiredAt: Long?
+        get() = prefs.getLong(KEY_EXPIRED_AT, -1L).takeIf { it > 0L }
+
     /** epoch millis of the last successful server response. */
     val lastCheckedAt: Long
         get() = prefs.getLong(KEY_CHECKED_AT, 0L)
 
-    fun recordEntitled(reason: String, expiresAtMs: Long?, nowMs: Long) {
-        prefs.edit()
+    fun recordEntitled(reason: String, expiresAtMs: Long?, nowMs: Long, planName: String? = null) {
+        val editor = prefs.edit()
             .putString(KEY_STATE, "ENTITLED")
             .putString(KEY_REASON, reason)
             .putLong(KEY_EXPIRES_AT, expiresAtMs ?: -1L)
             .putLong(KEY_CHECKED_AT, nowMs)
-            .apply()
+        if (planName != null) editor.putString(KEY_PLAN_NAME, planName) else editor.remove(KEY_PLAN_NAME)
+        editor.apply()
     }
 
-    fun recordDenied(reason: String, nowMs: Long) {
-        prefs.edit()
+    fun recordDenied(reason: String, nowMs: Long, planName: String? = null, expiredAtMs: Long? = null) {
+        val editor = prefs.edit()
             .putString(KEY_STATE, "DENIED")
             .putString(KEY_REASON, reason)
             .putLong(KEY_EXPIRES_AT, -1L)
             .putLong(KEY_CHECKED_AT, nowMs)
-            .apply()
+        if (planName != null) editor.putString(KEY_PLAN_NAME, planName) else editor.remove(KEY_PLAN_NAME)
+        if (expiredAtMs != null) editor.putLong(KEY_EXPIRED_AT, expiredAtMs) else editor.remove(KEY_EXPIRED_AT)
+        editor.apply()
     }
 
     /** Clear on sign-out so the next signed-in user starts fresh. */
@@ -70,6 +83,8 @@ class EntitlementStore(context: Context) {
         private const val KEY_STATE = "state"
         private const val KEY_REASON = "reason"
         private const val KEY_EXPIRES_AT = "expires_at"
+        private const val KEY_PLAN_NAME = "plan_name"
+        private const val KEY_EXPIRED_AT = "expired_at"
         private const val KEY_CHECKED_AT = "checked_at"
     }
 }

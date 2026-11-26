@@ -12,6 +12,9 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- Connectivity.isOnline() and the "connectivity returns" heartbeat
+         trigger both need to read network state. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- No ad/attribution use for this app: remove the AD_ID permission that
          transitive deps (e.g. Firebase Analytics, Play services) may merge
@@ -134,6 +137,18 @@
         <activity
             android:name=".auth.InboxConfirmActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".PlanExpiredActivity"
+            android:exported="false" />
+
+        <service
+            android:name=".HeartbeatPingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
         <service
             android:name=".BlockingService"

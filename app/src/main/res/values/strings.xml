@@ -176,6 +176,10 @@
     <string name="math_enter_number">Enter a number.</string>
     <string name="math_wrong">Not quite — try again.</string>
     <string name="math_day_done">Day %1$d complete!</string>
+    <string name="uninstall_finish_final_day">Finish</string>
+    <string name="uninstall_finishing">Finishing…</string>
+    <string name="uninstall_needs_internet">Needs internet to finish.</string>
+    <string name="uninstall_server_unreachable">Didn\'t reach the server. Try again.</string>
 
     <!-- Onboarding -->
     <string name="ob_watch_tutorial">▶  Watch tutorial</string>
@@ -318,6 +322,22 @@
     <string name="sign_out_locked_ok">OK</string>
     <string name="sign_out_confirm">Sign out</string>
     <string name="sign_out_cancel">Cancel</string>
+    <string name="sign_out_locked_sheet_title">Finish one of these first</string>
+    <string name="sign_out_locked_sheet_body">Sign-out and switching accounts stay locked until the exit process is done or an account deletion is scheduled.</string>
+    <string name="sign_out_locked_exit_option">Complete exit process (5 days)</string>
+    <string name="sign_out_locked_delete_option">Request account deletion (72 hours)</string>
+
+    <!-- Plan expired (lapsed entitlement) -->
+    <string name="plan_expired_headline">Your %1$s ended on %2$s</string>
+    <string name="plan_expired_plan_fallback">plan</string>
+    <string name="plan_expired_date_fallback">a recent date</string>
+    <string name="plan_expired_body">We\'ve emailed you a renewal link. Open your inbox to continue.</string>
+    <string name="plan_expired_resend">Email me the link again</string>
+    <string name="plan_expired_sent">Sent — check your inbox.</string>
+    <string name="plan_expired_resend_failed">Couldn\'t send it just now. Try again.</string>
+    <string name="plan_expired_website_link">Didn\'t get it? Continue on fliptle.com</string>
+    <string name="plan_expired_exit_link">Start the exit process instead</string>
+    <string name="plan_expired_delete_link">Request account deletion</string>
     <!-- Freeze: what it covers -->
     <!-- Uninstall hard reset -->
     <string name="uninstall_reset_toast">A day was missed — progress has reset to day 1.</string>
