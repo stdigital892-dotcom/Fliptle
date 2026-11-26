@@ -1,29 +1,64 @@
 "use strict";
 
 // Partner alert sender. Runs hourly from index.js. Logic lives here so it can be
-// unit-tested with injected fakes (clock, fetch, isOptedOut, logger).
+// unit-tested with injected fakes (clock, fetch, messaging, auth, isOptedOut,
+// logger).
 //
-// What this is: ONE "the app went dark before the user finished the exit
-// process" alert per unexpected-disappearance EVENT. The event id is the
-// installs/{uid}.lastHeartbeatMs value (the last time the phone checked in),
-// so the "same event" is any run that sees the same lastHeartbeatMs. If the
-// user comes back and sends a fresh heartbeat, that is a different event.
+// What this is: an alert for "the app went dark before the user finished the
+// exit process" — but a stale heartbeat alone is only a WEAK signal (the
+// phone could just be off, offline, or Doze-throttled). At the stale
+// threshold (default 72h) we do NOT alert directly. We enter a
+// CORROBORATION phase first:
 //
-// Follow-ups (24h / 72h) are intentionally NOT built here. See
-// FOLLOW-UPS at the bottom.
+//   1. Send a silent, data-only FCM push ({type:"heartbeat_ping"}) to
+//      installs/{uid}.fcmToken. Record silenceStartMs (once, when the
+//      incident starts), lastPingMs, pingCount, lastPingResult.
+//   2. The push itself fails with "registration-token-not-registered" ->
+//      STRONG signal (the app/token is really gone) -> alert, subject to the
+//      cooldown, quiet hours and dedup below.
+//   3. The push is accepted but no new heartbeat lands within
+//      PING_RESPONSE_WINDOW_HOURS (6h) -> alert.
+//   4. The push fails for any other reason (device offline/unreachable) ->
+//      retry every PING_RETRY_HOURS (24h). After MAX_PING_ATTEMPTS (4: the
+//      initial attempt + 3 retries — about 7 days of total silence) ->
+//      alert as a last resort.
+//
+// Any of these RESETS the whole incident (no alert, start over from
+// scratch next time it goes stale): a heartbeat arrives (structurally
+// already handled — see the stale query in runOnce), uninstall_approved
+// becomes true, Firebase Auth shows activity (lastRefreshTime /
+// lastSignInTime) within the stale window, or the install doc itself was
+// written to within the stale window.
+//
+// The event id is installs/{uid}.lastHeartbeatMs (unchanged from before) —
+// so "the same event" is any run that still sees that heartbeat value. A
+// silence INCIDENT is additionally keyed by that same eventId
+// (silenceEventId) so a resolved incident's old ping state is never carried
+// into a later one.
+//
+// Dedup: besides the per-event lastPartnerAlertEventId guard (unchanged) and
+// the COOLDOWN_DAYS_DEFAULT cooldown (unchanged), a corroboration-triggered
+// alert is also deduped by `uid + floor(silenceStartMs / 86400000)` — at
+// most one alert per silence incident.
 
 const partner = require("./partner");
 
 // ---- constants -----------------------------------------------------------
 
-const STALE_HOURS_DEFAULT = 48;
+const STALE_HOURS_DEFAULT = 72;
 const COOLDOWN_DAYS_DEFAULT = 7;
 const MAX_USERS_PER_RUN = 200;
-const MAX_FAILED_ATTEMPTS = 3;
-const RETRY_COUNT = 1; // one retry on top of the first try
+const MAX_FAILED_ATTEMPTS = 3; // WhatsApp send failures for one alert, unchanged
+const RETRY_COUNT = 1; // one retry on top of the first try, unchanged
 const QUIET_START_HOUR_IST = 22; // 22:00 IST
 const QUIET_END_HOUR_IST = 8;    //  8:00 IST
 const WHATSAPP_API_BASE = "https://graph.facebook.com/v21.0";
+
+// Corroboration phase.
+const PING_RETRY_HOURS_DEFAULT = 24;
+const PING_RESPONSE_WINDOW_HOURS_DEFAULT = 6;
+const MAX_PING_ATTEMPTS_DEFAULT = 4; // initial + 3 retries ≈ 7 days of silence
+const FCM_UNREGISTERED_ERROR_CODE = "messaging/registration-token-not-registered";
 
 const INSTALLS_COLLECTION = "installs";
 const ALERT_COLLECTION = "whatsappAlerts"; // shared with whatsapp.js
@@ -37,6 +72,7 @@ const SKIP = Object.freeze({
   PARTNER_INACTIVE: "partner_inactive",
   OPTED_OUT: "opted_out",
   ALREADY_SENT: "already_sent",
+  DEDUPED: "deduped_same_incident",
   COOLDOWN: "cooldown",
   QUIET_HOURS: "quiet_hours",
   TOO_MANY_FAILS: "too_many_failed_attempts",
@@ -44,6 +80,10 @@ const SKIP = Object.freeze({
   NOT_STALE: "not_stale",
   PROTECTION_WAS_NEVER_ACTIVE: "protection_never_active",
   SIGNED_OUT: "signed_out",
+  RECENT_AUTH_ACTIVITY: "recent_auth_activity",
+  RECENT_WRITE: "recent_write",
+  AWAITING_PING_RESPONSE: "awaiting_ping_response",
+  AWAITING_PING_RETRY: "awaiting_ping_retry",
   ALLOWLIST: "allowlist",
 });
 
@@ -135,16 +175,130 @@ function renderParameters({ firstName, note, days, longest, exitStatus, lastHear
   ];
 }
 
+// ---- corroboration (D) -----------------------------------------------------
+
+/** Dedup key for one silence incident: at most one alert per incident. */
+function silenceDedupKey(uid, silenceStartMs) {
+  return uid + "_" + Math.floor(silenceStartMs / 86400000);
+}
+
+/**
+ * Whether Firebase Auth shows real activity for this uid inside windowMs.
+ * Fails OPEN (returns false — "no recent activity found") on any read
+ * error, since the primary signal (a stale heartbeat) already got us here;
+ * we only want this check to SUPPRESS an alert when it can positively prove
+ * recent activity, never to block one by being unable to check.
+ */
+async function hasRecentAuthActivity(deps, uid, nowMs, windowMs) {
+  if (!deps.auth || typeof deps.auth.getUser !== "function") return false;
+  try {
+    const user = await deps.auth.getUser(uid);
+    const meta = (user && user.metadata) || {};
+    const times = [meta.lastRefreshTime, meta.lastSignInTime]
+      .map((t) => (t ? Date.parse(t) : NaN))
+      .filter((ms) => Number.isFinite(ms));
+    if (times.length === 0) return false;
+    return nowMs - Math.max(...times) < windowMs;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Best-effort "was this doc itself written to recently" check using
+ * installs/{uid}.updatedAt, when present. There is no universal write-time
+ * field on every path that touches this doc, so this is opportunistic: it
+ * can confirm recent activity but a missing field never blocks an alert.
+ */
+function hasRecentFirestoreWrite(install, nowMs, windowMs) {
+  const updatedMs = toMillis(install.updatedAt);
+  if (updatedMs == null) return false;
+  return nowMs - updatedMs < windowMs;
+}
+
+/**
+ * One data-only FCM push, {type:"heartbeat_ping"}. Never throws: resolves to
+ * a result string the caller records. "unregistered" is the strong signal
+ * from step 2; anything else failing is a soft "failed" for the retry
+ * schedule. No token at all is treated as a soft failure, not a strong
+ * signal — a legitimate device may simply not have registered one yet.
+ */
+async function sendPing(deps, fcmToken) {
+  if (!fcmToken) return { result: "failed", errorName: "no_token" };
+  try {
+    await deps.messaging.send({
+      token: fcmToken,
+      data: { type: "heartbeat_ping" },
+      android: { priority: "high" },
+    });
+    return { result: "sent" };
+  } catch (e) {
+    const code = e && e.code;
+    if (code === FCM_UNREGISTERED_ERROR_CODE) {
+      return { result: "unregistered", errorName: code };
+    }
+    return { result: "failed", errorName: code || "unknown" };
+  }
+}
+
+/**
+ * Pure decision step for ONE account already known to be stale-and-otherwise-
+ * eligible (see evaluate()). Looks only at its own corroboration state.
+ *
+ * Returns one of:
+ *   { action: "ping", isNewIncident }  — caller must send/resend a ping
+ *   { action: "alert", pingReason }    — corroboration confirmed; alert now
+ *   { action: "wait", reason }         — nothing to do this run
+ */
+function decideCorroboration(install, eventId, nowMs, config) {
+  const sameIncident =
+    install.silenceEventId === eventId && Number.isFinite(Number(install.silenceStartMs));
+
+  if (!sameIncident) {
+    return { action: "ping", isNewIncident: true };
+  }
+
+  const lastPingMs = Number(install.lastPingMs);
+  const pingCount = Number(install.pingCount) || 0;
+  const lastPingResult = install.lastPingResult;
+  const hoursSincePing = Number.isFinite(lastPingMs) ? (nowMs - lastPingMs) / 3600000 : Infinity;
+
+  if (lastPingResult === "unregistered") {
+    // Normally alerted the same run this result is seen; kept as a safety
+    // net in case a run is interrupted between recording and alerting.
+    return { action: "alert", pingReason: "unregistered" };
+  }
+
+  if (lastPingResult === "sent") {
+    if (hoursSincePing >= config.pingResponseWindowHours) {
+      return { action: "alert", pingReason: "no_response" };
+    }
+    return { action: "wait", reason: SKIP.AWAITING_PING_RESPONSE };
+  }
+
+  // "failed" (or an unrecognised/missing result — treat the same way).
+  if (pingCount >= config.maxPingAttempts) {
+    return { action: "alert", pingReason: "ping_exhausted" };
+  }
+  if (hoursSincePing >= config.pingRetryHours) {
+    return { action: "ping", isNewIncident: false };
+  }
+  return { action: "wait", reason: SKIP.AWAITING_PING_RETRY };
+}
+
 // ---- eligibility ---------------------------------------------------------
 
 /**
- * The one place that decides whether a user is eligible, as a pure function of
- * (install, partnerContact, nowMs, isOptedOutFn, config). Returns either
- * { ok: true, event } or { ok: false, reason }.
+ * The one place that decides what happens to ONE user, as a function of
+ * (install, partnerContact, nowMs, config) plus the async reset checks.
+ * Returns one of:
+ *   { ok: false, reason }                 — skip, do nothing
+ *   { ok: "ping", ping: { isNewIncident } } — send/resend a corroboration ping
+ *   { ok: true, event }                   — alert now
  *
- * It fails CLOSED on anything missing: unknown fields never pass, and a user
- * without a cooldown field is treated as not-in-cooldown only when no earlier
- * send is recorded.
+ * It fails CLOSED on anything missing for the pre-existing checks: unknown
+ * fields never pass, and a user without a cooldown field is treated as
+ * not-in-cooldown only when no earlier send is recorded.
  *
  * It does NOT consult the opt-out collection itself — that is an async read
  * done separately, because the sender does it last (right before send) and only
@@ -209,16 +363,43 @@ async function evaluate(deps, uid, install, partnerContact, nowMs, config) {
     return { ok: false, reason: SKIP.ALREADY_SENT };
   }
 
-  // Cooldown: time since the last alert to this user.
+  // Cooldown: time since the last alert to this user, unchanged.
   const lastAlertMs = Number(install.lastPartnerAlertAt);
   if (Number.isFinite(lastAlertMs) && lastAlertMs > 0) {
     const cooldownMs = config.cooldownDays * 24 * 60 * 60 * 1000;
     if (nowMs - lastAlertMs < cooldownMs) return { ok: false, reason: SKIP.COOLDOWN };
   }
 
-  // Too many failed attempts for this exact event -> give up.
+  // Too many failed WhatsApp-send attempts for this exact event -> give up.
   const failed = Number((install.partnerAlertFailuresByEvent || {})[eventId]) || 0;
   if (failed >= MAX_FAILED_ATTEMPTS) return { ok: false, reason: SKIP.TOO_MANY_FAILS };
+
+  // ---- reset checks: real activity anywhere overrides a stale heartbeat ----
+  if (await hasRecentAuthActivity(deps, uid, nowMs, staleMs)) {
+    return { ok: false, reason: SKIP.RECENT_AUTH_ACTIVITY };
+  }
+  if (hasRecentFirestoreWrite(install, nowMs, staleMs)) {
+    return { ok: false, reason: SKIP.RECENT_WRITE };
+  }
+
+  // ---- corroboration phase ----
+  const decision = decideCorroboration(install, eventId, nowMs, config);
+
+  if (decision.action === "wait") {
+    return { ok: false, reason: decision.reason };
+  }
+
+  if (decision.action === "ping") {
+    return { ok: "ping", ping: { isNewIncident: decision.isNewIncident, eventId } };
+  }
+
+  // decision.action === "alert" — one more dedup guard: at most one alert
+  // per silence incident, on top of the per-event ALREADY_SENT above.
+  const silenceStartMs = Number(install.silenceStartMs);
+  const dedupKey = silenceDedupKey(uid, silenceStartMs);
+  if (install.lastPartnerAlertDedupKey === dedupKey) {
+    return { ok: false, reason: SKIP.DEDUPED };
+  }
 
   return {
     ok: true,
@@ -231,6 +412,8 @@ async function evaluate(deps, uid, install, partnerContact, nowMs, config) {
       email: install.email || "",
       pornDays: Number(install.pornDays) || 0,
       failedCount: failed,
+      dedupKey,
+      pingReason: decision.pingReason,
     },
   };
 }
@@ -291,7 +474,32 @@ async function sendWithOneRetry(deps, args, config) {
   return first;
 }
 
-// ---- the per-user step ---------------------------------------------------
+// ---- the per-user steps ---------------------------------------------------
+
+/**
+ * Send (or simulate, in dry run) one corroboration ping and record the new
+ * state on installs/{uid}. Returns the ping result string.
+ */
+async function processPing(deps, uid, install, eventId, isNewIncident, nowMs, config) {
+  const fcmToken = install.fcmToken || null;
+  const result = config.dryRun ? { result: "sent" } : await sendPing(deps, fcmToken);
+
+  const installsRef = deps.db.doc(INSTALLS_COLLECTION + "/" + uid);
+  const update = {
+    lastPingMs: nowMs,
+    lastPingResult: result.result,
+  };
+  if (isNewIncident) {
+    update.silenceEventId = eventId;
+    update.silenceStartMs = nowMs;
+    update.pingCount = 1;
+  } else {
+    update.pingCount = (Number(install.pingCount) || 0) + 1;
+  }
+  await installsRef.set(update, { merge: true });
+
+  return result.result;
+}
 
 /**
  * Everything that happens for ONE eligible user, after the eligibility rules
@@ -354,6 +562,7 @@ async function processUser(deps, uid, event, nowMs, config) {
       {
         lastPartnerAlertAt: nowMs,
         lastPartnerAlertEventId: event.eventId,
+        lastPartnerAlertDedupKey: event.dedupKey || null,
       },
       { merge: true }
     );
@@ -382,7 +591,8 @@ async function processUser(deps, uid, event, nowMs, config) {
 // ---- the run -------------------------------------------------------------
 
 /**
- * One scheduled run. Iterates stale installs, applies every gate, sends.
+ * One scheduled run. Iterates stale installs, applies every gate, pings or
+ * sends.
  *
  * Returns per-run counts only (never PII).
  */
@@ -390,6 +600,7 @@ async function runOnce(deps, nowMs, config) {
   const counts = {
     checked: 0,
     eligible: 0,
+    pinged: 0,
     sent: 0,
     dry_run: 0,
     skipped_opt_out: 0,
@@ -415,6 +626,7 @@ async function runOnce(deps, nowMs, config) {
   for (const doc of snap.docs) {
     counts.checked++;
     const uid = doc.id;
+    const install = doc.data() || {};
     let contact = null;
     try {
       const contactSnap = await deps.db.doc(partner.CONTACTS_COLLECTION + "/" + uid).get();
@@ -425,7 +637,22 @@ async function runOnce(deps, nowMs, config) {
       });
     }
 
-    const verdict = await evaluate(deps, uid, doc.data() || {}, contact, nowMs, config);
+    const verdict = await evaluate(deps, uid, install, contact, nowMs, config);
+
+    if (verdict.ok === "ping") {
+      try {
+        const eventId = String(Number(install.lastHeartbeatMs));
+        await processPing(deps, uid, install, eventId, verdict.ping.isNewIncident, nowMs, config);
+        counts.pinged++;
+      } catch (e) {
+        counts.failed++;
+        deps.logger.error("partner-sender: ping crashed", {
+          uid, code: e && e.code, name: e && e.name,
+        });
+      }
+      continue;
+    }
+
     if (!verdict.ok) {
       counts.skipped++;
       counts.bySkipReason[verdict.reason] = (counts.bySkipReason[verdict.reason] || 0) + 1;
@@ -470,6 +697,10 @@ module.exports = {
   COOLDOWN_DAYS_DEFAULT,
   MAX_USERS_PER_RUN,
   MAX_FAILED_ATTEMPTS,
+  PING_RETRY_HOURS_DEFAULT,
+  PING_RESPONSE_WINDOW_HOURS_DEFAULT,
+  MAX_PING_ATTEMPTS_DEFAULT,
+  FCM_UNREGISTERED_ERROR_CODE,
   QUIET_START_HOUR_IST,
   QUIET_END_HOUR_IST,
   SKIP,
@@ -481,10 +712,16 @@ module.exports = {
   istHour,
   isQuietHour,
   renderParameters,
+  silenceDedupKey,
+  decideCorroboration,
+  hasRecentFirestoreWrite,
   // the moving parts (tested with fakes)
+  hasRecentAuthActivity,
+  sendPing,
   evaluate,
   postToWhatsApp,
   sendWithOneRetry,
+  processPing,
   processUser,
   runOnce,
 };

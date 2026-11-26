@@ -210,7 +210,23 @@ const DEFAULT_CFG = {
   cooldownDays: 7,
   dryRun: false,
   allowedUids: new Set(),
+  pingRetryHours: 24,
+  pingResponseWindowHours: 6,
+  maxPingAttempts: 4,
 };
+
+// Corroboration state for an install that has already exhausted its ping
+// cycle — used by tests whose point is what happens once an alert is
+// actually decided (send/fail/opt-out), not the corroboration phase itself.
+function readyToAlertFields(lastHeartbeatMs) {
+  return {
+    silenceEventId: String(lastHeartbeatMs),
+    silenceStartMs: lastHeartbeatMs,
+    lastPingMs: lastHeartbeatMs + 1 * 60 * 60 * 1000,
+    pingCount: 4,
+    lastPingResult: "failed",
+  };
+}
 const activeContact = (phone = PARTNER_CANONICAL, note = "please check") =>
   ({ partnerPhone: phone, status: "active", note });
 const installBase = {
@@ -227,7 +243,7 @@ test("evaluate: boundary — exactly 48h stale is not yet eligible, 48h01m is", 
   const resPast = await sender.evaluate(e.deps, "u1", atOneMinutePast, activeContact(), NOW, DEFAULT_CFG);
   assert.equal(resEq.ok, false);
   assert.equal(resEq.reason, sender.SKIP.NOT_STALE);
-  assert.equal(resPast.ok, true);
+  assert.equal(resPast.ok, "ping");
 });
 
 test("evaluate: skips when the exit process is marked completed (uninstall_approved)", async () => {
@@ -276,7 +292,7 @@ test("evaluate: cooldown refuses a second alert within COOLDOWN_DAYS days", asyn
   const past = await sender.evaluate(e.deps, "u1",
     { ...base, lastPartnerAlertAt: nineDaysAgo }, activeContact(), NOW, DEFAULT_CFG);
   assert.equal(inCooldown.reason, sender.SKIP.COOLDOWN);
-  assert.equal(past.ok, true);
+  assert.equal(past.ok, "ping");
 });
 
 test("evaluate: too-many-failed-attempts refuses the same event", async () => {
@@ -305,7 +321,7 @@ test("evaluate: signedOutAt older than the heartbeat does not skip (signed back 
   const r = await sender.evaluate(e.deps, "u1",
     { ...installBase, lastHeartbeatMs, signedOutAt: lastHeartbeatMs - 5 * H },
     activeContact(), NOW, DEFAULT_CFG);
-  assert.equal(r.ok, true);
+  assert.equal(r.ok, "ping");
 });
 
 test("evaluate: signedOutAt equal to the heartbeat does not skip", async () => {
@@ -314,7 +330,7 @@ test("evaluate: signedOutAt equal to the heartbeat does not skip", async () => {
   const r = await sender.evaluate(e.deps, "u1",
     { ...installBase, lastHeartbeatMs, signedOutAt: lastHeartbeatMs },
     activeContact(), NOW, DEFAULT_CFG);
-  assert.equal(r.ok, true);
+  assert.equal(r.ok, "ping");
 });
 
 test("evaluate: a missing signedOutAt changes nothing", async () => {
@@ -322,7 +338,7 @@ test("evaluate: a missing signedOutAt changes nothing", async () => {
   const withField = await sender.evaluate(e.deps, "u1",
     { ...installBase, signedOutAt: null }, activeContact(), NOW, DEFAULT_CFG);
   const without = await sender.evaluate(e.deps, "u1", installBase, activeContact(), NOW, DEFAULT_CFG);
-  assert.equal(without.ok, true);
+  assert.equal(without.ok, "ping");
   assert.deepEqual(withField, without);
 });
 
@@ -335,7 +351,7 @@ test("evaluate: signedOutAt as a Firestore Timestamp is read correctly", async (
   const older = await sender.evaluate(e.deps, "u1",
     { ...installBase, lastHeartbeatMs, signedOutAt: ts(lastHeartbeatMs - 1) }, activeContact(), NOW, DEFAULT_CFG);
   assert.equal(newer.reason, sender.SKIP.SIGNED_OUT);
-  assert.equal(older.ok, true);
+  assert.equal(older.ok, "ping");
 });
 
 test("evaluate: compares signedOutAt with lastHeartbeatAt (server time) when present", async () => {
@@ -349,7 +365,7 @@ test("evaluate: compares signedOutAt with lastHeartbeatAt (server time) when pre
     { ...installBase, lastHeartbeatMs, lastHeartbeatAt: at, signedOutAt: at - 1000 },
     activeContact(), NOW, DEFAULT_CFG);
   assert.deepEqual(newer, { ok: false, reason: sender.SKIP.SIGNED_OUT });
-  assert.equal(older.ok, true);
+  assert.equal(older.ok, "ping");
 });
 
 test("evaluate: a phone clock BEHIND the server does not cause a false skip", async () => {
@@ -362,11 +378,11 @@ test("evaluate: a phone clock BEHIND the server does not cause a false skip", as
   const r = await sender.evaluate(e.deps, "u1",
     { ...installBase, lastHeartbeatMs, lastHeartbeatAt, signedOutAt: S },
     activeContact(), NOW, DEFAULT_CFG);
-  assert.equal(r.ok, true, "heartbeat after sign-out by server time must not be skipped");
+  assert.equal(r.ok, "ping", "heartbeat after sign-out by server time must not be skipped");
   // sanity: comparing against the phone clock alone WOULD have skipped
   assert.ok(S > lastHeartbeatMs);
   // and the event id still comes from lastHeartbeatMs, as before
-  assert.equal(r.event.eventId, String(lastHeartbeatMs));
+  assert.equal(r.ping.eventId, String(lastHeartbeatMs));
 });
 
 test("evaluate: lastHeartbeatAt as a Firestore Timestamp is read correctly", async () => {
@@ -376,7 +392,7 @@ test("evaluate: lastHeartbeatAt as a Firestore Timestamp is read correctly", asy
   const r = await sender.evaluate(e.deps, "u1",
     { ...installBase, lastHeartbeatMs: S - 1000, lastHeartbeatAt: ts(S + 1000), signedOutAt: ts(S) },
     activeContact(), NOW, DEFAULT_CFG);
-  assert.equal(r.ok, true);
+  assert.equal(r.ok, "ping");
 });
 
 test("evaluate: falls back to lastHeartbeatMs when lastHeartbeatAt is missing", async () => {
@@ -389,7 +405,7 @@ test("evaluate: falls back to lastHeartbeatMs when lastHeartbeatAt is missing", 
     { ...installBase, lastHeartbeatMs, signedOutAt: lastHeartbeatMs - 1 },
     activeContact(), NOW, DEFAULT_CFG);
   assert.equal(skip.reason, sender.SKIP.SIGNED_OUT);
-  assert.equal(pass.ok, true);
+  assert.equal(pass.ok, "ping");
 });
 
 test("evaluate: the stale check still uses lastHeartbeatMs, not lastHeartbeatAt", async () => {
@@ -398,7 +414,7 @@ test("evaluate: the stale check still uses lastHeartbeatMs, not lastHeartbeatAt"
   const r = await sender.evaluate(e.deps, "u1",
     { ...installBase, lastHeartbeatMs: NOW - 60 * H, lastHeartbeatAt: NOW - H },
     activeContact(), NOW, DEFAULT_CFG);
-  assert.equal(r.ok, true);
+  assert.equal(r.ok, "ping");
   const fresh = await sender.evaluate(e.deps, "u1",
     { ...installBase, lastHeartbeatMs: NOW - H, lastHeartbeatAt: NOW - 60 * H },
     activeContact(), NOW, DEFAULT_CFG);
@@ -410,7 +426,7 @@ test("runOnce: a signed-out user is skipped, counted under 'signed_out', and not
   const e = env({
     "installs/u1": { ...installBase, lastHeartbeatMs, signedOutAt: lastHeartbeatMs + 1000 },
     "partnerContacts/u1": activeContact(),
-    "installs/u2": { ...installBase, lastHeartbeatMs, email: "b@x.com", displayName: "Bela" }, // removed: no signedOutAt
+    "installs/u2": { ...installBase, lastHeartbeatMs, email: "b@x.com", displayName: "Bela", ...readyToAlertFields(lastHeartbeatMs) }, // removed: no signedOutAt
     "partnerContacts/u2": activeContact("919000000001"),
   });
   const calls = [];
@@ -544,16 +560,16 @@ test("processUser: dry-run writes a dry_run doc and sends NOTHING", async () => 
 test("runOnce: processes stale users, skips the rest with correct reasons, and ONE user failing doesn't stop the batch", async () => {
   const staleBase = { ...installBase, lastHeartbeatMs: NOW - 60 * H };
   const e = env({
-    // u1 — fully eligible, send succeeds
-    "installs/u1": { ...staleBase, email: "a@x.com", displayName: "Anita" },
+    // u1 — fully eligible, already past corroboration, send succeeds
+    "installs/u1": { ...staleBase, email: "a@x.com", displayName: "Anita", ...readyToAlertFields(staleBase.lastHeartbeatMs) },
     "partnerContacts/u1": activeContact(PARTNER_CANONICAL),
     "partnerLinks/u1": { status: "saved", partnerPhoneLast4: "6789" },
-    // u2 — same stale, send fails and throws unexpectedly
-    "installs/u2": { ...staleBase, email: "b@x.com", displayName: "Bela" },
+    // u2 — same stale, already past corroboration, send fails and throws unexpectedly
+    "installs/u2": { ...staleBase, email: "b@x.com", displayName: "Bela", ...readyToAlertFields(staleBase.lastHeartbeatMs) },
     "partnerContacts/u2": activeContact("919000000001"),
     "partnerLinks/u2": { status: "saved", partnerPhoneLast4: "0001" },
-    // u3 — eligible but partner opted out
-    "installs/u3": { ...staleBase, email: "c@x.com", displayName: "Chaya" },
+    // u3 — eligible (past corroboration) but partner opted out
+    "installs/u3": { ...staleBase, email: "c@x.com", displayName: "Chaya", ...readyToAlertFields(staleBase.lastHeartbeatMs) },
     "partnerContacts/u3": activeContact("919000000002"),
     "partnerLinks/u3": { status: "saved", partnerPhoneLast4: "0002" },
     // u4 — the exit process completed, must be skipped
@@ -869,4 +885,281 @@ test("applyPendingPartnerChanges: one account failing does not stop the batch, a
   assert.equal(counts.removed, 1, "u2 still got processed");
   const loggedNumbers = e.logger.lines.some((l) => l.includes(PARTNER_RAW) || l.includes(PARTNER_CANONICAL));
   assert.equal(loggedNumbers, false, "no phone number ever logged");
+});
+
+// ---------------------------------------------------------------- corroboration (D)
+
+function makeMessaging(outcome) {
+  // outcome: "sent" | "unregistered" | "failed"
+  return {
+    send: async () => {
+      if (outcome === "unregistered") {
+        const e = new Error("not registered");
+        e.code = sender.FCM_UNREGISTERED_ERROR_CODE;
+        throw e;
+      }
+      if (outcome === "failed") {
+        const e = new Error("unavailable");
+        e.code = "messaging/unavailable";
+        throw e;
+      }
+      return { name: "projects/p/messages/1" };
+    },
+  };
+}
+
+function makeAuth(metadata) {
+  return { getUser: async () => ({ metadata: metadata || {} }) };
+}
+
+test("sendPing: maps the FCM 'registration-token-not-registered' error to result 'unregistered'", async () => {
+  const r1 = await sender.sendPing({ messaging: makeMessaging("unregistered") }, "TOKEN");
+  assert.equal(r1.result, "unregistered");
+  const r2 = await sender.sendPing({ messaging: makeMessaging("sent") }, "TOKEN");
+  assert.equal(r2.result, "sent");
+  const r3 = await sender.sendPing({ messaging: makeMessaging("failed") }, "TOKEN");
+  assert.equal(r3.result, "failed");
+  const r4 = await sender.sendPing({ messaging: makeMessaging("sent") }, null);
+  assert.equal(r4.result, "failed");
+  assert.equal(r4.errorName, "no_token");
+});
+
+test("evaluate: a brand-new stale incident asks for a ping, not an alert", async () => {
+  const e = env();
+  const lastHeartbeatMs = NOW - 80 * H;
+  const r = await sender.evaluate(e.deps, "u1", { ...installBase, lastHeartbeatMs },
+    activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(r.ok, "ping");
+  assert.equal(r.ping.isNewIncident, true);
+  assert.equal(r.ping.eventId, String(lastHeartbeatMs));
+});
+
+test("evaluate: UNREGISTERED ping result is a strong signal -> alert immediately", async () => {
+  const e = env();
+  const lastHeartbeatMs = NOW - 80 * H;
+  const install = {
+    ...installBase, lastHeartbeatMs,
+    silenceEventId: String(lastHeartbeatMs), silenceStartMs: NOW - 10 * H,
+    lastPingMs: NOW - 9 * H, pingCount: 1, lastPingResult: "unregistered",
+  };
+  const r = await sender.evaluate(e.deps, "u1", install, activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(r.ok, true);
+  assert.equal(r.event.pingReason, "unregistered");
+});
+
+test("evaluate: ping delivered with no response within the window -> alert", async () => {
+  const e = env();
+  const lastHeartbeatMs = NOW - 80 * H;
+  const waitingStillInWindow = {
+    ...installBase, lastHeartbeatMs,
+    silenceEventId: String(lastHeartbeatMs), silenceStartMs: NOW - 5 * H,
+    lastPingMs: NOW - 5 * H, pingCount: 1, lastPingResult: "sent",
+  };
+  const withinWindow = await sender.evaluate(e.deps, "u1", waitingStillInWindow, activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(withinWindow.ok, false);
+  assert.equal(withinWindow.reason, sender.SKIP.AWAITING_PING_RESPONSE);
+
+  const pastWindow = {
+    ...waitingStillInWindow,
+    lastPingMs: NOW - 7 * H, // past the 6h response window
+  };
+  const r = await sender.evaluate(e.deps, "u1", pastWindow, activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(r.ok, true);
+  assert.equal(r.event.pingReason, "no_response");
+});
+
+test("evaluate: ping failed for another reason -> retried after the retry window, not before", async () => {
+  const e = env();
+  const lastHeartbeatMs = NOW - 80 * H;
+  const tooSoon = {
+    ...installBase, lastHeartbeatMs,
+    silenceEventId: String(lastHeartbeatMs), silenceStartMs: NOW - 5 * H,
+    lastPingMs: NOW - 1 * H, pingCount: 1, lastPingResult: "failed",
+  };
+  const waiting = await sender.evaluate(e.deps, "u1", tooSoon, activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(waiting.ok, false);
+  assert.equal(waiting.reason, sender.SKIP.AWAITING_PING_RETRY);
+
+  const readyToRetry = { ...tooSoon, lastPingMs: NOW - 25 * H }; // past the 24h retry window
+  const r = await sender.evaluate(e.deps, "u1", readyToRetry, activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(r.ok, "ping");
+  assert.equal(r.ping.isNewIncident, false);
+});
+
+test("evaluate: after maxPingAttempts failed cycles, alerts as a last resort", async () => {
+  const e = env();
+  const lastHeartbeatMs = NOW - 200 * H;
+  const exhausted = {
+    ...installBase, lastHeartbeatMs,
+    silenceEventId: String(lastHeartbeatMs), silenceStartMs: NOW - 170 * H,
+    lastPingMs: NOW - 26 * H, pingCount: 4, lastPingResult: "failed",
+  };
+  const r = await sender.evaluate(e.deps, "u1", exhausted, activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(r.ok, true);
+  assert.equal(r.event.pingReason, "ping_exhausted");
+});
+
+test("evaluate: recent Firebase Auth activity suppresses the alert (auth active -> suppress)", async () => {
+  const lastHeartbeatMs = NOW - 80 * H;
+  const install = { ...installBase, lastHeartbeatMs };
+  const recentAuth = { auth: makeAuth({ lastSignInTime: new Date(NOW - 10 * H).toUTCString() }) };
+  const r = await sender.evaluate({ ...env().deps, ...recentAuth }, "u1", install, activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, sender.SKIP.RECENT_AUTH_ACTIVITY);
+
+  // Activity OUTSIDE the stale window does not suppress.
+  const staleAuth = { auth: makeAuth({ lastSignInTime: new Date(NOW - 100 * H).toUTCString() }) };
+  const r2 = await sender.evaluate({ ...env().deps, ...staleAuth }, "u1", install, activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(r2.ok, "ping");
+});
+
+test("evaluate: an auth lookup failure never suppresses (fails open on this check only)", async () => {
+  const lastHeartbeatMs = NOW - 80 * H;
+  const install = { ...installBase, lastHeartbeatMs };
+  const brokenAuth = { auth: { getUser: async () => { throw new Error("not found"); } } };
+  const r = await sender.evaluate({ ...env().deps, ...brokenAuth }, "u1", install, activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(r.ok, "ping");
+});
+
+test("evaluate: a recent Firestore write (installs.updatedAt) suppresses the alert", async () => {
+  const e = env();
+  const lastHeartbeatMs = NOW - 80 * H;
+  const recentWrite = { ...installBase, lastHeartbeatMs, updatedAt: NOW - 10 * H };
+  const r = await sender.evaluate(e.deps, "u1", recentWrite, activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, sender.SKIP.RECENT_WRITE);
+
+  const staleWrite = { ...installBase, lastHeartbeatMs, updatedAt: NOW - 100 * H };
+  const r2 = await sender.evaluate(e.deps, "u1", staleWrite, activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(r2.ok, "ping");
+});
+
+test("evaluate: dedup — an alert already sent for this silence incident is not repeated", async () => {
+  const e = env();
+  const lastHeartbeatMs = NOW - 200 * H;
+  const silenceStartMs = NOW - 170 * H;
+  const dedupKey = sender.silenceDedupKey("u1", silenceStartMs);
+  const exhausted = {
+    ...installBase, lastHeartbeatMs,
+    silenceEventId: String(lastHeartbeatMs), silenceStartMs,
+    lastPingMs: NOW - 26 * H, pingCount: 4, lastPingResult: "failed",
+    lastPartnerAlertDedupKey: dedupKey,
+  };
+  const r = await sender.evaluate(e.deps, "u1", exhausted, activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, sender.SKIP.DEDUPED);
+
+  // A different incident (different silenceStartMs -> different dedup key) is not blocked.
+  const newIncident = { ...exhausted, silenceStartMs: silenceStartMs + 2 * 24 * H };
+  const r2 = await sender.evaluate(e.deps, "u1", newIncident, activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(r2.ok, true);
+});
+
+test("evaluate: quiet hours and cooldown still take priority over corroboration", async () => {
+  const e = env();
+  const lastHeartbeatMs = NOW - 80 * H;
+  // Cooldown: even an incident ready to alert is blocked while in cooldown.
+  const inCooldown = {
+    ...installBase, lastHeartbeatMs,
+    silenceEventId: String(lastHeartbeatMs), silenceStartMs: NOW - 10 * H,
+    lastPingMs: NOW - 9 * H, pingCount: 1, lastPingResult: "unregistered",
+    lastPartnerAlertAt: NOW - 2 * 24 * H, // 2 days ago, inside the 7-day cooldown
+  };
+  const r = await sender.evaluate(e.deps, "u1", inCooldown, activeContact(), NOW, DEFAULT_CFG);
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, sender.SKIP.COOLDOWN);
+
+  // Quiet hours block the whole run before evaluate is even reached for anyone.
+  const deps = { ...e.deps, fetch: async () => { throw new Error("must not be called"); }, isOptedOut: async () => false };
+  const quiet = Date.UTC(2026, 9, 5, 20, 0, 0); // 01:30 IST
+  const counts = await sender.runOnce(deps, quiet, DEFAULT_CFG);
+  assert.equal(counts.pinged, 0);
+  assert.equal(counts.sent, 0);
+});
+
+test("processPing: a new incident sends the data-only push and records the starting state", async () => {
+  const e = env({ "installs/u1": { ...installBase, fcmToken: "TESTTOKEN" } });
+  const deps = { ...e.deps, messaging: makeMessaging("sent") };
+  const lastHeartbeatMs = NOW - 80 * H;
+  const eventId = String(lastHeartbeatMs);
+  const result = await sender.processPing(deps, "u1", e.store.get("installs/u1"), eventId, true, NOW, DEFAULT_CFG);
+  assert.equal(result, "sent");
+  const install = e.store.get("installs/u1");
+  assert.equal(install.silenceEventId, eventId);
+  assert.equal(install.silenceStartMs, NOW);
+  assert.equal(install.lastPingMs, NOW);
+  assert.equal(install.pingCount, 1);
+  assert.equal(install.lastPingResult, "sent");
+});
+
+test("processPing: a retry increments pingCount without resetting silenceStartMs", async () => {
+  const lastHeartbeatMs = NOW - 80 * H;
+  const eventId = String(lastHeartbeatMs);
+  const existing = {
+    ...installBase, lastHeartbeatMs,
+    silenceEventId: eventId, silenceStartMs: NOW - 25 * H,
+    lastPingMs: NOW - 25 * H, pingCount: 1, lastPingResult: "failed",
+  };
+  const e = env({ "installs/u1": existing });
+  const deps = { ...e.deps, messaging: makeMessaging("failed") };
+  const result = await sender.processPing(deps, "u1", existing, eventId, false, NOW, DEFAULT_CFG);
+  assert.equal(result, "failed");
+  const install = e.store.get("installs/u1");
+  assert.equal(install.silenceStartMs, NOW - 25 * H, "unchanged — same incident");
+  assert.equal(install.pingCount, 2);
+});
+
+test("processPing: dry run simulates 'sent' and never calls messaging", async () => {
+  const e = env({ "installs/u1": { ...installBase, fcmToken: "TESTTOKEN" } });
+  let called = false;
+  const deps = { ...e.deps, messaging: { send: async () => { called = true; } } };
+  const lastHeartbeatMs = NOW - 80 * H;
+  const result = await sender.processPing(
+    deps, "u1", e.store.get("installs/u1"), String(lastHeartbeatMs), true, NOW, { ...DEFAULT_CFG, dryRun: true }
+  );
+  assert.equal(result, "sent");
+  assert.equal(called, false);
+});
+
+test("runOnce: a newly-stale user is pinged, not alerted, and nothing is sent to the partner", async () => {
+  const lastHeartbeatMs = NOW - 80 * H;
+  const e = env({
+    "installs/u1": { ...installBase, lastHeartbeatMs, email: "a@x.com", displayName: "Anita", fcmToken: "TESTTOKEN" },
+    "partnerContacts/u1": activeContact(),
+  });
+  const deps = {
+    ...e.deps,
+    messaging: makeMessaging("sent"),
+    fetch: async () => { throw new Error("must not message the partner yet"); },
+    isOptedOut: async () => false,
+  };
+  const counts = await sender.runOnce(deps, NOW, DEFAULT_CFG);
+  assert.equal(counts.pinged, 1);
+  assert.equal(counts.sent, 0);
+  const install = e.store.get("installs/u1");
+  assert.equal(install.lastPingResult, "sent");
+  assert.equal(install.pingCount, 1);
+});
+
+test("runOnce: an UNREGISTERED push alerts the partner on the very next run", async () => {
+  const lastHeartbeatMs = NOW - 80 * H;
+  const e = env({
+    "installs/u1": { ...installBase, lastHeartbeatMs, email: "a@x.com", displayName: "Anita", fcmToken: "TESTTOKEN" },
+    "partnerContacts/u1": activeContact(),
+  });
+  const sent = [];
+  const deps = {
+    ...e.deps,
+    messaging: makeMessaging("unregistered"),
+    fetch: async (url, init) => { sent.push(JSON.parse(init.body).to); return { status: 200, async json() { return { messages: [{ id: "wamid.U1" }] }; } }; },
+    isOptedOut: async () => false,
+  };
+  // First run: corroboration starts, push comes back unregistered, state recorded.
+  const first = await sender.runOnce(deps, NOW, DEFAULT_CFG);
+  assert.equal(first.pinged, 1);
+  assert.equal(first.sent, 0);
+  // Second run (any time later): evaluate sees lastPingResult "unregistered" -> alerts.
+  const second = await sender.runOnce(deps, NOW + 60 * 1000, DEFAULT_CFG);
+  assert.equal(second.sent, 1);
+  assert.deepEqual(sent, [PARTNER_CANONICAL]);
 });

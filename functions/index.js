@@ -39,6 +39,7 @@ const PAID_PLANS = {
 // razorpayWebhook, so a payment is applied identically and exactly once no
 // matter which path processes it first. See subscription.js.
 const subscription = require("./subscription");
+const expiryEmail = require("./expiry-email");
 const paymentFieldValues = {
   timestampFromMs: (ms) => admin.firestore.Timestamp.fromMillis(ms),
   serverTimestamp: () => admin.firestore.FieldValue.serverTimestamp(),
@@ -462,6 +463,33 @@ exports.getSubscription = onCall(
 );
 
 // ============================================================================
+// getTrialStatus — lets offer.html hide the Free Trial card for an email that
+// has already used its trial (or ever paid). Display only: the server already
+// refuses a second trial in getEntitlement, so a tampered page gains nothing.
+// Reveals one boolean about an email, and nothing else.
+// ============================================================================
+exports.getTrialStatus = onCall(
+  {
+    region: RAZORPAY_REGION,
+    cors: true,
+  },
+  async (request) => {
+    const email = String((request.data || {}).email || "").trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) {
+      throw new HttpsError("invalid-argument", "A valid email is required.");
+    }
+    const [planSnap, subSnap] = await Promise.all([
+      admin.firestore().doc("planSelections/" + email).get(),
+      admin.firestore().doc("subscriptions/" + email).get(),
+    ]);
+    const plan = planSnap.exists ? planSnap.data() || {} : null;
+    const trialUsed = !!(plan && (plan.selectedPlan === "trial" || plan.trialStartedAt));
+    const everPaid = subSnap.exists;
+    return { trialUsed: trialUsed || everPaid };
+  }
+);
+
+// ============================================================================
 // Account deletion, with a 72-hour delay.
 //
 //   requestAccountDeletion  — schedules it (always a fresh 72 hours; writes
@@ -658,17 +686,33 @@ exports.getEntitlement = onCall(
     const db = admin.firestore();
     const nowMs = admin.firestore.Timestamp.now().toMillis();
 
+    // Tracks the most recent entitlement this account HAD, so that if we fall
+    // all the way through to "expired" we can report which plan it was and
+    // when it ended, and fire the once-per-expiry renewal email. Whichever
+    // branch below sets these first wins (paid is checked before trial).
+    let expiredPlanName = null;
+    let expiredAtMs = null;
+    let expiredDocRef = null;
+    let expiredDocData = null;
+
     // ---- 1. Paid subscription ----
-    const subSnap = await db.doc("subscriptions/" + email).get();
+    const subRef = db.doc("subscriptions/" + email);
+    const subSnap = await subRef.get();
     const sub = subSnap.exists ? (subSnap.data() || {}) : null;
     if (sub && sub.status === "active") {
       const paid = subscription.isPaidActive(sub, nowMs, GRACE_MS);
       if (paid.entitled) {
-        return { entitled: true, reason: "paid", expiresAt: paid.expiresAtMs };
+        return { entitled: true, reason: "paid", expiresAt: paid.expiresAtMs, planName: sub.planName || null };
       }
       // Either past expiry + grace, or no expiresAt at all — a payment
       // recorded before this field existed. Both fall through and are
       // treated as "expired" below; neither grants indefinite access.
+      if (paid.expiresAtMs != null) {
+        expiredPlanName = sub.planName || null;
+        expiredAtMs = paid.expiresAtMs;
+        expiredDocRef = subRef;
+        expiredDocData = sub;
+      }
     }
 
     // ---- 2. Trial (14 days from server-stamped trialStartedAt) ----
@@ -695,9 +739,16 @@ exports.getEntitlement = onCall(
         const startMs = trialStartedAt.toMillis();
         const trialEndMs = startMs + TRIAL_MS;
         if (nowMs <= trialEndMs + GRACE_MS) {
-          return { entitled: true, reason: "trial", expiresAt: trialEndMs };
+          return { entitled: true, reason: "trial", expiresAt: trialEndMs, planName: "Free Trial" };
         }
-        // Trial past grace — fall through
+        // Trial past grace — fall through. Only recorded as THE expiry if no
+        // paid expiry already claimed that role (paid takes precedence).
+        if (expiredAtMs == null) {
+          expiredPlanName = "Free Trial";
+          expiredAtMs = trialEndMs;
+          expiredDocRef = planRef;
+          expiredDocData = plan;
+        }
       }
     }
 
@@ -715,11 +766,112 @@ exports.getEntitlement = onCall(
     const wasEntitledBefore =
       (sub && (sub.status === "active" || sub.status === "expired")) ||
       (plan && plan.selectedPlan === "trial");
+
+    if (wasEntitledBefore && expiredDocRef && expiryEmail.shouldAutoSend(expiredDocData, expiredAtMs)) {
+      // Best-effort, once per expiry (deduped by expiredAtMs on the doc that
+      // produced it). Never lets a send failure affect the entitlement result.
+      try {
+        await sendExpiryRenewalEmailNow(email, expiredPlanName, expiredAtMs);
+        await expiredDocRef.set(
+          { expiryRenewalEmailSentFor: expiredAtMs },
+          { merge: true }
+        );
+      } catch (e) {
+        logger.error("getEntitlement: auto expiry email failed", { message: e && e.message });
+      }
+    }
+
     return {
       entitled: false,
       reason: wasEntitledBefore ? "expired" : "none",
       expiresAt: null,
+      planName: wasEntitledBefore ? expiredPlanName : null,
+      expiredAt: wasEntitledBefore ? expiredAtMs : null,
     };
+  }
+);
+
+// ============================================================================
+// Plan-expiry renewal email — sent once automatically from getEntitlement
+// when an account first flips to "expired" (see expiry-email.js for the
+// dedup rule), and on demand via the sendExpiryRenewalEmail callable below
+// (rate-limited to expiryEmail.MAX_PER_DAY per uid per day, tracked on
+// installs/{uid}). Same Resend secret as the waitlist/app welcome emails —
+// no new paid service.
+// ============================================================================
+async function sendExpiryRenewalEmailNow(email, planName, expiresAtMs) {
+  const resend = new Resend(RESEND_API_KEY.value());
+  const { error } = await resend.emails.send({
+    from: FROM,
+    to: [email],
+    replyTo: REPLY_TO,
+    subject: expiryEmail.SUBJECT,
+    html: expiryEmail.buildHtml({ email, planName, expiresAtMs }),
+    text: expiryEmail.buildText({ email, planName, expiresAtMs }),
+  });
+  if (error) {
+    throw new Error("Resend error: " + (error.message || JSON.stringify(error)));
+  }
+}
+
+exports.sendExpiryRenewalEmail = onCall(
+  { secrets: [RESEND_API_KEY], region: RAZORPAY_REGION },
+  async (request) => {
+    if (!request.auth || !request.auth.token || !request.auth.token.email) {
+      throw new HttpsError("unauthenticated", "Sign in required.");
+    }
+    const uid = request.auth.uid;
+    const email = String(request.auth.token.email).trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) {
+      throw new HttpsError("failed-precondition", "Auth token has no valid email.");
+    }
+
+    const db = admin.firestore();
+    const installsRef = db.doc("installs/" + uid);
+    const nowMs = admin.firestore.Timestamp.now().toMillis();
+
+    const installSnap = await installsRef.get();
+    const install = installSnap.exists ? (installSnap.data() || {}) : null;
+    const limit = expiryEmail.checkRateLimit(install, nowMs);
+    if (!limit.allowed) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "Too many renewal emails requested today. Please try again tomorrow."
+      );
+    }
+
+    // Reuse getEntitlement's own precedence to find the most recent plan —
+    // whatever plan this account last had, paid or trial, entitled or not.
+    const [subSnap, planSnap] = await Promise.all([
+      db.doc("subscriptions/" + email).get(),
+      db.doc("planSelections/" + email).get(),
+    ]);
+    const sub = subSnap.exists ? (subSnap.data() || {}) : null;
+    const plan = planSnap.exists ? (planSnap.data() || {}) : null;
+
+    let planName = null;
+    let expiresAtMs = null;
+    if (sub && sub.expiresAt) {
+      planName = sub.planName || null;
+      expiresAtMs = subscription.toMs(sub.expiresAt);
+    } else if (plan && plan.selectedPlan === "trial" && plan.trialStartedAt && plan.trialStartedAt.toMillis) {
+      planName = "Free Trial";
+      expiresAtMs = plan.trialStartedAt.toMillis() + TRIAL_MS;
+    }
+
+    try {
+      await sendExpiryRenewalEmailNow(email, planName, expiresAtMs);
+    } catch (e) {
+      logger.error("sendExpiryRenewalEmail: send failed", { message: e && e.message });
+      throw new HttpsError("internal", "Could not send the email. Please try again.");
+    }
+
+    await installsRef.set(
+      { expiryEmailDayKey: limit.dayKey, expiryEmailCountToday: limit.nextCount },
+      { merge: true }
+    );
+    logger.info("sendExpiryRenewalEmail: sent", { uid });
+    return { sent: true };
   }
 );
 
@@ -1024,6 +1176,11 @@ function partnerConfig() {
     cooldownDays: Number(PARTNER_ALERTS_COOLDOWN_DAYS.value()) || partnerSender.COOLDOWN_DAYS_DEFAULT,
     dryRun: PARTNER_ALERTS_DRY_RUN.value() !== false,
     allowedUids: new Set(list),
+    // Corroboration phase (see partner-sender.js): a stale heartbeat pings
+    // the device before anyone is alerted.
+    pingRetryHours: partnerSender.PING_RETRY_HOURS_DEFAULT,
+    pingResponseWindowHours: partnerSender.PING_RESPONSE_WINDOW_HOURS_DEFAULT,
+    maxPingAttempts: partnerSender.MAX_PING_ATTEMPTS_DEFAULT,
   };
 }
 
@@ -1049,6 +1206,8 @@ exports.sendPartnerAlerts = onSchedule(
       logger,
       fv: partnerFieldValues,
       fetch: globalThis.fetch, // Node 20
+      auth: admin.auth(), // corroboration: recent Firebase Auth activity check
+      messaging: admin.messaging(), // corroboration: the heartbeat_ping push
       // Shared opt-out check from whatsapp.js. NEVER swap for a local copy:
       // bypassing this would send alerts to numbers that have replied STOP.
       isOptedOut: whatsapp.isOptedOut,

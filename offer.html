@@ -135,6 +135,8 @@ h1.welcome-heading{
 /* ---- PLANS ---- */
 .plans-grid{display:grid;grid-template-columns:1fr;gap:16px}
 @media(min-width:760px){.plans-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:760px){.plans-grid.two-plans{grid-template-columns:repeat(2,1fr);max-width:640px;margin-left:auto;margin-right:auto}}
+.plan-card[hidden]{display:none}
 .plan-card{
   position:relative;overflow:hidden;
   background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:18px;
@@ -236,7 +238,7 @@ footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line)
         <div class="feat-icon">🎬</div>
         <div>
           <h4>Shorts & Reels Control</h4>
-          <p>Limited daily sessions — not a total ban.</p>
+          <p>Reels and Shorts are blocked when you turn this on — not a session limit.</p>
         </div>
       </div>
       <div class="feat">
@@ -367,6 +369,13 @@ footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line)
       const result = await call(payload);
       return result.data;
     },
+    // True when this email has already used its free trial (or ever paid).
+    // Display only; the server enforces it. Any failure means "show all plans".
+    async getTrialStatus(email) {
+      const call = httpsCallable(fns, "getTrialStatus");
+      const result = await call({ email });
+      return !!(result.data && result.data.trialUsed);
+    },
   };
 </script>
 
@@ -397,7 +406,11 @@ footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line)
     // name is purely cosmetic for the greeting, the rest of the page (plan
     // selection, payment, subscription lookup) always needs a real email.
     const hasEmail = EMAIL_RE.test(email);
-    if (name) {
+    if (source === 'expiry') {
+      // Arrived here from the plan-expiry email — a returning user, not a
+      // first-time "Welcome".
+      heading.textContent = 'Your plan ended. Choose a plan to continue.';
+    } else if (name) {
       heading.innerHTML = 'Welcome, <span class="accent-text">' + escHtml(name) + '</span>';
     } else if (hasEmail) {
       heading.innerHTML = 'Welcome, <span class="accent-text">' + escHtml(email) + '</span>';
@@ -418,6 +431,34 @@ footer{padding:36px 20px 40px;text-align:center;border-top:1px solid var(--line)
     history.replaceState(null, '', url);
     renderHeading();
   });
+
+  // A returning email that already used its trial sees only Monthly and
+  // Annual. Best-effort: if the check fails, all three plans stay visible
+  // (the server still refuses a second trial either way).
+  var trialChecked = '';
+  function applyTrialStatus() {
+    if (!EMAIL_RE.test(email) || trialChecked === email) return;
+    if (!window.OfferDB || !window.OfferDB.ready) return;
+    var asked = email;
+    trialChecked = asked;
+    window.OfferDB.getTrialStatus(asked).then(function (used) {
+      if (asked !== email) return;
+      var card = document.querySelector('.plan-card[data-card="trial"]');
+      if (card) card.hidden = !!used;
+      var grid = document.querySelector('.plans-grid');
+      if (grid) grid.classList.toggle('two-plans', !!used);
+      // The expiry heading (above) already says "choose a plan" — don't
+      // overwrite it with the trial-specific message.
+      var h = document.querySelector('#plans h2');
+      if (h && used && source !== 'expiry') h.textContent = 'Your free trial has ended. Choose a plan to continue.';
+    }).catch(function () { trialChecked = ''; });
+  }
+  var tries = 0;
+  (function poll() {
+    applyTrialStatus();
+    if (trialChecked !== email && tries++ < 40) setTimeout(poll, 250);
+  })();
+  emailGateForm && emailGateForm.addEventListener('submit', function () { setTimeout(applyTrialStatus, 0); });
 
   function setPlansMsg(text, isErr) {
     plansMsg.textContent = text || '';
