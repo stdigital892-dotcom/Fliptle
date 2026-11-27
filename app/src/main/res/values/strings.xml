@@ -338,6 +338,7 @@
     <string name="plan_expired_website_link">Didn\'t get it? Continue on fliptle.com</string>
     <string name="plan_expired_exit_link">Start the exit process instead</string>
     <string name="plan_expired_delete_link">Request account deletion</string>
+    <string name="plan_expired_no_browser">No browser found to open that link.</string>
     <!-- Freeze: what it covers -->
     <!-- Uninstall hard reset -->
     <string name="uninstall_reset_toast">A day was missed — progress has reset to day 1.</string>

@@ -84,12 +84,17 @@ class PlanExpiredActivity : AppCompatActivity() {
     private fun openWebsite() {
         val encodedEmail = Uri.encode(email)
         val url = "https://fliptle.com/offer.html?email=$encodedEmail&source=expiry"
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).setPackage("com.android.chrome")
         try {
-            startActivity(intent)
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).setPackage("com.android.chrome"))
         } catch (_: ActivityNotFoundException) {
-            // Chrome isn't installed; fall back to whatever handles http(s).
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+            // Chrome isn't installed (or its intent otherwise failed to
+            // resolve): fall back to whatever handles http(s) at all.
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+            } catch (_: ActivityNotFoundException) {
+                // No browser at all can handle it -- never crash, just say so.
+                Toast.makeText(this, R.string.plan_expired_no_browser, Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }
